@@ -55,3 +55,6 @@ docs/_build/
 # Virtualenv
 local/
 include/
+
+# PyCharm
+.idea/
