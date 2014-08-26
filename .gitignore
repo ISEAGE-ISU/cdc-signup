@@ -58,3 +58,9 @@ include/
 
 # PyCharm
 .idea/
+
+# Uploads
+static/upload/
+
+# Local settings
+local_settings.py
