@@ -1,2 +1,4 @@
 Django==1.6.6
 MySQL-python
+python-ldap
+django-auth-ldap==1.2.1

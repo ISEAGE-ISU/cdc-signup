@@ -126,10 +126,36 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Uncomment the next line to enable the admin:
-    # 'django.contrib.admin',
+    'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
-    # 'django.contrib.admindocs',
+    'django.contrib.admindocs',
+    'base',
 )
+
+##############
+# Active Directory Settings
+##############
+AD_DNS_NAME = "ad.iseage.org"  # FQDN of your DC
+AD_LDAP_PORT = 3268
+AD_LDAP_URL = 'ldap://%s:%s' % (AD_DNS_NAME, AD_LDAP_PORT)
+# If using SSL use these:
+#AD_LDAP_PORT=636
+#AD_LDAP_URL='ldaps://%s:%s' % (AD_DNS_NAME,AD_LDAP_PORT)
+
+AD_SEARCH_DN = 'dc=iseage,dc=org'
+AD_NT4_DOMAIN = 'ISEAGE'
+AD_SEARCH_FIELDS = ['mail','givenName','sn','sAMAccountName','memberOf']
+AD_MEMBERSHIP_ADMIN = ['Domain Admins']  # this ad group gets superuser status in django
+#AD_MEMBERSHIP_REQ = AD_MEMBERSHIP_ADMIN + ['CDCUsers','Green','White','Red']  # only members of this group can access
+AD_CERT_FILE = False  # this is the certificate of the Certificate Authority issuing your DCs certificate
+AD_DEBUG = False
+AD_DEBUG_FILE = '/var/log/signup/ldap.debug'
+
+AUTHENTICATION_BACKENDS = (
+    'auth.ActiveDirectoryAuthenticationBackend',
+    'django.contrib.auth.backends.ModelBackend'
+)
+
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
