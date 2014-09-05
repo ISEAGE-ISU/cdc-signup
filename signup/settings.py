@@ -101,9 +101,10 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
-    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
 ROOT_URLCONF = 'signup.urls'
@@ -132,24 +133,47 @@ INSTALLED_APPS = (
     'base',
 )
 
+LOGIN_URL = URL_ROOT + 'login/'
+LOGOUT_URL = URL_ROOT + 'logout/'
+LOGIN_REDIRECT_URL = URL_ROOT
+SESSION_SAVE_EVERY_REQUEST = True  # http://stackoverflow.com/questions/1366146/django-session-expiry
+SESSION_COOKIE_AGE = 60 * 60  # age in seconds
+#SESSION_COOKIE_SECURE = True
+DEFAULT_NEXT_URL = "/"
+
+##############
+# Caching
+##############
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+    }
+}
+
+
 ##############
 # Active Directory Settings
 ##############
-AD_DNS_NAME = "ad.iseage.org"  # FQDN of your DC
-AD_LDAP_PORT = 3268
-AD_LDAP_URL = 'ldap://%s:%s' % (AD_DNS_NAME, AD_LDAP_PORT)
+AD_DNS_NAME = "dc1.iseage.org"  # FQDN of your DC
+#AD_LDAP_PORT = 3268
+#AD_LDAP_URL = 'ldaps://%s:%s' % (AD_DNS_NAME, AD_LDAP_PORT)
 # If using SSL use these:
-#AD_LDAP_PORT=636
-#AD_LDAP_URL='ldaps://%s:%s' % (AD_DNS_NAME,AD_LDAP_PORT)
+AD_LDAP_PORT=636
+AD_LDAP_URL='ldaps://%s:%s' % (AD_DNS_NAME,AD_LDAP_PORT)
 
-AD_SEARCH_DN = 'dc=iseage,dc=org'
+AD_BASE_DN = 'DC=iseage,DC=org'
+AD_DOMAIN = 'iseage.org'
 AD_NT4_DOMAIN = 'ISEAGE'
 AD_SEARCH_FIELDS = ['mail','givenName','sn','sAMAccountName','memberOf']
 AD_MEMBERSHIP_ADMIN = ['Domain Admins']  # this ad group gets superuser status in django
 #AD_MEMBERSHIP_REQ = AD_MEMBERSHIP_ADMIN + ['CDCUsers','Green','White','Red']  # only members of this group can access
 AD_CERT_FILE = False  # this is the certificate of the Certificate Authority issuing your DCs certificate
 AD_DEBUG = False
+AD_LDAP_DEBUG_LEVEL = 2
 AD_DEBUG_FILE = '/var/log/signup/ldap.debug'
+
+AD_CDCUSER_OU = 'CDCUsers'
 
 AUTHENTICATION_BACKENDS = (
     'auth.ActiveDirectoryAuthenticationBackend',
