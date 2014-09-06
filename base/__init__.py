@@ -1,8 +1,34 @@
 import models
 from signup import settings
+from django.template import RequestContext
 from django.core.cache import cache
+from django.contrib.auth.models import User
 
 GLOBAL_SETTINGS_OBJECT = 'GLOBAL_SETTINGS_OBJECT'
+
+def get_context(request):
+    context = {}
+    context['MEDIA_URL'] = settings.MEDIA_URL
+    context['current_url_full'] = request.get_full_path()
+    request.session.__setitem__('ip_addr', request.META.get('HTTP_X_FORWARDED_FOR'))
+    request.session.__setitem__('recent_path', request.META.get('PATH_INFO'))
+    if request.user:
+        context['user'] = request.user
+        context['participant'] = None
+        if isinstance(request.user, User):
+            context['participant'] = request.user.profile
+
+    notification = request.GET.get('notification', None)
+    if notification:
+        msg_type = request.GET.get('notification_type', 'success')
+        if msg_type == 'error':
+            request.notifications.error(notification)
+        elif msg_type == 'warning':
+            request.notifications.warning(notification)
+        else:
+            request.notifications.success(notification)
+    r_ctx = RequestContext(request, context)
+    return r_ctx
 
 
 def get_global_settings_object():
@@ -53,6 +79,7 @@ class OutOfTeamNumbersError(Exception):
 
 class TeamAlreadyExistsError(Exception):
     pass
+
 
 class PasswordMismatchError(Exception):
     pass

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="row-fluid">
+        <div class="span6 offset3">
+            <div class="widget-box">
+                <div class="widget-title">
+                    <h5>Login</h5>
+                </div>
+                <div class="widget-content">
+                    <div class="row-fluid">
+                        <div class="span12">
+                            {% if form.errors %}
+                            <div class="alert alert-error" style="text-align: center; margin-top: -15px;">Invalid credentials. &nbsp;Please try again.</div>
+                            {% endif %}
+
+                            <form class="login-form form-horizontal" method="POST">
+                                {% csrf_token %}
+
+                                <div class="control-group">
+                                    <label class="control-label" for="id_username">Username</label>
+                                    <div class="controls">
+                                        <div class="input-append">
+                                            {{ form.username }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="control-group">
+                                    <label class="control-label" for="id_password">Password</label>
+                                    <div class="controls">
+                                        {{ form.password }}
+                                    </div>
+                                </div>
+
+                                <input class="btn btn-primary" type="submit" value="Login" style="margin-top: 20px; margin-left: 396px; margin-bottom: 15px;"/>
+                                <input type="hidden" name="next" value="{{ next }}" />
+                            </form>
+                        </div>
+
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block js %}
+
+    <script>
+        $(document).ready(function(){
+            $('#id_username').focus();
+        });
+    </script>
+
+{% endblock %}

@@ -1,0 +1,88 @@
+{% load cache %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{{ page_title }} - CDC Signup</title>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/static/img/favicon.png" />
+
+    <link rel="stylesheet" href="/static/includes/bootstrap/css/bootstrap.css" />
+    <link rel="stylesheet" href="/static/includes/bootstrap-notify/css/bootstrap-notify.css" />
+    <link rel="stylesheet" href="/static/styles/theme.css" />
+    <link rel="stylesheet" href="/static/styles/style.css" />
+
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+
+<div id="header">
+    <a href="{% url "site-index" %}"><img src="/static/img/logo.png" width="170" style="margin-top: 20px; margin-left: 20px;" /></a>
+</div>
+
+{% if notifications %}
+    {% for message in notifications %}
+        <div class="notifications top-center" data-row="{{ message }}" title="{{ message.tags }}"></div>
+    {% endfor %}
+{% endif %}
+
+<div id="content" style="min-height:1000px;">
+    {% block full-content %} {# We use this block to override the whole content area, for error pages #}
+    <div id="content-header">
+        <h1>{{ page_title }}</h1>
+
+        <div>
+            <div class="btn-group">
+                {% if user.is_authenticated %}
+                    <a class="btn btn-large" href="{% url "logout" %}">Logout</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row-fluid">
+            <div class="span12">
+
+                {% block content %}{% endblock %}
+
+            </div>
+        </div>
+    </div>
+
+    {% endblock %}
+</div>
+
+<script src="/static/includes/jquery-1.11.1.min.js"></script>
+<script src="/static/includes/bootstrap/js/bootstrap.min.js"></script>
+<script src="/static/includes/bootstrap-notify/js/bootstrap-notify.js"></script>
+
+<script>
+    $(document).ready(function(){
+        //setup content height
+        $(window).resize(function(){
+            var new_height = $(window).height() - 55;
+            if(new_height < 675) new_height = 675;
+            $("#content").css('min-height', new_height);
+        });
+
+        $(window).trigger('resize');
+
+        $('.notifications').each(function(){
+            var that = $(this);
+            var message = that.attr('data-row');
+            var color = that.attr('title');
+            that.notify({
+                message: {text: message},
+                type: color,
+                fadeOut: { enabled: true, delay: 4500 }
+            }).show();
+        });
+    });
+
+</script>
+
+{% block js %}{% endblock %}
+
+</body>
+</html>

@@ -142,6 +142,15 @@ SESSION_COOKIE_AGE = 60 * 60  # age in seconds
 DEFAULT_NEXT_URL = "/"
 
 ##############
+# Email
+##############
+#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = 'mailhub.iastate.edu'
+EMAIL_PORT = 25
+
+
+##############
 # Caching
 ##############
 CACHES = {
@@ -156,11 +165,11 @@ CACHES = {
 # Active Directory Settings
 ##############
 AD_DNS_NAME = "dc1.iseage.org"  # FQDN of your DC
-#AD_LDAP_PORT = 3268
-#AD_LDAP_URL = 'ldaps://%s:%s' % (AD_DNS_NAME, AD_LDAP_PORT)
+AD_LDAP_PORT = 3268
+AD_LDAP_URL = 'ldap://%s:%s' % (AD_DNS_NAME, AD_LDAP_PORT)
 # If using SSL use these:
-AD_LDAP_PORT=636
-AD_LDAP_URL='ldaps://%s:%s' % (AD_DNS_NAME,AD_LDAP_PORT)
+#AD_LDAP_PORT=636
+#AD_LDAP_URL='ldaps://%s:%s' % (AD_DNS_NAME,AD_LDAP_PORT)
 
 AD_CDCUSER_OU = 'CDCUsers'
 AD_CDCUSER_GROUP = 'CDCUsers'
@@ -187,30 +196,21 @@ AUTHENTICATION_BACKENDS = (
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
-# A sample logging configuration. The only tangible logging
-# performed by this configuration is to send an email to
-# the site admins on every HTTP 500 error when DEBUG=False.
-# See http://docs.djangoproject.com/en/dev/topics/logging for
-# more details on how to customize your logging configuration.
+# Logging
+# Log everything to console
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
-    },
     'handlers': {
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
+        'console': {
+            'level':'INFO',
+            'class':'logging.StreamHandler'
         }
     },
     'loggers': {
         'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
+            'handlers': ['console'],
+            'level': 'INFO',
             'propagate': True,
         },
     }
