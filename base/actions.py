@@ -3,9 +3,19 @@ from signup import settings
 import base
 import datetime
 import models
-from django.contrib.auth.models import BaseUserManager as usermgr
+from django.contrib.auth.models import User
 from django.core.mail import send_mail
+import re
 
+# For checking that generated passwords meet AD complexity requirements
+UPPER = re.compile('[A-Z]')
+LOWER = re.compile('[a-z]')
+NUMERIC = re.compile('[0-9]')
+PASSWORD_LENGTH = 12
+
+##########
+# LDAP functions
+##########
 def initialize_ldap():
     if settings.AD_CERT_FILE:
         ldap.set_option(ldap.OPT_X_TLS_CACERTFILE, settings.AD_CERT_FILE)
@@ -40,6 +50,25 @@ def ldap_debug_write(message):
         fObj.write("%s\t%s\n" % (now,message))
         fObj.close()
 
+def get_user_dn(participant_id):
+    participant = models.Participant.objects.get(pk=participant_id)
+    username = participant.user.get_username()
+    user_dn = 'CN={username},OU={ou},{base_dn}'.format(username=username,
+                                                      ou=settings.AD_CDCUSER_OU,
+                                                      base_dn=settings.AD_BASE_DN)
+    return user_dn
+
+def get_group_dn(team_id):
+    team = models.Team.objects.get(pk=team_id)
+    group = settings.AD_BLUE_TEAM_FORMAT.format(number=team.number)
+    group_dn = 'CN={group},OU={ou},{base_dn}'.format(group=group,
+                                                     ou=settings.AD_CDCUSER_OU,
+                                                     base_dn=settings.AD_BASE_DN)
+    return group_dn
+
+##########
+# User accounts
+##########
 def create_user_account(username, fname, lname, email):
     ldap_connection = admin_bind()
     if not ldap_connection:
@@ -49,6 +78,10 @@ def create_user_account(username, fname, lname, email):
     cdcuser_ou = settings.AD_CDCUSER_OU
 
     # Check and see if user exists
+
+    # This is needed for searches to work
+    ldap.set_option(ldap.OPT_REFERRALS, 0)
+
     search_filter = '(&(sAMAccountName=' + username + ')(objectClass=person))'
     try:
         user_results = ldap_connection.search_s(base_dn, ldap.SCOPE_SUBTREE, search_filter, ['distinguishedName'])
@@ -58,7 +91,7 @@ def create_user_account(username, fname, lname, email):
 
     # Check the results
     if len(user_results) != 0:
-        ldap_debug_write("User ", username, " already exists in AD: " + user_results[0][1]['distinguishedName'][0])
+        ldap_debug_write("User " + username + " already exists in AD: " + user_results[0][1]['distinguishedName'][0])
         return False
 
     user_dn = 'CN={username},OU={ou},{search}'.format(username=username,
@@ -76,12 +109,22 @@ def create_user_account(username, fname, lname, email):
     user_attrs['mail'] = email
     user_ldif = ldap.modlist.addModlist(user_attrs)
 
-    password = usermgr.make_random_password(length=12)
+    # Generate a password that AD will like
+    while True:
+        password = User.objects.make_random_password(length=PASSWORD_LENGTH)
+        if UPPER.match(password) and LOWER.match(password) and NUMERIC.match(password):
+            break
 
     # Prep the password
     unicode_pass = unicode('\"' + password + '\"', 'iso-8859-1')
     password_value = unicode_pass.encode('utf-16-le')
     add_pass = [(ldap.MOD_REPLACE, 'unicodePwd', [password_value])]
+
+    # New group membership
+    add_member = [(ldap.MOD_ADD, 'member', user_dn)]
+    cdcuser_group_dn = 'CN={group},OU={ou},{search}'.format(group=settings.AD_CDCUSER_GROUP,
+                                                      ou=cdcuser_ou,
+                                                      search=base_dn)
 
     # 512 will set user account to enabled
     mod_acct = [(ldap.MOD_REPLACE, 'userAccountControl', '512')]
@@ -91,6 +134,13 @@ def create_user_account(username, fname, lname, email):
         ldap_connection.add_s(user_dn, user_ldif)
     except ldap.LDAPError, e:
         ldap_debug_write("Error adding new user: " + e)
+        return False
+
+    # Add user to CDCUsers group
+    try:
+        ldap_connection.modify_s(cdcuser_group_dn, add_member)
+    except ldap.LDAPError, e:
+        ldap_debug_write("Error adding user to CDCUsers group: " + e)
         return False
 
     # Add the password
@@ -131,22 +181,75 @@ def create_user_account(username, fname, lname, email):
     # All is good
     return True
 
-def get_available_team_numbers():
-    pass
+def update_password(participant_id, old_password, new_password):
+    # Check that the current password is correct
+    user_dn = get_user_dn(participant_id)
+    l = initialize_ldap()
+    try:
+        l.simple_bind_s(user_dn, old_password)
+    except ldap.INVALID_CREDENTIALS:
+        ldap_debug_write("Failed to authenticate current password for user {dn}: ".format(dn=user_dn))
+        raise base.PasswordMismatchError()
+    except ldap.LDAPError, e:
+        ldap_debug_write("Couldn't bind as user {dn}: ".format(dn=user_dn) + e)
+        return False
 
-def get_user_dn(participant_id):
+    # If we got this far, auth was successful
+    l.unbind_s()
+
+    # Prep the password
+    unicode_pass = unicode('\"' + new_password + '\"', 'iso-8859-1')
+    password_value = unicode_pass.encode('utf-16-le')
+    modlist = [(ldap.MOD_REPLACE, 'unicodePwd', [password_value])]
+
+    ldap_connection = admin_bind()
+    if not ldap_connection:
+        return False
+
+    # Change the password
+    try:
+        ldap_connection.modify_s(user_dn, modlist)
+    except ldap.LDAPError, e:
+        ldap_debug_write("Error setting password: " + e)
+        return False
+
+    # If we're here, the password change succeeded
+    ldap_connection.unbind_s()
+
+    # Send email
     participant = models.Participant.objects.get(pk=participant_id)
-    username = participant.user.get_username()
-    user_dn = 'CN={username},OU={ou},{base_dn}'.format(username=username,
-                                                      ou=settings.AD_CDCUSER_OU,
-                                                      base_dn=settings.AD_BASE_DN)
 
-def get_group_dn(team_id):
-    team = models.Team.objects.get(pk=team_id)
-    group = base.get_global_setting('ldap_group_format').format(number=team.number)
-    group_dn = 'CN={group},OU={ou},{base_dn}'.format(group=group,
-                                                     ou=settings.AD_CDCUSER_OU,
-                                                     base_dn=settings.AD_BASE_DN)
+    email_body = """Hi there {fname} {lname},
+
+              Your password has been successfully updated.
+
+              If you didn't change your password, please contact CDC support at cdc_support@iastate.edu immediately.
+              """
+
+    send_mail('ISEAGE CDC Support: Password successfully updated',
+              email_body.format(fname=participant.user.first_name, lname=participant.user.last_name),
+              'cdc_support@iastate.edu',
+              participant.user.email)
+
+    # All done
+    return True
+
+##########
+# Teams
+##########
+def create_team(name, captain_id):
+    team, created = models.Team.objects.get_or_create(name=name)
+    if not created:
+        raise base.TeamAlreadyExistsError()
+
+    assign_team_number(team.id)
+
+    captain = models.Participant.objects.get(pk=captain_id)
+    captain.team = team
+    captain.captain = True
+    captain.save()
+
+    return True
 
 def add_user_to_team(team_id, participant_id):
     ldap_connection = admin_bind()
@@ -164,6 +267,35 @@ def add_user_to_team(team_id, participant_id):
         return False
 
     ldap_connection.unbind_s()
+
+    # Send email
+    participant = models.Participant.objects.get(pk=participant_id)
+    team = models.Team.objects.get(pk=team_id)
+    captain_list = models.Participant.objects.filter(team_id=team_id).filter(captain=True)
+    captains = ""
+    for captain in captain_list:
+        captains = captains + "{fname} {lname}  \t{email}\n".format(fname=captain.user.first_name,
+                                                                  lname=captain.user.last_name,
+                                                                  email=captain.user.email)
+
+    email_body = """Hi there {fname} {lname},
+
+              Your request to join a team has been approved.
+              You have been added to Team {number}: {team}
+
+              Be sure to get in contact with your team captain(s) if you haven't already:
+
+              {captains}
+
+              If you have questions, email CDC support at cdc_support@iastate.edu
+              """
+
+    send_mail('ISEAGE CDC Support: You have been added to a team',
+              email_body.format(fname=participant.user.first_name, lname=participant.user.last_name,
+                                number=team.number, team=team.name, captains=captains),
+              'cdc_support@iastate.edu',
+              participant.user.email)
+
     return True
 
 def remove_user_from_team(team_id, participant_id):
@@ -178,7 +310,7 @@ def remove_user_from_team(team_id, participant_id):
     try:
         ldap_connection.modify_s(group_dn, modlist)
     except ldap.LDAPError, e:
-        print "Error adding user to group: " + e
+        print "Error removing user from group: " + e
         return False
 
     ldap_connection.unbind_s()
@@ -195,7 +327,7 @@ def assign_team_number(team_id):
             break
 
     if not number:
-        return False
+        raise base.OutOfTeamNumbersError()
 
     team = models.Team.objects.get(pk=team_id)
     team.number = number
@@ -203,5 +335,3 @@ def assign_team_number(team_id):
 
     return True
 
-def update_password(user, old_password, new_password):
-    pass

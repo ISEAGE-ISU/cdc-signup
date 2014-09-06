@@ -83,12 +83,8 @@ class ActiveDirectoryAuthenticationBackend:
         # cache the AD password
         user.set_password(password)
         user.save()
-        #setup UserProfile
-        user_profile = base_models.UserProfile.objects.get_or_create(
-            user=user, is_white=user_info['is_white'], is_green=user_info['is_green'],
-            is_green_admin=user_info['is_green_admin'], is_blue=user_info['is_blue'],
-            is_red=user_info['is_red'], team_number=user_info['team_number']
-        )
+        # setup Participant
+        participant = base_models.Participant.objects.get_or_create(user=user)
         return user
 
     def get_user(self, user_id):
@@ -111,11 +107,6 @@ class ActiveDirectoryAuthenticationBackend:
         group_dict = {
             'is_admin': False,
             'is_valid': False,
-            'is_white': False,
-            'is_green': False,
-            'is_green_admin': False,
-            'is_red': False,
-            'is_blue': False,
             'team_number': 0
         }
         pattern = re.compile(r'(CN|OU)=(?P<groupName>[\w\s|\d\s]+),')
@@ -130,17 +121,8 @@ class ActiveDirectoryAuthenticationBackend:
                         group_dict['is_admin'] = True
                     if this_group in settings.AD_MEMBERSHIP_REQ:
                         group_dict['is_valid'] = True
-                    if this_group in settings.AD_WHITE_GROUP:
-                        group_dict['is_white'] = True
-                    if this_group in settings.AD_GREEN_GROUP:
-                        group_dict['is_green'] = True
-                    if this_group in settings.AD_GREEN_ADMIN_GROUP:
-                        group_dict['is_green_admin'] = True
-                    if this_group in settings.AD_RED_GROUP:
-                        group_dict['is_red'] = True
                     self.debug_write("Comparing %s to %s" % (str(settings.AD_BLUE_GROUP_PREFIX), str(this_group)))
                     if str(settings.AD_BLUE_GROUP_PREFIX) in str(this_group):
-                        group_dict['is_blue'] = True
                         num_match = re.search('(\d+)$', this_group)
                         if num_match:
                             group_dict['team_number'] = num_match.group(0)
@@ -151,15 +133,7 @@ class ActiveDirectoryAuthenticationBackend:
             self.debug_write('is normal user (not admin)')
         else:
             self.debug_write('does not have the AD group membership needed')
-        if group_dict['is_white']:
-            self.debug_write('is white user')
-        if group_dict['is_green']:
-            self.debug_write('is green user')
-        if group_dict['is_green_admin']:
-            self.debug_write('is green admin')
-        if group_dict['is_red']:
-            self.debug_write('is red user')
-        if group_dict['is_blue']:
+        if group_dict['team_number'] > 0:
             self.debug_write('is blue user on team %s' % group_dict['team_number'])
 
         return group_dict

@@ -39,3 +39,20 @@ def reset_global_settings_object():
     gs = models.GlobalSettings.objects.get_or_create(id__exact=1)[0]
     cache.set(GLOBAL_SETTINGS_OBJECT, gs)
     return gs
+
+##########
+# Exceptions
+##########
+class UsernameAlreadyExistsError(Exception):
+    pass
+
+
+class OutOfTeamNumbersError(Exception):
+    pass
+
+
+class TeamAlreadyExistsError(Exception):
+    pass
+
+class PasswordMismatchError(Exception):
+    pass
