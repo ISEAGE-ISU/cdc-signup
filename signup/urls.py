@@ -20,16 +20,16 @@ urlpatterns = patterns('',
     url(r'^login/$', 'base.views.login', name='site-login'),
     url(r'^logout/$', 'django.contrib.auth.views.logout_then_login', name='site-logout'),
 
-    url(r'^signup/$', '', name='signup'),
-    url(r'^forgot/$', '', name='forgot-password'),
+    url(r'^signup/$', views.SignupView.as_view(), name='signup'),
+    url(r'^forgot/$', views.ForgotPasswordView.as_view(), name='forgot-password'),
 
-    url(r'^join_team/$', '', name='team-list'),
-    url(r'^join_team/(?P<team_id>[0-9-_:]+)/$', '', name='join-team'),
-    url(r'^create_team/$', '', name='create-team'),
-    url(r'^leave_team/$', '', name='leave-team'),
-
-    url(r'^manage_team/$', '', name='manage-team'),
-    url(r'^approve/(?P<participant_id>[0-9-_:]+)/$', '', name='approve-member'),
-    url(r'^approve_captain/(?P<participant_id>[0-9-_:]+)/$', '', name='approve-captain'),
+    # url(r'^join_team/$', '', name='team-list'),
+    # url(r'^join_team/(?P<team_id>[0-9-_:]+)/$', '', name='join-team'),
+    # url(r'^create_team/$', '', name='create-team'),
+    # url(r'^leave_team/$', '', name='leave-team'),
+    #
+    # url(r'^manage_team/$', '', name='manage-team'),
+    # url(r'^approve/(?P<participant_id>[0-9-_:]+)/$', '', name='approve-member'),
+    # url(r'^approve_captain/(?P<participant_id>[0-9-_:]+)/$', '', name='approve-captain'),
 
 )
