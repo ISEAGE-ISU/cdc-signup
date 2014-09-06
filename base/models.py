@@ -20,7 +20,7 @@ class Participant(models.Model):
     user = models.OneToOneField(auth_models.User)
     team = models.ForeignKey('Team', blank=True)
     captain = models.BooleanField(default=False)
-    requested_team = models.ForeignKey('Team', blank=True)
+    requested_team = models.ForeignKey('Team', related_name='requested_team',blank=True)
 
     def __unicode__(self):
         return "{username} ({name})".format(username=self.user.get_username(), name=self.user.get_full_name())
