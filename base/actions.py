@@ -176,7 +176,7 @@ def create_user_account(username, fname, lname, email):
     send_mail('Your ISEAGE CDC account',
               email_body.format(fname=fname, lname=lname,username=username, password=password),
               'cdc_support@iastate.edu',
-              email)
+              [email])
 
     # All is good
     return True
@@ -229,7 +229,7 @@ def update_password(participant_id, old_password, new_password):
     send_mail('ISEAGE CDC Support: Password successfully updated',
               email_body.format(fname=participant.user.first_name, lname=participant.user.last_name),
               'cdc_support@iastate.edu',
-              participant.user.email)
+              [participant.user.email])
 
     # All done
     return True
@@ -237,6 +237,25 @@ def update_password(participant_id, old_password, new_password):
 ##########
 # Teams
 ##########
+def assign_team_number(team_id):
+    num_teams = base.get_global_setting('number_of_teams')
+    assigned_numbers = models.Team.objects.values_list('number', flat=True)
+    number = None
+
+    for i in range(1, num_teams + 1):
+        if not i in assigned_numbers:
+            number = i
+            break
+
+    if not number:
+        raise base.OutOfTeamNumbersError()
+
+    team = models.Team.objects.get(pk=team_id)
+    team.number = number
+    team.save()
+
+    return True
+
 def create_team(name, captain_id):
     team, created = models.Team.objects.get_or_create(name=name)
     if not created:
@@ -248,6 +267,25 @@ def create_team(name, captain_id):
     captain.team = team
     captain.captain = True
     captain.save()
+
+    email_body = """Hi there {fname} {lname},
+
+              Your team has been successfully created.
+              Your team name is: {team}
+              Your team number is: {number}
+
+              You can manage your team by visiting https://signup.iseage.org/manage_team/
+
+              Your team members should create an account and submit a request to join your team.
+
+              If you have questions, email CDC support at cdc_support@iastate.edu
+              """
+
+    send_mail('ISEAGE CDC Support: You have been added to a team',
+              email_body.format(fname=captain.user.first_name, lname=captain.user.last_name,
+                                team=team.name, number=team.number),
+              'cdc_support@iastate.edu',
+              [captain.user.email])
 
     return True
 
@@ -294,7 +332,7 @@ def add_user_to_team(team_id, participant_id):
               email_body.format(fname=participant.user.first_name, lname=participant.user.last_name,
                                 number=team.number, team=team.name, captains=captains),
               'cdc_support@iastate.edu',
-              participant.user.email)
+              [participant.user.email])
 
     return True
 
@@ -316,22 +354,53 @@ def remove_user_from_team(team_id, participant_id):
     ldap_connection.unbind_s()
     return True
 
-def assign_team_number(team_id):
-    num_teams = base.get_global_setting('number_of_teams')
-    assigned_numbers = models.Team.objects.values_list('number', flat=True)
-    number = None
+def promote_to_captain(participant_id):
+    participant = models.Participant.objects.get(pk=participant_id)
+    participant.captain = True
+    participant.save()
 
-    for i in range(1, num_teams + 1):
-        if not i in assigned_numbers:
-            number = i
-            break
+def demote_captain(participant_id):
+    participant = models.Participant.objects.get(pk=participant_id)
+    participant.captain = False
+    participant.save()
 
-    if not number:
-        raise base.OutOfTeamNumbersError()
-
+def submit_join_request(participant_id, team_id):
+    participant = models.Participant.objects.get(pk=participant_id)
     team = models.Team.objects.get(pk=team_id)
-    team.number = number
-    team.save()
+    captains = models.Participant.objects.filter(team_id=team_id).filter(captain=True)
+    participant.requested_team = team
+    participant.save()
 
-    return True
+    email_body = """Hi there captains,
 
+              {fname} {lname} ({email}) has requested to join your team, {team}.
+
+              Visit https://signup.iseage.org/manage_team/ to confirm or deny this request.
+
+              If you have questions, email CDC support at cdc_support@iastate.edu
+              """
+
+    send_mail('ISEAGE CDC Support: Someone has requested to join your team',
+              email_body.format(fname=participant.user.first_name, lname=participant.user.last_name,
+                                email=participant.user.email,team=team.name),
+              'cdc_support@iastate.edu',
+              captains.values_list('email', flat=True))
+
+def sumbit_captain_request(participant_id):
+    participant = models.Participant.objects.get(pk=participant_id)
+    captains = models.Participant.objects.filter(team=participant.team).filter(captain=True)
+
+    email_body = """Hi there captains,
+
+              {fname} {lname} ({email}) has requested to become a captain of your team, {team}.
+
+              Visit https://signup.iseage.org/manage_team/ to confirm or deny this request.
+
+              If you have questions, email CDC support at cdc_support@iastate.edu
+              """
+
+    send_mail('ISEAGE CDC Support: Someone has requested to become a captain of your team',
+              email_body.format(fname=participant.user.first_name, lname=participant.user.last_name,
+                                email=participant.user.email,team=participant.team.name),
+              'cdc_support@iastate.edu',
+              captains.values_list('email', flat=True))
