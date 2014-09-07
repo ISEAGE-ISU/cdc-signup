@@ -8,25 +8,15 @@ GLOBAL_SETTINGS_OBJECT = 'GLOBAL_SETTINGS_OBJECT'
 
 def get_context(request):
     context = {}
-    context['MEDIA_URL'] = settings.MEDIA_URL
     context['current_url_full'] = request.get_full_path()
     request.session.__setitem__('ip_addr', request.META.get('HTTP_X_FORWARDED_FOR'))
     request.session.__setitem__('recent_path', request.META.get('PATH_INFO'))
     if request.user:
         context['user'] = request.user
-        context['participant'] = None
         if isinstance(request.user, User):
-            context['participant'] = request.user.profile
+            obj, created = models.Participant.objects.get_or_create(user=request.user)
+            context['participant'] = obj
 
-    notification = request.GET.get('notification', None)
-    if notification:
-        msg_type = request.GET.get('notification_type', 'success')
-        if msg_type == 'error':
-            request.notifications.error(notification)
-        elif msg_type == 'warning':
-            request.notifications.warning(notification)
-        else:
-            request.notifications.success(notification)
     r_ctx = RequestContext(request, context)
     return r_ctx
 

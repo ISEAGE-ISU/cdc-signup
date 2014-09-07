@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load tt_web %}
+
+{% block content %}
+
+    <div class="span6 offset3">
+        <form class='form-horizontal' action='' method="POST">
+            {% csrf_token %}
+            {% render_form form %}
+        </form>
+    </div>
+
+{% endblock %}

@@ -1,14 +1,28 @@
-from django.shortcuts import render
+from django.shortcuts import redirect
 from django.views.generic.base import View, TemplateResponseMixin
 from django.contrib.auth import views as auth_views
+from django.contrib import messages
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
+
 import base
-import json
+import forms as base_forms
+import actions
 
 def login(request):
     context={
         'page_title':"Login",
     }
     return auth_views.login(request, template_name='login.html', extra_context=context)
+
+
+class LoginRequiredMixin(object):
+    """
+    Including this mixin with your view will ensure the user is authenticated.
+    """
+    @method_decorator(login_required(login_url='/login/'))
+    def dispatch(self, *args, **kwargs):
+        return super(LoginRequiredMixin, self).dispatch(*args, **kwargs)
 
 
 class BaseView(View):
@@ -96,11 +110,11 @@ class SignupView(BaseTemplateView):
     template_name = 'signup.html'
 
 
-class HomeView(BaseTemplateView):
+class HomeView(BaseTemplateView, LoginRequiredMixin):
     template_name = 'home.html'
 
 
-class CaptainHome(BaseTemplateView):
+class CaptainHome(BaseTemplateView, LoginRequiredMixin):
     pass
 
 
@@ -108,5 +122,31 @@ class ForgotPasswordView(BaseTemplateView):
     template_name = 'forgot.html'
 
 
-class TeamCreationView(BaseTemplateView):
-    pass
+class TeamCreationView(BaseTemplateView, LoginRequiredMixin):
+    template_name = 'create_team.html'
+
+    def get(self, request, context, *args, **kwargs):
+        if 'form' in kwargs:
+            form = kwargs.pop('form')
+        else:
+            form = base_forms.CreateTeamForm()
+        context['form'] = form
+        return self.render_to_response(context)
+
+    def post(self, request, context, *args, **kwargs):
+        form = base_forms.CreateTeamForm(request.POST)
+        if form.is_valid():
+            pt = context['participant']
+            name = form.cleaned_data['name']
+            try:
+                actions.create_team(name, pt.id)
+            except base.TeamAlreadyExistsError:
+                form.add_error('name', "A team with that name already exists. Please choose another name.")
+            except base.OutOfTeamNumbersError:
+                form.add_error(None, "There are currently no slots available for new teams. Please email cdc_support@iastate.edu and tell us this so we can fix it.")
+                pass
+
+            messages.success('Team {name} successfully created.'.format(name=name))
+            return redirect('manage-team')
+        else:
+            return self.get(request, context, form=form)
