@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load tt_web %}
 
 {% block content %}
 
-    <div class="span6 offset3">
+    <div class="col-md-6 col-md-offset-3">
         <form class='form-horizontal' action='' method="POST">
             {% csrf_token %}
             {% render_form form %}
@@ -11,12 +12,3 @@
 
 {% endblock %}
 
-{% block js %}
-
-    <script>
-        $(document).ready(function(){
-            $('#id_username').focus();
-        });
-    </script>
-
-{% endblock %}

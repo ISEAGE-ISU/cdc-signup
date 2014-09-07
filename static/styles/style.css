@@ -1,0 +1,207 @@
+/* Base tag settings */
+ol{
+    list-style-type: none;
+    padding-left:0;
+    margin:0;
+}
+
+ul{
+    list-style-type: none;
+    padding-left:0;
+    margin:0;
+}
+
+dt  {
+    clear:left;
+    float:left;
+    line-height:26px;
+    width:145px;
+    text-align:right;
+    font-weight:bold;
+}
+
+dd {
+    clear:right;
+    line-height:18px;
+    padding:4px;
+    text-align:left;
+    margin-left:145px;
+
+}
+
+/* Bootstrap overrides */
+.container-fluid .row-fluid .container-fluid .row-fluid:first-child {
+     margin-top: 0;
+ }
+
+.container-fluid .row-fluid .container-fluid {
+    padding: 0;
+}
+
+.btn-legend:hover {
+    cursor: auto;
+}
+
+/* Padding for all icons */
+i {
+    padding-right:4px;
+}
+
+/* Helper classes for headings and quick styles */
+.bold {
+    font-weight: bold;
+}
+
+.italic {
+    font-style: italic;
+}
+
+.h1 {
+    font: bold 26px Arial, Helvetica, Sans-serif;
+}
+
+.h2 {
+    font: bold 22px Arial, Helvetica, Sans-serif;
+}
+
+.h3 {
+    font: bold 18px Arial, Helvetica, Sans-serif;
+}
+
+.h4 {
+    font: bold 14px Arial, Helvetica, Sans-serif;
+}
+
+/* TODO Remove this when we no longer need it? */
+.quote {
+    background-color: #EFEFEF;
+    border-left: 3px solid #D0D0D0;
+    border-radius: 7px;
+    margin: 20px 0px 20px 40px;
+    width: 600px;
+    padding: 15px;
+    line-height: 24px;
+    font-size: 18px;
+}
+
+/* Helper classes for quick colors */
+.red {
+    background-color: #FF9999;
+}
+
+.green {
+    background-color: #99FF99;
+}
+
+span.white {
+    font-weight: bold;
+    background-color: inherit;
+}
+
+span.green {
+    font-weight: bold;
+    color: #009900;
+    background-color: inherit;
+}
+
+span.red {
+    font-weight: bold;
+    color: #990000;
+    background-color: inherit;
+}
+
+span.blue {
+    font-weight: bold;
+    color: #000099;
+    background-color: inherit;
+}
+
+.spoiler {
+    background-color: #000000;
+    color:#000000;
+    padding: 2px 5px;
+}
+
+.spoiler:hover {
+    color:#FFFFFF;
+}
+
+.required-indicator {
+    color:#FF0000;
+}
+
+.table td.emphasis
+{
+    font-weight:bold;
+    font-size: 20px;
+}
+
+/* Notifications */
+.notifications.top-center {
+    top:45px;
+    left:35%;
+    width:30%;
+    z-index: 99999;
+}
+
+.notifications.top-center>div {
+    margin:5px auto;
+    /*width:100%;*/
+    text-align:center;
+}
+
+/* Forms */
+.login-form.form-horizontal #id_username {
+    width: 145px;
+}
+
+.required-indicator {
+    color: #FF0000;
+    padding-left: 2px;
+}
+
+.form-horizontal p.title {
+    font-style: italic;
+    max-width: 680px;
+}
+
+.form-horizontal input[type="text"],
+.form-horizontal input[type="password"],
+.form-horizontal input[type="file"],
+.form-horizontal textarea,
+.form-horizontal input .uneditable-input {
+    width: 234px;
+}
+
+.form-horizontal textarea {
+    height: 100px;
+}
+
+.form-horizontal div.clearable-file-input div label {
+    display: inline;
+    float: none;
+}
+
+.form-horizontal .fieldset-container {
+    padding: 20px;
+}
+
+.widget-content.nopadding .form-actions {
+    padding-left: 230px;
+}
+
+.form-horizontal .form-actions .delete-button {
+    display: inline;
+}
+
+p.form-inline label {
+    margin: 0 5px 0 10px;
+}
+
+p.form-inline textarea {
+    height: 40px;
+    width: 250px;
+}
+.fieldset-container hr {
+    border-top: 1px solid #dddddd;
+}

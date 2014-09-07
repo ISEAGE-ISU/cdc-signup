@@ -1,12 +1,12 @@
-{% load cache %}
 {% load tt_web %}
+{% load cache %}
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <title>{{ page_title }} - CDC Signup</title>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/static/img/favicon.png" />
+    <link rel="icon" href="/static/img/favicon.ico" />
 
     <link rel="stylesheet" href="/static/includes/bootstrap/css/bootstrap.css" />
     <link rel="stylesheet" href="/static/includes/bootstrap-notify/css/bootstrap-notify.css" />
@@ -19,7 +19,16 @@
 <body>
 
 <div id="header">
-    <a href="{% url "site-index" %}"><img src="/static/img/logo.png" width="170" style="margin-top: 20px; margin-left: 20px;" /></a>
+    <div class="container-fluid">
+        <div class="row-fluid">
+            <div style="float: left;">
+                <a href="{% url "site-index" %}"><img style="max-height: 83px" src="/static/img/ISEAGE.jpg"/></a>
+            </div>
+            <div style="float: left;">
+                <h1>CDC Signup</h1>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% if notifications %}
@@ -43,7 +52,7 @@
     </div>
     <div class="container-fluid">
         <div class="row-fluid">
-            <div class="span12">
+            <div class="col-md-12">
 
                 {% block content %}{% endblock %}
 

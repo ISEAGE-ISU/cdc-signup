@@ -5,7 +5,7 @@ class SignupForm(forms.Form):
     email = forms.EmailField(label="Email", required=True)
     first_name = forms.CharField(label="First name", required=True)
     last_name = forms.CharField(label="Last name", required=True)
-    username = forms.CharField(label="Desired username", required=True)
+    username = forms.CharField(label="Desired username", max_length=40, required=True)
 
 
 class ChangePasswordForm(forms.Form):
@@ -14,7 +14,7 @@ class ChangePasswordForm(forms.Form):
     new_password_again = forms.CharField(widget=forms.PasswordInput(), required=True)
 
     def clean(self):
-        cleaned_data = super(ForgotPasswordForm, self)
+        cleaned_data = super(ChangePasswordForm, self)
         if cleaned_data.new_password != cleaned_data.new_password_again:
             raise forms.ValidationError("The passwords you inputted do not match.")
 

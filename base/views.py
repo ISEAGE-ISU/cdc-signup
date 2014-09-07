@@ -109,9 +109,36 @@ class IndexView(BaseTemplateView):
 class SignupView(BaseTemplateView):
     template_name = 'signup.html'
 
+    def get(self, request, context, *args, **kwargs):
+        if 'form' in kwargs:
+            form = kwargs.pop('form')
+        else:
+            form = base_forms.SignupForm()
+        context['form'] = form
+        return self.render_to_response(context)
+
+    def post(self, request, context, *args, **kwargs):
+        form = base_forms.SignupForm(request.POST)
+        if form.is_valid():
+            pt = context['participant']
+            name = form.cleaned_data['name']
+            try:
+                actions.create_team(name, pt.id)
+            except base.TeamAlreadyExistsError:
+                form.add_error('name', "A team with that name already exists. Please choose another name.")
+            except base.OutOfTeamNumbersError:
+                form.add_error(None, "There are currently no slots available for new teams. Please email cdc_support@iastate.edu and tell us this so we can fix it.")
+                pass
+
+            messages.success('Team {name} successfully created.'.format(name=name))
+            return redirect('manage-team')
+        else:
+            return self.get(request, context, form=form)
+
 
 class HomeView(BaseTemplateView, LoginRequiredMixin):
     template_name = 'home.html'
+    page_title = "Welcome!"
 
 
 class CaptainHome(BaseTemplateView, LoginRequiredMixin):
