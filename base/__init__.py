@@ -1,5 +1,6 @@
 import models
 from signup import settings
+from django import template as dt
 from django.template import RequestContext
 from django.core.cache import cache
 from django.contrib.auth.models import User
@@ -55,6 +56,21 @@ def reset_global_settings_object():
     gs = models.GlobalSettings.objects.get_or_create(id__exact=1)[0]
     cache.set(GLOBAL_SETTINGS_OBJECT, gs)
     return gs
+
+def render_template(request, template, context=None):
+    if not context: context = {}
+    if request is not None:
+        ctx = dt.RequestContext(request, context)
+    else:
+        ctx = dt.Context(context)
+    return dt.loader.get_template(template).render(ctx)
+
+
+def fetch_objects(objects):
+    list = []
+    for object in objects:
+        list.append(object)
+    return list
 
 ##########
 # Exceptions

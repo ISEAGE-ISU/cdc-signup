@@ -1,4 +1,5 @@
 import ldap
+from ldap import modlist
 from signup import settings
 import base
 import datetime
@@ -8,23 +9,31 @@ from django.core.mail import send_mail
 import re
 
 # For checking that generated passwords meet AD complexity requirements
-UPPER = re.compile('[A-Z]')
-LOWER = re.compile('[a-z]')
-NUMERIC = re.compile('[0-9]')
+UPPER = re.compile('.*[A-Z].*')
+LOWER = re.compile('.*[a-z].*')
+NUMERIC = re.compile('.*[0-9].*')
 PASSWORD_LENGTH = 12
 
 ##########
 # LDAP functions
 ##########
 def initialize_ldap():
+    ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+
     if settings.AD_CERT_FILE:
         ldap.set_option(ldap.OPT_X_TLS_CACERTFILE, settings.AD_CERT_FILE)
 
-    l = ldap.initialize(settings.AD_LDAP_URL,
-                        trace_level=settings.AD_LDAP_DEBUG_LEVEL,
-                        trace_file=settings.AD_DEBUG_FILE)
+    try:
+        f = open(settings.AD_DEBUG_FILE, 'a')
+        l = ldap.initialize(settings.AD_LDAP_URL,
+                            trace_level=settings.AD_LDAP_DEBUG_LEVEL,
+                            trace_file=f)
+    except:
+        l = ldap.initialize(settings.AD_LDAP_URL)
 
     l.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
+    l.set_option(ldap.OPT_X_TLS,ldap.OPT_X_TLS_DEMAND)
+    l.set_option(ldap.OPT_X_TLS_DEMAND, True)
 
     return l
 
@@ -35,8 +44,8 @@ def admin_bind():
         admin_pw = base.get_global_setting('administrator_bind_pw')
         l.simple_bind_s(admin_dn, admin_pw)
 
-    except ldap.LDAPerror, e:
-        ldap_debug_write("Couldn't bind as admin to LDAP server: " + e)
+    except ldap.LDAPError as e:
+        ldap_debug_write("Couldn't bind as admin to LDAP server: " + str(e))
         return None
 
     return l
@@ -52,8 +61,9 @@ def ldap_debug_write(message):
 
 def get_user_dn(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
-    username = participant.user.get_username()
-    user_dn = 'CN={username},OU={ou},{base_dn}'.format(username=username,
+    fname = participant.user.first_name
+    lname = participant.user.last_name
+    user_dn = 'CN={first} {last},OU={ou},{base_dn}'.format(first=fname, last=lname,
                                                       ou=settings.AD_CDCUSER_OU,
                                                       base_dn=settings.AD_BASE_DN)
     return user_dn
@@ -75,13 +85,12 @@ def generate_password():
     while True:
         password = User.objects.make_random_password(length=PASSWORD_LENGTH)
         if UPPER.match(password) and LOWER.match(password) and NUMERIC.match(password):
-            break
-    return password
+            return password
 
 def make_password_modlist(password):
     if password:
         # Prep the password
-        unicode_pass = unicode('\"' + password + '\"', 'iso-8859-1')
+        unicode_pass = ('\"' + password + '\"').encode('iso-8859-1')
         password_value = unicode_pass.encode('utf-16-le')
         add_pass = [(ldap.MOD_REPLACE, 'unicodePwd', [password_value])]
         return add_pass
@@ -104,29 +113,29 @@ def create_user_account(username, fname, lname, email):
     search_filter = '(&(sAMAccountName=' + username + ')(objectClass=person))'
     try:
         user_results = ldap_connection.search_s(base_dn, ldap.SCOPE_SUBTREE, search_filter, ['distinguishedName'])
-    except ldap.LDAPError, e:
-        ldap_debug_write("Couldn't search for existing username: " + e)
+    except ldap.LDAPError as e:
+        ldap_debug_write("Couldn't search for existing username: " + str(e))
         return False
 
     # Check the results
-    if len(user_results) != 0:
+    if len(user_results) != 0 and user_results[0][0] is not None:
         ldap_debug_write("User " + username + " already exists in AD: " + user_results[0][1]['distinguishedName'][0])
-        return False
+        raise base.UsernameAlreadyExistsError()
 
-    user_dn = 'CN={username},OU={ou},{search}'.format(username=username,
+    user_dn = 'CN={first} {last},OU={ou},{search}'.format(first=fname, last=lname,
                                                       ou=cdcuser_ou,
                                                       search=base_dn)
     user_attrs = {}
     user_attrs['objectClass'] = ['top', 'person', 'organizationalPerson', 'user']
-    user_attrs['cn'] = fname + ' ' + lname
-    user_attrs['userPrincipalName'] = username + '@' + settings.AD_DOMAIN
-    user_attrs['sAMAccountName'] = username
-    user_attrs['givenName'] = fname
-    user_attrs['sn'] = lname
-    user_attrs['displayName'] = fname + ' ' + lname
+    user_attrs['cn'] = str(fname + ' ' + lname)
+    user_attrs['userPrincipalName'] = str(username + '@' + settings.AD_DOMAIN)
+    user_attrs['sAMAccountName'] = str(username)
+    user_attrs['givenName'] = str(fname)
+    user_attrs['sn'] = str(lname)
+    user_attrs['displayName'] = str(fname + ' ' + lname)
     user_attrs['userAccountControl'] = '514'
-    user_attrs['mail'] = email
-    user_ldif = ldap.modlist.addModlist(user_attrs)
+    user_attrs['mail'] = str(email)
+    user_ldif = modlist.addModlist(user_attrs)
 
     password = generate_password()
     add_pass = make_password_modlist(password)
@@ -143,29 +152,29 @@ def create_user_account(username, fname, lname, email):
     # Add the new user account
     try:
         ldap_connection.add_s(user_dn, user_ldif)
-    except ldap.LDAPError, e:
-        ldap_debug_write("Error adding new user: " + e)
+    except ldap.LDAPError as e:
+        ldap_debug_write("Error adding new user: " + str(e))
         return False
 
     # Add user to CDCUsers group
     try:
         ldap_connection.modify_s(cdcuser_group_dn, add_member)
-    except ldap.LDAPError, e:
-        ldap_debug_write("Error adding user to CDCUsers group: " + e)
+    except ldap.LDAPError as e:
+        ldap_debug_write("Error adding user to CDCUsers group: " + str(e))
         return False
 
     # Add the password
     try:
         ldap_connection.modify_s(user_dn, add_pass)
-    except ldap.LDAPError, e:
-        ldap_debug_write("Error setting password: " + e)
+    except ldap.LDAPError as e:
+        ldap_debug_write("Error setting password: " + str(e))
         return False
 
     # Change the account back to enabled
     try:
         ldap_connection.modify_s(user_dn, mod_acct)
-    except ldap.LDAPError, e:
-        ldap_debug_write("Error enabling user: " + e)
+    except ldap.LDAPError as e:
+        ldap_debug_write("Error enabling user: " + str(e))
         return False
 
     # LDAP unbind
@@ -203,15 +212,15 @@ def update_password(participant_id, old_password, new_password):
     except ldap.INVALID_CREDENTIALS:
         ldap_debug_write("Failed to authenticate current password for " + user_dn)
         raise base.PasswordMismatchError()
-    except ldap.LDAPError, e:
-        ldap_debug_write("Couldn't bind as user {dn} - ".format(dn=user_dn) + e)
+    except ldap.LDAPError as e:
+        ldap_debug_write("Couldn't bind as user {dn} - ".format(dn=user_dn) + str(e))
         return False
 
     # If we got this far, auth was successful
     l.unbind_s()
 
     # Prep the password
-    modlist = make_password_modlist(new_password)
+    ml = make_password_modlist(new_password)
 
     ldap_connection = admin_bind()
     if not ldap_connection:
@@ -219,9 +228,9 @@ def update_password(participant_id, old_password, new_password):
 
     # Change the password
     try:
-        ldap_connection.modify_s(user_dn, modlist)
-    except ldap.LDAPError, e:
-        ldap_debug_write("Error setting password: " + e)
+        ldap_connection.modify_s(user_dn, ml)
+    except ldap.LDAPError as e:
+        ldap_debug_write("Error setting password: " + str(e))
         return False
 
     # If we're here, the password change succeeded
@@ -256,14 +265,14 @@ def forgot_password(email):
     user_dn = get_user_dn(user.participant.id)
 
     password = generate_password()
-    modlist = make_password_modlist(password)
+    ml = make_password_modlist(password)
 
     # Change the password
     ldap_debug_write("Resetting password for " + user_dn)
     try:
-        ldap_connection.modify_s(user_dn, modlist)
-    except ldap.LDAPError, e:
-        ldap_debug_write("Error resetting password: " + e)
+        ldap_connection.modify_s(user_dn, ml)
+    except ldap.LDAPError as e:
+        ldap_debug_write("Error resetting password: " + str(e))
         return False
 
     # If we're here, the password change succeeded
@@ -352,11 +361,11 @@ def add_user_to_team(team_id, participant_id):
     user_dn = get_user_dn(participant_id)
     group_dn = get_group_dn(team_id)
 
-    modlist = [(ldap.MOD_ADD, 'member', user_dn)]
+    ml = [(ldap.MOD_ADD, 'member', user_dn)]
     try:
-        ldap_connection.modify_s(group_dn, modlist)
-    except ldap.LDAPError, e:
-        print "Error adding user to group: " + e
+        ldap_connection.modify_s(group_dn, ml)
+    except ldap.LDAPError as e:
+        ldap_debug_write("Error adding user to group: " + str(e))
         return False
 
     ldap_connection.unbind_s()
@@ -400,11 +409,11 @@ def remove_user_from_team(team_id, participant_id):
     user_dn = get_user_dn(participant_id)
     group_dn = get_group_dn(team_id)
 
-    modlist = [(ldap.MOD_DELETE, 'member', user_dn)]
+    ml = [(ldap.MOD_DELETE, 'member', user_dn)]
     try:
-        ldap_connection.modify_s(group_dn, modlist)
-    except ldap.LDAPError, e:
-        print "Error removing user from group: " + e
+        ldap_connection.modify_s(group_dn, ml)
+    except ldap.LDAPError as e:
+        ldap_debug_write("Error removing user from group: " + str(e))
         return False
 
     ldap_connection.unbind_s()

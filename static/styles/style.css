@@ -160,9 +160,11 @@ span.blue {
 .form-horizontal p.title {
     font-style: italic;
     max-width: 680px;
+    margin-bottom: 15px;
 }
 
 .form-horizontal input[type="text"],
+.form-horizontal input[type="email"],
 .form-horizontal input[type="password"],
 .form-horizontal input[type="file"],
 .form-horizontal textarea,
@@ -184,7 +186,7 @@ span.blue {
 }
 
 .widget-content.nopadding .form-actions {
-    padding-left: 230px;
+    padding-left: 8.33333333%;
 }
 
 .form-horizontal .form-actions .delete-button {
@@ -201,4 +203,8 @@ p.form-inline textarea {
 }
 .fieldset-container hr {
     border-top: 1px solid #dddddd;
+}
+
+.errorlist {
+    color: #d8000c;;
 }

@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 
+from signup import settings
 import base
 import forms as base_forms
 import actions
@@ -121,20 +122,25 @@ class SignupView(BaseTemplateView):
     def post(self, request, context, *args, **kwargs):
         form = base_forms.SignupForm(request.POST)
         if form.is_valid():
-            pt = context['participant']
-            name = form.cleaned_data['name']
+            email = form.cleaned_data['email']
+            first = form.cleaned_data['first_name']
+            last = form.cleaned_data['last_name']
+            username = form.cleaned_data['username']
+            success = False
             try:
-                actions.create_team(name, pt.id)
-            except base.TeamAlreadyExistsError:
-                form.add_error('name', "A team with that name already exists. Please choose another name.")
-            except base.OutOfTeamNumbersError:
-                form.add_error(None, "There are currently no slots available for new teams. Please email cdc_support@iastate.edu and tell us this so we can fix it.")
-                pass
+                success = actions.create_user_account(username,first,last,email)
+            except base.UsernameAlreadyExistsError:
+                form.add_error('username', "That username already exists. Please choose another one.")
+                return self.get(request, context, form=form)
 
-            messages.success('Team {name} successfully created.'.format(name=name))
-            return redirect('manage-team')
-        else:
-            return self.get(request, context, form=form)
+            if success:
+                messages.success(request, 'Account successfully created. Please check your email for further instructions.')
+                return redirect('site-login')
+            else:
+                messages.error(request, """Whoops! Something went wrong.
+                Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+
+        return self.get(request, context, form=form)
 
 
 class DashboardView(BaseTemplateView, LoginRequiredMixin):
@@ -168,7 +174,7 @@ class ForgotPasswordView(BaseTemplateView):
                 form.add_error('email', "No account with that email exists.")
 
             if success:
-                messages.success('Password successfully reset. Please check your email for further instructions')
+                messages.success(request, 'Password successfully reset. Please check your email for further instructions')
                 return redirect('site-login')
 
         return self.get(request, context, form=form)
@@ -196,10 +202,11 @@ class TeamCreationView(BaseTemplateView, LoginRequiredMixin):
             except base.TeamAlreadyExistsError:
                 form.add_error('name', "A team with that name already exists. Please choose another name.")
             except base.OutOfTeamNumbersError:
-                form.add_error(None, "There are currently no slots available for new teams. Please email cdc_support@iastate.edu and tell us this so we can fix it.")
+                form.add_error(None, """There are currently no slots available for new teams.
+                Please email {support} and tell us this so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
 
             if success:
-                messages.success('Team {name} successfully created.'.format(name=name))
+                messages.success(request, 'Team {name} successfully created.'.format(name=name))
                 return redirect('manage-team')
 
         return self.get(request, context, form=form)

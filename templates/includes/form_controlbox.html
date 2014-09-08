@@ -1,0 +1,6 @@
+<div class="form-actions">
+    <input type="submit" value="Submit" class="btn btn-primary" style="{{ button_style }}" />
+    {% if object and allow_delete %}
+        <a class="btn btn-danger delete-button" href="#delete-modal" role="button" data-toggle="modal"><i class="icon-trash"></i>Delete</a>
+    {% endif %}
+</div>

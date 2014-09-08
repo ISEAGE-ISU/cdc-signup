@@ -185,11 +185,8 @@ CACHES = {
 # Active Directory Settings
 ##############
 AD_DNS_NAME = "dc1.iseage.org"  # FQDN of your DC
-AD_LDAP_PORT = 3268
-AD_LDAP_URL = 'ldap://%s:%s' % (AD_DNS_NAME, AD_LDAP_PORT)
-# If using SSL use these:
-#AD_LDAP_PORT=636
-#AD_LDAP_URL='ldaps://%s:%s' % (AD_DNS_NAME,AD_LDAP_PORT)
+AD_LDAP_PORT=636
+AD_LDAP_URL='ldaps://%s:%s' % (AD_DNS_NAME,AD_LDAP_PORT)
 
 AD_CDCUSER_OU = 'CDCUsers'
 AD_CDCUSER_GROUP = 'CDCUsers'
@@ -209,7 +206,7 @@ AD_LDAP_DEBUG_LEVEL = 2
 AD_DEBUG_FILE = '/var/log/signup/ldap.debug'
 
 AUTHENTICATION_BACKENDS = (
-    'auth.ActiveDirectoryAuthenticationBackend',
+    'signup.auth.ActiveDirectoryAuthenticationBackend',
     'django.contrib.auth.backends.ModelBackend'
 )
 

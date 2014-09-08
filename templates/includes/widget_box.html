@@ -1,0 +1,18 @@
+{% load tt_web %}
+
+<div class="widget-box">
+    <div class="widget-title">
+        <span class="icon"><i class="fa {{ widget_icon }}"></i></span>
+        <h5>{{ widget_title }}</h5>
+    </div>
+
+    <div class="widget-content nopadding">
+        <div class="widget-content" style="border-bottom: none;">
+            {{ widget_description }}
+        </div>
+
+        {{ widget_content }}
+
+        {% include "includes/form_controlbox.html" %}
+    </div>
+</div>

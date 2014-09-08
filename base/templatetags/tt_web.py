@@ -21,7 +21,7 @@ def render_field(bound, label=None):
         return '<div class="hidden">{widget}</div>'.format(widget=bound)
 
     # set our css classes
-    classes = ['control-group']
+    classes = ['form-group']
 
     # setup the required indicator
     if bound.field.required:
@@ -51,9 +51,9 @@ def render_field(bound, label=None):
         'error': bound.errors,
     }
 
-    template = '<div id="div_{name}" class="{classes}"><label class="control-label" for="id_{name}">{label}</label><div class="controls">{widget}<span class="help-inline">{error}</span></div></div>'
-    checkbox_template = '<div id="div_{name}" class="{classes}"><div class="controls"><label class="checkbox">{widget}{label}</label><span class="help-inline">{error}/span></div></div>'
-    radio_template = '<div id="div_{name}" class="{classes}"><div class="controls"><label class="radio">{widget}</label><span class="help-inline">{error}</span></div></div>'
+    template = '<div id="div_{name}" class="{classes}"><label class="col-sm-2 control-label" for="id_{name}">{label}</label><div class="col-sm-8">{widget}<span class="help-block">{error}</span></div></div>'
+    checkbox_template = '<div id="div_{name}" class="{classes}"><div class="col-sm-8"><label class="checkbox">{widget}{label}</label><span class="help-block">{error}/span></div></div>'
+    radio_template = '<div id="div_{name}" class="{classes}"><div class="col-sm-8"><label class="radio">{widget}</label><span class="help-block">{error}</span></div></div>'
     if (isinstance(bound.field.widget, forms.widgets.CheckboxInput)):
         return mark_safe(checkbox_template.format(**ctx))
     elif isinstance(bound.field.widget, forms.widgets.RadioSelect):
@@ -95,7 +95,7 @@ def render_form(form, in_widget=False, show_legend=True):
     # helper for rendering fieldsets
     def get_fieldsets_html(fieldsets, form, show_legend):
         fieldset_html = '<fieldset id="{id}">{legend}' \
-                        '{title}<div>{field}</div></fieldset>'
+                        '{title}<div>{fields}</div></fieldset>'
 
         fieldsets_html = []
         for fieldset in fieldsets:
@@ -151,8 +151,8 @@ def render_form_errors(form, fieldsets=None):
 
 def render_form_errors_helper(form):
     rendered_form_errors = ''
-    error_base = "<div class=\"alert alert-error\">There were errors with your form submission." \
-                 " Please correct to continue. {messages} </div>"
+    error_base = "<div class=\"alert alert-error\"><strong>There were errors with your form submission." \
+                 " Please correct to continue.</strong> {messages} </div>"
 
     if hasattr(form, 'show_no_base_error'):
         rendered_form_errors = "<div class=\"error_notice_dialog\">{errors}</div>".format(errors=unicode(form.non_field_errors()))
@@ -223,7 +223,7 @@ def render_widget(widget_data):
 
     icon = widget_data.get('icon', None)
     if icon:
-        widget_output += '<span class="icon"><i class="{icon}"></i></span>'.format(icon=icon)
+        widget_output += '<span class="icon"><i class="fa {icon}"></i></span>'.format(icon=icon)
 
     widget_output += '<h5>{title}</h5>'.format(title=widget_data.get('title', None))
 

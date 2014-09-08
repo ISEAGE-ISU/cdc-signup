@@ -8,8 +8,8 @@ from django.dispatch import receiver
 # Signal for automatically making Participant objects
 ########
 @receiver(post_save, sender=auth_models.User)
-def create_participant(sender, **kwargs):
-    Participant.objects.get_or_create(user=sender)
+def create_participant(sender, instance, **kwargs):
+    Participant.objects.get_or_create(user=instance)
 
 
 class GlobalSettings(models.Model):
@@ -28,9 +28,9 @@ class Team(models.Model):
 
 class Participant(models.Model):
     user = models.OneToOneField(auth_models.User)
-    team = models.ForeignKey('Team', blank=True)
+    team = models.ForeignKey('Team', blank=True, null=True)
     captain = models.BooleanField(default=False)
-    requested_team = models.ForeignKey('Team', related_name='requested_team',blank=True)
+    requested_team = models.ForeignKey('Team', related_name='requested_team', blank=True, null=True)
 
     def __unicode__(self):
         return "{username} ({name})".format(username=self.user.get_username(), name=self.user.get_full_name())

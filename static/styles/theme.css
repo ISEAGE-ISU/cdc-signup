@@ -987,14 +987,14 @@ form {
     width: 200px;
 }
 .form-horizontal .form-group {
-    padding: 10px 0;
+    padding: 0 0;
 }
 /*.form-horizontal input[type=text], .form-horizontal input[type=password], .form-horizontal textarea {*/
     /*width: 80%;*/
 /*}*/
 .form-horizontal .form-actions {
     margin-top: 0;
-    margin-bottom: 0;
+    margin-bottom: 20px;
 }
 .help-block, .help-inline {
     color: #999999;
