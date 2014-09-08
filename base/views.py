@@ -106,10 +106,18 @@ class BaseTemplateView(BaseView, TemplateResponseMixin):
 
 class IndexView(BaseTemplateView):
     template_name = 'index.html'
+    page_title = "Welcome!"
+
+    def get(self, request, context, *args, **kwargs):
+        if request.user.is_authenticated():
+            return redirect('dashboard')
+
+        return self.render_to_response(context)
 
 
 class SignupView(BaseTemplateView):
     template_name = 'signup.html'
+    page_title = "Signup"
 
     def get(self, request, context, *args, **kwargs):
         if 'form' in kwargs:
@@ -154,6 +162,7 @@ class CaptainHome(BaseTemplateView, LoginRequiredMixin):
 
 class ForgotPasswordView(BaseTemplateView):
     template_name = 'forgot.html'
+    page_title = "Forgot your password?"
 
     def get(self, request, context, *args, **kwargs):
         if 'form' in kwargs:

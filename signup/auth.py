@@ -80,7 +80,7 @@ class ActiveDirectoryAuthenticationBackend:
         # personal data
         user.first_name = user_info['first_name']
         user.last_name = user_info['last_name']
-        user.mail = user_info['mail']
+        user.email = user_info['mail']
 
         # cache the AD password
         user.set_password(password)
@@ -121,8 +121,8 @@ class ActiveDirectoryAuthenticationBackend:
                         group_dict['is_admin'] = True
                     if this_group in settings.AD_MEMBERSHIP_REQ:
                         group_dict['is_valid'] = True
-                    self.debug_write("Comparing %s to %s" % (str(settings.AD_BLUE_GROUP_PREFIX), str(this_group)))
-                    if str(settings.AD_BLUE_GROUP_PREFIX) in str(this_group):
+                    self.debug_write("Comparing %s to %s" % (str(settings.AD_BLUE_TEAM_PREFIX), str(this_group)))
+                    if str(settings.AD_BLUE_TEAM_PREFIX) in str(this_group):
                         num_match = re.search('(\d+)$', this_group)
                         if num_match:
                             group_dict['team_number'] = num_match.group(0)
@@ -146,6 +146,7 @@ class ActiveDirectoryAuthenticationBackend:
                     'password' : password,
             }
             # prepare LDAP connection
+            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
             if settings.AD_CERT_FILE:
                 ldap.set_option(ldap.OPT_X_TLS_CACERTFILE, settings.AD_CERT_FILE)
             ldap.set_option(ldap.OPT_REFERRALS, 0)  # DO NOT TURN THIS OFF OR SEARCH WON'T WORK!
@@ -154,6 +155,8 @@ class ActiveDirectoryAuthenticationBackend:
             self.debug_write('ldap.initialize...')
             l = ldap.initialize(settings.AD_LDAP_URL)
             l.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
+            l.set_option(ldap.OPT_X_TLS,ldap.OPT_X_TLS_DEMAND)
+            l.set_option(ldap.OPT_X_TLS_DEMAND, True)
 
             # bind
             binddn = "%s@%s" % (username,settings.AD_NT4_DOMAIN)
@@ -162,7 +165,7 @@ class ActiveDirectoryAuthenticationBackend:
 
             # search
             self.debug_write('searching for %s...' % binddn)
-            result = l.search_ext_s(settings.AD_SEARCH_DN, ldap.SCOPE_SUBTREE,
+            result = l.search_ext_s(settings.AD_BASE_DN, ldap.SCOPE_SUBTREE,
                                     "sAMAccountName=%s" % username, settings.AD_SEARCH_FIELDS)
 
             self.debug_write("Full results: %s" % result)
