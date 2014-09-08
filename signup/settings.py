@@ -164,6 +164,11 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = 'mailhub.iastate.edu'
 EMAIL_PORT = 25
 
+# Where people should ask for help
+SUPPORT_EMAIL = 'cdc_support@iastate.edu'
+# What will appear in the From field of emails
+EMAIL_FROM_ADDR = SUPPORT_EMAIL
+
 
 ##############
 # Caching

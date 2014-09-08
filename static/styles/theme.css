@@ -405,9 +405,6 @@ a:hover {
     margin-bottom: 16px;
     position: relative;
 }
-.widget-box.widget-calendar, .widget-box.widget-chat {
-    overflow:hidden !important;
-}
 .accordion .widget-box {
     margin-top: -2px;
     margin-bottom: 0;
@@ -986,11 +983,10 @@ form {
     border-bottom: 0;
 }
 .form-horizontal .control-label {
-    padding-top: 15px;
+    padding-top: 3px;
     width: 200px;
 }
-.form-horizontal .controls {
-    margin-left: 210px;
+.form-horizontal .form-group {
     padding: 10px 0;
 }
 /*.form-horizontal input[type=text], .form-horizontal input[type=password], .form-horizontal textarea {*/
@@ -1244,6 +1240,6 @@ form {
 }
 
 /*When a row is inside the main content, don't double the margin on top*/
-.container-fluid .row-fluid .span12 .row-fluid:first-of-type {
+.container-fluid .row-fluid .col-md-12 .row-fluid:first-of-type {
     margin-top: 0;
 }

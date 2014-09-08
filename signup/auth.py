@@ -83,8 +83,6 @@ class ActiveDirectoryAuthenticationBackend:
         # cache the AD password
         user.set_password(password)
         user.save()
-        # setup Participant
-        participant = base_models.Participant.objects.get_or_create(user=user)
         return user
 
     def get_user(self, user_id):

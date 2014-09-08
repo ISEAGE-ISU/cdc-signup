@@ -1,6 +1,7 @@
 from django.shortcuts import redirect
 from django.views.generic.base import View, TemplateResponseMixin
 from django.contrib.auth import views as auth_views
+from django.contrib.auth.models import User
 from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
@@ -136,9 +137,9 @@ class SignupView(BaseTemplateView):
             return self.get(request, context, form=form)
 
 
-class HomeView(BaseTemplateView, LoginRequiredMixin):
-    template_name = 'home.html'
-    page_title = "Welcome!"
+class DashboardView(BaseTemplateView, LoginRequiredMixin):
+    template_name = 'dashboard.html'
+    page_title = "Dashboard"
 
 
 class CaptainHome(BaseTemplateView, LoginRequiredMixin):
@@ -147,6 +148,30 @@ class CaptainHome(BaseTemplateView, LoginRequiredMixin):
 
 class ForgotPasswordView(BaseTemplateView):
     template_name = 'forgot.html'
+
+    def get(self, request, context, *args, **kwargs):
+        if 'form' in kwargs:
+            form = kwargs.pop('form')
+        else:
+            form = base_forms.ForgotPasswordForm()
+        context['form'] = form
+        return self.render_to_response(context)
+
+    def post(self, request, context, *args, **kwargs):
+        form = base_forms.ForgotPasswordForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            success = False
+            try:
+                success = actions.forgot_password(email)
+            except User.DoesNotExist:
+                form.add_error('email', "No account with that email exists.")
+
+            if success:
+                messages.success('Password successfully reset. Please check your email for further instructions')
+                return redirect('site-login')
+
+        return self.get(request, context, form=form)
 
 
 class TeamCreationView(BaseTemplateView, LoginRequiredMixin):
@@ -165,15 +190,16 @@ class TeamCreationView(BaseTemplateView, LoginRequiredMixin):
         if form.is_valid():
             pt = context['participant']
             name = form.cleaned_data['name']
+            success = False
             try:
-                actions.create_team(name, pt.id)
+                success = actions.create_team(name, pt.id)
             except base.TeamAlreadyExistsError:
                 form.add_error('name', "A team with that name already exists. Please choose another name.")
             except base.OutOfTeamNumbersError:
                 form.add_error(None, "There are currently no slots available for new teams. Please email cdc_support@iastate.edu and tell us this so we can fix it.")
-                pass
 
-            messages.success('Team {name} successfully created.'.format(name=name))
-            return redirect('manage-team')
-        else:
-            return self.get(request, context, form=form)
+            if success:
+                messages.success('Team {name} successfully created.'.format(name=name))
+                return redirect('manage-team')
+
+        return self.get(request, context, form=form)

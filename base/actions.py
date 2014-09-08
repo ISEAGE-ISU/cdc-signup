@@ -69,6 +69,24 @@ def get_group_dn(team_id):
 ##########
 # User accounts
 ##########
+def generate_password():
+    # Generate a password that AD will like
+    password = None
+    while True:
+        password = User.objects.make_random_password(length=PASSWORD_LENGTH)
+        if UPPER.match(password) and LOWER.match(password) and NUMERIC.match(password):
+            break
+    return password
+
+def make_password_modlist(password):
+    if password:
+        # Prep the password
+        unicode_pass = unicode('\"' + password + '\"', 'iso-8859-1')
+        password_value = unicode_pass.encode('utf-16-le')
+        add_pass = [(ldap.MOD_REPLACE, 'unicodePwd', [password_value])]
+        return add_pass
+    return None
+
 def create_user_account(username, fname, lname, email):
     ldap_connection = admin_bind()
     if not ldap_connection:
@@ -77,11 +95,12 @@ def create_user_account(username, fname, lname, email):
     base_dn = settings.AD_BASE_DN
     cdcuser_ou = settings.AD_CDCUSER_OU
 
-    # Check and see if user exists
-
     # This is needed for searches to work
     ldap.set_option(ldap.OPT_REFERRALS, 0)
 
+    ldap_debug_write("Attempting to create user {user} ({email})".format(user=username, email=email))
+
+    # Check and see if user exists
     search_filter = '(&(sAMAccountName=' + username + ')(objectClass=person))'
     try:
         user_results = ldap_connection.search_s(base_dn, ldap.SCOPE_SUBTREE, search_filter, ['distinguishedName'])
@@ -109,16 +128,8 @@ def create_user_account(username, fname, lname, email):
     user_attrs['mail'] = email
     user_ldif = ldap.modlist.addModlist(user_attrs)
 
-    # Generate a password that AD will like
-    while True:
-        password = User.objects.make_random_password(length=PASSWORD_LENGTH)
-        if UPPER.match(password) and LOWER.match(password) and NUMERIC.match(password):
-            break
-
-    # Prep the password
-    unicode_pass = unicode('\"' + password + '\"', 'iso-8859-1')
-    password_value = unicode_pass.encode('utf-16-le')
-    add_pass = [(ldap.MOD_REPLACE, 'unicodePwd', [password_value])]
+    password = generate_password()
+    add_pass = make_password_modlist(password)
 
     # New group membership
     add_member = [(ldap.MOD_ADD, 'member', user_dn)]
@@ -170,12 +181,13 @@ def create_user_account(username, fname, lname, email):
               Password: {password}
 
               Make sure you change your password right away.
-              If you have questions, email CDC support at cdc_support@iastate.edu
+              If you have questions, email CDC support at {support}
               """
 
     send_mail('Your ISEAGE CDC account',
-              email_body.format(fname=fname, lname=lname,username=username, password=password),
-              'cdc_support@iastate.edu',
+              email_body.format(fname=fname, lname=lname,username=username, password=password,
+                                support=settings.SUPPORT_EMAIL),
+              settings.EMAIL_FROM_ADDR,
               [email])
 
     # All is good
@@ -185,22 +197,21 @@ def update_password(participant_id, old_password, new_password):
     # Check that the current password is correct
     user_dn = get_user_dn(participant_id)
     l = initialize_ldap()
+    ldap_debug_write("Attempting to reset password for " + user_dn)
     try:
         l.simple_bind_s(user_dn, old_password)
     except ldap.INVALID_CREDENTIALS:
-        ldap_debug_write("Failed to authenticate current password for user {dn}: ".format(dn=user_dn))
+        ldap_debug_write("Failed to authenticate current password for " + user_dn)
         raise base.PasswordMismatchError()
     except ldap.LDAPError, e:
-        ldap_debug_write("Couldn't bind as user {dn}: ".format(dn=user_dn) + e)
+        ldap_debug_write("Couldn't bind as user {dn} - ".format(dn=user_dn) + e)
         return False
 
     # If we got this far, auth was successful
     l.unbind_s()
 
     # Prep the password
-    unicode_pass = unicode('\"' + new_password + '\"', 'iso-8859-1')
-    password_value = unicode_pass.encode('utf-16-le')
-    modlist = [(ldap.MOD_REPLACE, 'unicodePwd', [password_value])]
+    modlist = make_password_modlist(new_password)
 
     ldap_connection = admin_bind()
     if not ldap_connection:
@@ -223,16 +234,60 @@ def update_password(participant_id, old_password, new_password):
 
               Your password has been successfully updated.
 
-              If you didn't change your password, please contact CDC support at cdc_support@iastate.edu immediately.
+              If you didn't change your password, please contact CDC support at {support} immediately.
               """
 
     send_mail('ISEAGE CDC Support: Password successfully updated',
-              email_body.format(fname=participant.user.first_name, lname=participant.user.last_name),
-              'cdc_support@iastate.edu',
+              email_body.format(fname=participant.user.first_name, lname=participant.user.last_name,
+                                support=settings.SUPPORT_EMAIL),
+              settings.EMAIL_FROM_ADDR,
               [participant.user.email])
 
     # All done
     return True
+
+def forgot_password(email):
+    user = User.objects.get(email=email)
+
+    ldap_connection = admin_bind()
+    if not ldap_connection:
+        return False
+
+    user_dn = get_user_dn(user.participant.id)
+
+    password = generate_password()
+    modlist = make_password_modlist(password)
+
+    # Change the password
+    ldap_debug_write("Resetting password for " + user_dn)
+    try:
+        ldap_connection.modify_s(user_dn, modlist)
+    except ldap.LDAPError, e:
+        ldap_debug_write("Error resetting password: " + e)
+        return False
+
+    # If we're here, the password change succeeded
+    ldap_connection.unbind_s()
+
+    # Send email
+    email_body = """Hi there {fname} {lname},
+
+              Your password has been reset to {password}
+              You should change it right away at https://signup.iseage.org/dashboard/
+
+              If you didn't request a password reset, please contact CDC support at {support} immediately.
+              """
+
+    send_mail('ISEAGE CDC Support: Your password has been reset',
+              email_body.format(fname=user.first_name, lname=user.last_name, password=password,
+                                support=settings.SUPPORT_EMAIL),
+              settings.EMAIL_FROM_ADDR,
+              [user.email])
+
+    # All done
+    return True
+
+
 
 ##########
 # Teams
@@ -278,13 +333,13 @@ def create_team(name, captain_id):
 
               Your team members should create an account and submit a request to join your team.
 
-              If you have questions, email CDC support at cdc_support@iastate.edu
+              If you have questions, email CDC support at {support}
               """
 
     send_mail('ISEAGE CDC Support: You have been added to a team',
               email_body.format(fname=captain.user.first_name, lname=captain.user.last_name,
-                                team=team.name, number=team.number),
-              'cdc_support@iastate.edu',
+                                team=team.name, number=team.number, support=settings.SUPPORT_EMAIL),
+              settings.EMAIL_FROM_ADDR,
               [captain.user.email])
 
     return True
@@ -325,13 +380,14 @@ def add_user_to_team(team_id, participant_id):
 
               {captains}
 
-              If you have questions, email CDC support at cdc_support@iastate.edu
+              If you have questions, email CDC support at {support}
               """
 
     send_mail('ISEAGE CDC Support: You have been added to a team',
               email_body.format(fname=participant.user.first_name, lname=participant.user.last_name,
-                                number=team.number, team=team.name, captains=captains),
-              'cdc_support@iastate.edu',
+                                number=team.number, team=team.name, captains=captains,
+                                support=settings.SUPPORT_EMAIL),
+              settings.EMAIL_FROM_ADDR,
               [participant.user.email])
 
     return True
@@ -377,13 +433,14 @@ def submit_join_request(participant_id, team_id):
 
               Visit https://signup.iseage.org/manage_team/ to confirm or deny this request.
 
-              If you have questions, email CDC support at cdc_support@iastate.edu
+              If you have questions, email CDC support at {support}
               """
 
     send_mail('ISEAGE CDC Support: Someone has requested to join your team',
               email_body.format(fname=participant.user.first_name, lname=participant.user.last_name,
-                                email=participant.user.email,team=team.name),
-              'cdc_support@iastate.edu',
+                                email=participant.user.email,team=team.name,
+                                support=settings.SUPPORT_EMAIL),
+              settings.EMAIL_FROM_ADDR,
               captains.values_list('email', flat=True))
 
 def sumbit_captain_request(participant_id):
@@ -396,11 +453,12 @@ def sumbit_captain_request(participant_id):
 
               Visit https://signup.iseage.org/manage_team/ to confirm or deny this request.
 
-              If you have questions, email CDC support at cdc_support@iastate.edu
+              If you have questions, email CDC support at {support}
               """
 
     send_mail('ISEAGE CDC Support: Someone has requested to become a captain of your team',
               email_body.format(fname=participant.user.first_name, lname=participant.user.last_name,
-                                email=participant.user.email,team=participant.team.name),
-              'cdc_support@iastate.edu',
+                                email=participant.user.email,team=participant.team.name,
+                                support=settings.SUPPORT_EMAIL),
+              settings.EMAIL_FROM_ADDR,
               captains.values_list('email', flat=True))

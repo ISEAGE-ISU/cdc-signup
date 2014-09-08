@@ -1,5 +1,15 @@
 from django.db import models
 from django.contrib.auth import models as auth_models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+########
+# Signal for automatically making Participant objects
+########
+@receiver(post_save, sender=auth_models.User)
+def create_participant(sender, **kwargs):
+    Participant.objects.get_or_create(user=sender)
 
 
 class GlobalSettings(models.Model):

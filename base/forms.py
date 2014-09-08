@@ -1,5 +1,5 @@
 from django import forms
-import models
+
 
 class SignupForm(forms.Form):
     email = forms.EmailField(label="Email", required=True)

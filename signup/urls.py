@@ -21,6 +21,7 @@ urlpatterns = patterns('',
     url(r'^logout/$', 'django.contrib.auth.views.logout_then_login', name='site-logout'),
 
     url(r'^signup/$', views.SignupView.as_view(), name='signup'),
+    url(r'^dashboard/$', views.DashboardView.as_view(), name='dashboard'),
     url(r'^forgot/$', views.ForgotPasswordView.as_view(), name='forgot-password'),
 
     # url(r'^join_team/$', '', name='team-list'),

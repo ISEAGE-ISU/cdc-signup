@@ -151,9 +151,6 @@ span.blue {
 }
 
 /* Forms */
-.login-form.form-horizontal #id_username {
-    width: 145px;
-}
 
 .required-indicator {
     color: #FF0000;
