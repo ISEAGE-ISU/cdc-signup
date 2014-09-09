@@ -183,7 +183,7 @@ class SignupView(BaseTemplateView):
         return self.get(request, context, form=form)
 
 
-class DashboardView(BaseTemplateView, LoginRequiredMixin):
+class DashboardView(LoginRequiredMixin, BaseTemplateView):
     template_name = 'dashboard.html'
     page_title = "Dashboard"
     breadcrumb = 'Dashboard'
@@ -260,7 +260,7 @@ class ForgotPasswordView(BaseTemplateView):
         return self.get(request, context, form=form)
 
 
-class TeamListView(BaseTemplateView, LoginRequiredMixin):
+class TeamListView(LoginRequiredMixin, BaseTemplateView):
     template_name = 'team_list.html'
     page_title = "Join Team"
     breadcrumb = 'Team list'
@@ -274,7 +274,7 @@ class TeamListView(BaseTemplateView, LoginRequiredMixin):
         return self.render_to_response(context)
 
 
-class JoinTeamView(BaseTemplateView, LoginRequiredMixin):
+class JoinTeamView(LoginRequiredMixin. BaseTemplateView):
     template_name = 'join_team.html'
     page_title = "Team Join Request"
     breadcrumb = 'Join Team'
@@ -312,14 +312,14 @@ class JoinTeamView(BaseTemplateView, LoginRequiredMixin):
             return redirect('dashboard')
 
 
-class LeaveTeamView(BaseTemplateView, LoginRequiredMixin):
+class LeaveTeamView(LoginRequiredMixin, BaseTemplateView):
     pass
 
 
 ##########
 # Captain views
 ##########
-class TeamCreationView(BaseTemplateView, LoginRequiredMixin):
+class TeamCreationView(LoginRequiredMixin, BaseTemplateView):
     template_name = 'create_team.html'
     page_title = "Create Team"
     breadcrumb = 'Create team'
@@ -360,7 +360,7 @@ class TeamCreationView(BaseTemplateView, LoginRequiredMixin):
         return self.get(request, context, form=form)
 
 
-class CaptainHomeView(BaseTemplateView, LoginRequiredMixin, UserIsCaptainMixin):
+class CaptainHomeView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView):
     template_name = 'team_dash.html'
     page_title = 'Manage Team'
     breadcrumb = 'Manage team'
@@ -401,7 +401,7 @@ class CaptainHomeView(BaseTemplateView, LoginRequiredMixin, UserIsCaptainMixin):
         return self.get(request, context, form=form)
 
 
-class ApproveMemberView(BaseTemplateView, LoginRequiredMixin, UserIsCaptainMixin):
+class ApproveMemberView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView):
     template_name = 'approve_member.html'
     page_title = 'Confirm Member Approval'
     breadcrumb = 'Approve Member'
@@ -446,7 +446,7 @@ class ApproveMemberView(BaseTemplateView, LoginRequiredMixin, UserIsCaptainMixin
             return redirect('manage-team')
 
 
-class ApproveCaptainView(BaseTemplateView, LoginRequiredMixin, UserIsCaptainMixin):
+class ApproveCaptainView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView):
     template_name = 'approve_captain.html'
     page_title = 'Confirm Captain Approval'
     breadcrumb = 'Approve Captain'
