@@ -21,8 +21,9 @@ Copy signup.conf.supervisor to /etc/supervisor/conf.d/signup.conf
 
 Reload and start:
 
-`supervisorctl reload
-supervisorctl start signup`
+`supervisorctl reload`
+
+`supervisorctl start signup`
 
 ##Setup nginx
 
@@ -30,6 +31,7 @@ Copy signup.conf.nginx to /etc/nginx/conf.d/signup.conf
 
 Unlink default site and reload:
 
-`unlink /etc/nginx/sites-enabled/default
-service nginx reload`
+`unlink /etc/nginx/sites-enabled/default`
+
+`service nginx reload`
 
