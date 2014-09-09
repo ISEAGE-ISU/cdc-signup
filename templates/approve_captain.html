@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load tt_web %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-11" style="max-width: 700px;">
+            <p>Are you sure you want to promote {{ member.user.first_name }} {{ member.user.last_name }} to captain?</p>
+            {% render_widget widget_data %}
+                <form class='form-horizontal' action='' method="POST">
+                    {% csrf_token %}
+                    <input type="submit" action="{% url "approve-captain" member.id %}">
+                </form>
+            {% render_widget_bottom %}
+        </div>
+    </div>
+
+{% endblock %}

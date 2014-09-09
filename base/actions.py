@@ -14,6 +14,31 @@ LOWER = re.compile('.*[a-z].*')
 NUMERIC = re.compile('.*[0-9].*')
 PASSWORD_LENGTH = 12
 
+def get_current_members(team_id):
+    return models.Participant.objects.filter(team=team_id).order_by('captain')
+
+def get_member_requests(team_id):
+    return models.Participant.objects.filter(requested_team=team_id)
+
+def get_captain_requests(team_id):
+    return models.Participant.objects.filter(team=team_id,requests_captain=True)
+
+def confirm_member_request(participant_id, team_id):
+    participant = models.Participant.objects.get(pk=participant_id)
+    if participant.requested_team.id == team_id:
+        add_user_to_team(team_id, participant_id)
+        return True
+    else:
+        raise base.NoSuchRequest()
+
+def confirm_captain_request(participant_id, team_id):
+    participant = models.Participant.objects.get(pk=participant_id)
+    if participant.team.id == team_id and participant.requests_captain:
+        promote_to_captain(participant_id)
+        return True
+    else:
+        raise base.NoSuchRequest()
+
 ##########
 # LDAP functions
 ##########
@@ -152,6 +177,10 @@ def create_user_account(username, fname, lname, email):
     # Add the new user account
     try:
         ldap_connection.add_s(user_dn, user_ldif)
+    except ldap.ALREADY_EXISTS as e:
+        ldap_debug_write("That DN already exists: " + str(e))
+        raise base.DuplicateName()
+
     except ldap.LDAPError as e:
         ldap_debug_write("Error adding new user: " + str(e))
         return False
@@ -327,6 +356,22 @@ def create_team(name, captain_id):
 
     assign_team_number(team.id)
 
+    ldap_connection = admin_bind()
+    if not ldap_connection:
+        return False
+
+    user_dn = get_user_dn(captain_id)
+    group_dn = get_group_dn(team.id)
+
+    ml = [(ldap.MOD_ADD, 'member', user_dn)]
+    try:
+        ldap_connection.modify_s(group_dn, ml)
+    except ldap.LDAPError as e:
+        ldap_debug_write("Error adding user to group: " + str(e))
+        return False
+
+    ldap_connection.unbind_s()
+
     captain = models.Participant.objects.get(pk=captain_id)
     captain.team = team
     captain.captain = True
@@ -353,6 +398,21 @@ def create_team(name, captain_id):
 
     return True
 
+def rename_team(team_id, new_name):
+    exists = True
+    try:
+        models.Team.objects.get(name=new_name)
+    except models.Team.DoesNotExist:
+        exists = False
+
+    if exists:
+        raise base.TeamAlreadyExistsError()
+
+    team = models.Team.objects.get(pk=team_id)
+    team.name = new_name
+    team.save()
+    return True
+
 def add_user_to_team(team_id, participant_id):
     ldap_connection = admin_bind()
     if not ldap_connection:
@@ -370,15 +430,20 @@ def add_user_to_team(team_id, participant_id):
 
     ldap_connection.unbind_s()
 
-    # Send email
+
     participant = models.Participant.objects.get(pk=participant_id)
     team = models.Team.objects.get(pk=team_id)
+    participant.team = team
+    participant.requested_team = None
+    participant.save()
+
+    # Send email
     captain_list = models.Participant.objects.filter(team_id=team_id).filter(captain=True)
     captains = ""
     for captain in captain_list:
         captains = captains + "{fname} {lname}  \t{email}\n".format(fname=captain.user.first_name,
-                                                                  lname=captain.user.last_name,
-                                                                  email=captain.user.email)
+                                                                    lname=captain.user.last_name,
+                                                                    email=captain.user.email)
 
     email_body = """Hi there {fname} {lname},
 
@@ -417,6 +482,10 @@ def remove_user_from_team(team_id, participant_id):
         return False
 
     ldap_connection.unbind_s()
+
+    participant = models.Participant.objects.get(pk=participant_id)
+    participant.team = None
+    participant.save()
     return True
 
 def promote_to_captain(participant_id):
@@ -455,6 +524,8 @@ def submit_join_request(participant_id, team_id):
 def sumbit_captain_request(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
     captains = models.Participant.objects.filter(team=participant.team).filter(captain=True)
+    participant.requests_captain = True
+    participant.save()
 
     email_body = """Hi there captains,
 

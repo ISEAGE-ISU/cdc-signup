@@ -4,20 +4,20 @@ from django.contrib.auth import views as auth_views
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
+from django.utils.html import mark_safe
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.http import Http404
 
 from signup import settings
 import base
+from base import breadcrumbs
 import forms as base_forms
 import actions
+import models
 
-def login(request):
-    context={
-        'page_title':"Login",
-    }
-    return auth_views.login(request, template_name='login.html', extra_context=context)
-
-
+##########
+# Base Classes
+##########
 class LoginRequiredMixin(object):
     """
     Including this mixin with your view will ensure the user is authenticated.
@@ -27,11 +27,23 @@ class LoginRequiredMixin(object):
         return super(LoginRequiredMixin, self).dispatch(*args, **kwargs)
 
 
+class UserIsCaptainMixin(object):
+    """
+    Verify that the user is a captain.
+    """
+    test_pass = lambda u: u.participant.user_is_captain()
+
+    @method_decorator(user_passes_test(test_pass))
+    def dispatch(self, *args, **kwargs):
+        return super(UserIsCaptainMixin, self).dispatch(*args, **kwargs)
+
+
 class BaseView(View):
     """
     Override Django's default dispatch method to include the context in handler calls.
     """
     page_title = "ISEAGE CDC Signup"
+    breadcrumb = "Breadcrumb"
 
     # Override this method in a subclass if the page title cannot be a simple string.
     # E.g. contains some kind of variable.
@@ -45,8 +57,10 @@ class BaseView(View):
 
     # This function is used to add class properties to the context, such as page_title.
     def _view_context(self, request, context, *args, **kwargs):
+        crumbs = breadcrumbs.render_breadcrumbs(request.get_full_path(), context)
         return {
             'page_title': self.get_page_title(request, context),
+            'breadcrumbs': mark_safe(crumbs),
         }
 
     def modify_context(self, request, context, *args, **kwargs):
@@ -104,9 +118,23 @@ class BaseTemplateView(BaseView, TemplateResponseMixin):
         return self.render_to_response(context)
 
 
+##########
+# Member views
+##########
+def login(request):
+    this_breadcrumb = '<a href="%s" class="current">%s</a>' % ('/login', "Login")
+    crumbs = mark_safe(breadcrumbs.render_breadcrumbs("/login/", {}) + this_breadcrumb)
+    context={
+        'page_title':"Login",
+        'breadcrumbs':crumbs,
+    }
+    return auth_views.login(request, template_name='login.html', extra_context=context)
+
+
 class IndexView(BaseTemplateView):
     template_name = 'index.html'
     page_title = "Welcome!"
+    breadcrumb = 'Home'
 
     def get(self, request, context, *args, **kwargs):
         if request.user.is_authenticated():
@@ -118,6 +146,7 @@ class IndexView(BaseTemplateView):
 class SignupView(BaseTemplateView):
     template_name = 'signup.html'
     page_title = "Signup"
+    breadcrumb = 'Signup'
 
     def get(self, request, context, *args, **kwargs):
         if 'form' in kwargs:
@@ -137,6 +166,9 @@ class SignupView(BaseTemplateView):
             success = False
             try:
                 success = actions.create_user_account(username,first,last,email)
+            except base.DuplicateName:
+                form.add_error('first_name', """It looks like there's already an account with the same first and last names as you provided.
+                Try including your middle initial or middle name.""")
             except base.UsernameAlreadyExistsError:
                 form.add_error('username', "That username already exists. Please choose another one.")
                 return self.get(request, context, form=form)
@@ -145,7 +177,7 @@ class SignupView(BaseTemplateView):
                 messages.success(request, 'Account successfully created. Please check your email for further instructions.')
                 return redirect('site-login')
             else:
-                messages.error(request, """Whoops! Something went wrong.
+                form.add_error(None, """Whoops! Something went wrong on our end.
                 Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
 
         return self.get(request, context, form=form)
@@ -154,15 +186,52 @@ class SignupView(BaseTemplateView):
 class DashboardView(BaseTemplateView, LoginRequiredMixin):
     template_name = 'dashboard.html'
     page_title = "Dashboard"
+    breadcrumb = 'Dashboard'
 
+    def get(self, request, context, *args, **kwargs):
+        if request.user.participant.team:
+            context['is_member'] = True
+        if request.user.participant.captain:
+            context['is_captain'] = True
 
-class CaptainHome(BaseTemplateView, LoginRequiredMixin):
-    pass
+        if 'form' in kwargs:
+            form = kwargs.pop('form')
+        else:
+            form = base_forms.ChangePasswordForm()
+        context['form'] = form
+        context['widget_data'] = {
+            'title': 'Dashboard',
+            'icon': 'fa-dashboard',
+        }
+
+        return self.render_to_response(context)
+
+    def post(self, request, context, *args, **kwargs):
+        form = base_forms.ChangePasswordForm(request.POST)
+        if form.is_valid():
+            pt = request.user.participant
+            old = form.cleaned_data['old_password']
+            new = form.cleaned_data['new_password']
+            success = False
+            try:
+                success = actions.update_password(pt.id, old, new)
+            except base.PasswordMismatchError:
+                form.add_error('old_password', "The password you entered does not match the one found in our records.")
+
+            if success:
+                messages.success(request, 'Password successfully updated.')
+                return redirect('site-login')
+            else:
+                form.add_error(None, """Whoops! Something went wrong on our end.
+                Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+
+        return self.get(request, context, form=form)
 
 
 class ForgotPasswordView(BaseTemplateView):
     template_name = 'forgot.html'
     page_title = "Forgot your password?"
+    breadcrumb = 'Reset password'
 
     def get(self, request, context, *args, **kwargs):
         if 'form' in kwargs:
@@ -183,14 +252,31 @@ class ForgotPasswordView(BaseTemplateView):
                 form.add_error('email', "No account with that email exists.")
 
             if success:
-                messages.success(request, 'Password successfully reset. Please check your email for further instructions')
+                messages.success(request, 'Password successfully reset. Please check your email for further instructions.')
                 return redirect('site-login')
 
         return self.get(request, context, form=form)
 
 
+class TeamListView(BaseTemplateView, LoginRequiredMixin):
+    pass
+
+
+class JoinTeamView(BaseTemplateView, LoginRequiredMixin):
+    pass
+
+
+class LeaveTeamView(BaseTemplateView, LoginRequiredMixin):
+    pass
+
+
+##########
+# Captain views
+##########
 class TeamCreationView(BaseTemplateView, LoginRequiredMixin):
     template_name = 'create_team.html'
+    page_title = "Create Team"
+    breadcrumb = 'Create team'
 
     def get(self, request, context, *args, **kwargs):
         if 'form' in kwargs:
@@ -203,6 +289,10 @@ class TeamCreationView(BaseTemplateView, LoginRequiredMixin):
     def post(self, request, context, *args, **kwargs):
         form = base_forms.CreateTeamForm(request.POST)
         if form.is_valid():
+            if request.user.is_superuser:
+                messages.warning(request, 'Team creation by Superusers is disabled for your safety.')
+                return self.get(request, context, form=form)
+
             pt = context['participant']
             name = form.cleaned_data['name']
             success = False
@@ -217,5 +307,129 @@ class TeamCreationView(BaseTemplateView, LoginRequiredMixin):
             if success:
                 messages.success(request, 'Team {name} successfully created.'.format(name=name))
                 return redirect('manage-team')
+            else:
+                form.add_error(None, """Whoops! Something went wrong on our end.
+                Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
 
         return self.get(request, context, form=form)
+
+
+class CaptainHomeView(BaseTemplateView, LoginRequiredMixin, UserIsCaptainMixin):
+    template_name = 'team_dash.html'
+    page_title = 'Manage Team'
+    breadcrumb = 'Manage team'
+
+    def get(self, request, context, *args, **kwargs):
+        if 'form' in kwargs:
+            form = kwargs.pop('form')
+        else:
+            form = base_forms.UpdateTeamNameForm()
+        context['form'] = form
+        context['widget_data'] = {
+            'title': 'Team Members',
+            'icon': 'fa-users',
+        }
+
+        team = context['participant'].team
+        context['current_members'] = actions.get_current_members(team.id)
+        context['member_requests'] = actions.get_member_requests(team.id)
+        context['captain_requests'] = actions.get_captain_requests(team.id)
+
+        return self.render_to_response(context)
+
+    def post(self, request, context, *args, **kwargs):
+        form = base_forms.UpdateTeamNameForm(request.POST)
+        if form.is_valid():
+            pt = context['participant']
+            name = form.cleaned_data['name']
+            success = False
+            try:
+                success = actions.rename_team(pt.team.id, name)
+            except base.TeamAlreadyExistsError:
+                form.add_error('name', "A team with that name already exists. Please choose another name.")
+
+            if success:
+                messages.success(request, 'Team name successfully updated.')
+                return redirect('manage-team')
+
+        return self.get(request, context, form=form)
+
+
+class ApproveMemberView(BaseTemplateView, LoginRequiredMixin, UserIsCaptainMixin):
+    template_name = 'approve_member.html'
+    page_title = 'Confirm Member Approval'
+    breadcrumb = 'Approve Member'
+
+    def get(self, request, context, *args, **kwargs):
+        participant_id = kwargs.get('participant_id')
+        try:
+            team = request.user.participant.team
+            participant = models.Participant.objects.get(pk=participant_id)
+        except:
+            raise Http404
+
+        if participant.requested_team == team:
+            context['member'] = participant
+            return self.render_to_response(context)
+        else:
+            raise Http404
+
+    def post(self, request, context, *args, **kwargs):
+        participant_id = kwargs.get('participant_id')
+        try:
+            team = request.user.participant.team
+            participant = models.Participant.objects.get(pk=participant_id)
+        except:
+            raise Http404
+
+        if participant.requested_team == team:
+            if actions.add_user_to_team(team.id, participant_id):
+                messages.success('{first} {last} has been successfully added to your team.'.format(
+                    first=participant.user.first_name,last=participant.user.last_name))
+                return redirect('manage-team')
+            else:
+                messages.error(request, """Whoops! Something went wrong on our end.
+                Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                return self.render_to_response(context)
+        else:
+            messages.error(request, 'No such join request.')
+            return redirect('manage-team')
+
+
+class ApproveCaptainView(BaseTemplateView, LoginRequiredMixin, UserIsCaptainMixin):
+    template_name = 'approve_captain.html'
+    page_title = 'Confirm Captain Approval'
+    breadcrumb = 'Approve Captain'
+
+    def get(self, request, context, *args, **kwargs):
+        participant_id = kwargs.get('participant_id')
+        try:
+            team = request.user.participant.team
+            participant = models.Participant.objects.get(pk=participant_id)
+        except:
+            raise Http404
+
+        if participant.requested_team == team:
+            context['member'] = participant
+            return self.render_to_response(context)
+        else:
+            raise Http404
+
+    def post(self, request, context, *args, **kwargs):
+        participant_id = kwargs.get('participant_id')
+        try:
+            team = request.user.participant.team
+            participant = models.Participant.objects.get(pk=participant_id)
+        except:
+            raise Http404
+        if participant.requested_team == team:
+            if actions.add_user_to_team(team.id, participant_id):
+                messages.success('{first} {last} has been successfully promoted to captain.'.format(
+                    first=participant.user.first_name,last=participant.user.last_name))
+                return redirect('manage-team')
+            else:
+                messages.error(request, """Whoops! Something went wrong on our end.
+                Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                return self.render_to_response(context)
+        else:
+            raise Http404

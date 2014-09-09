@@ -45,3 +45,21 @@ class ForgotPasswordForm(forms.Form):
 
 class CreateTeamForm(forms.Form):
     name = forms.CharField(max_length=50, required=True)
+
+    class Meta:
+        fieldsets = [{
+                'id':'create-team',
+                'legend':'New Team',
+                'title':"Enter a name for your team. Don't worry, you can change it later."
+        }]
+
+
+class UpdateTeamNameForm(forms.Form):
+    name = forms.CharField(max_length=50, required=True)
+
+    class Meta:
+        fieldsets = [{
+                'id':'rename-team',
+                'legend':'Rename Team',
+                'title':"You can rename your team here."
+        }]

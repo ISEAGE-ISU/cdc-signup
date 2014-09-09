@@ -75,6 +75,10 @@ def fetch_objects(objects):
 ##########
 # Exceptions
 ##########
+class DuplicateName(Exception):
+    pass
+
+
 class UsernameAlreadyExistsError(Exception):
     pass
 
@@ -89,3 +93,4 @@ class TeamAlreadyExistsError(Exception):
 
 class PasswordMismatchError(Exception):
     pass
+

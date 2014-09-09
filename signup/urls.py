@@ -24,13 +24,13 @@ urlpatterns = patterns('',
     url(r'^dashboard/$', views.DashboardView.as_view(), name='dashboard'),
     url(r'^forgot/$', views.ForgotPasswordView.as_view(), name='forgot-password'),
 
-    # url(r'^join_team/$', '', name='team-list'),
-    # url(r'^join_team/(?P<team_id>[0-9-_:]+)/$', '', name='join-team'),
-    # url(r'^create_team/$', '', name='create-team'),
-    # url(r'^leave_team/$', '', name='leave-team'),
-    #
-    # url(r'^manage_team/$', '', name='manage-team'),
-    # url(r'^approve/(?P<participant_id>[0-9-_:]+)/$', '', name='approve-member'),
-    # url(r'^approve_captain/(?P<participant_id>[0-9-_:]+)/$', '', name='approve-captain'),
+    url(r'^join_team/$', views.TeamListView.as_view(), name='team-list'),
+    url(r'^join_team/(?P<team_id>[0-9-_:]+)/$', views.JoinTeamView.as_view(), name='join-team'),
+    url(r'^leave_team/$', views.LeaveTeamView.as_view(), name='leave-team'),
+
+    url(r'^create_team/$', views.TeamCreationView.as_view(), name='create-team'),
+    url(r'^manage_team/$', views.CaptainHomeView.as_view(), name='manage-team'),
+    url(r'^approve_member/(?P<participant_id>[0-9-_:]+)/$', views.ApproveMemberView.as_view(), name='approve-member'),
+    url(r'^approve_captain/(?P<participant_id>[0-9-_:]+)/$', views.ApproveCaptainView.as_view(), name='approve-captain'),
 
 )

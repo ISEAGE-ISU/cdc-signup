@@ -231,7 +231,7 @@ def render_widget(widget_data):
     if buttons:
         widget_output += '<div class="buttons">'
         for button in buttons:
-            widget_output += '<a href="{link}" class="btn btn-mini"> <i class="{icon}"></i>{button}</a>'.format(button)
+            widget_output += '<a href="{link}" class="btn btn-mini"> <i class="fa {icon}"></i>{button}</a>'.format(button)
         widget_output += '</div>'
 
     widget_output += '</div>'
@@ -240,7 +240,7 @@ def render_widget(widget_data):
     if table:
         widget_output += '<div class="widget-content nopadding">{table}</div></div>'.format(table=render_widget_table(table))
     else:
-        widget_output += '<div class="widget-content">{data}</div></div>'.format(data=widget_data.get('content', None))
+        widget_output += '<div class="widget-content">{data}'.format(data=widget_data.get('content', ""))
 
     return mark_safe(widget_output)
 

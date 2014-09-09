@@ -31,6 +31,10 @@ class Participant(models.Model):
     team = models.ForeignKey('Team', blank=True, null=True)
     captain = models.BooleanField(default=False)
     requested_team = models.ForeignKey('Team', related_name='requested_team', blank=True, null=True)
+    requests_captain = models.BooleanField(default=False)
+
+    def user_is_captain(self):
+        return self.captain or self.user.is_superuser
 
     def __unicode__(self):
         return "{username} ({name})".format(username=self.user.get_username(), name=self.user.get_full_name())
