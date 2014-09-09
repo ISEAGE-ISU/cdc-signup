@@ -1,0 +1,47 @@
+ssl_session_cache shared:SSL:16m;
+ssl_session_timeout 10m;
+
+upstream green_unicorn {
+    #Port you configured green unicorn to use
+    server unix:/var/www/var/run/gunicorn.sock fail_timeout=0;
+}
+
+server {
+    #Redirects everything to https
+    listen 80;
+    rewrite ^(.*) https://$host$1 permanent;
+}
+
+server {
+    listen 443;
+    ssl on;
+    server_name signup.iseage.org;
+    #Be sure to create these files in /etc/nginx/ssl/
+    ssl_certificate ssl/iseage.org.pem;
+    ssl_certificate_key ssl/iseage.org.key;
+    client_max_body_size 4G;
+    keepalive_timeout 5;
+
+    #Edit this to be the path where you installed signup
+    root /var/www/cdc-signup;
+
+    location ^~ /static/ {
+        gzip_static on;
+        expires max;
+    }
+
+    location ^~ /static/admin/ {
+        root /var/www/cdc-signup/lib/python2.7/site-packages/django/contrib/admin/;
+        gzip_static on;
+        expires   max;
+    }
+
+    location / {
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+        proxy_pass http://green_unicorn;
+    }
+
+}
+
