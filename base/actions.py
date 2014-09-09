@@ -351,6 +351,9 @@ def create_team(name, captain_id):
 
     ldap_connection.unbind_s()
 
+    # Reload so we get the correct number
+    team = models.Team.objects.get(pk=team.id)
+
     captain = models.Participant.objects.get(pk=captain_id)
     captain.team = team
     captain.captain = True
@@ -369,7 +372,7 @@ def create_team(name, captain_id):
               If you have questions, email CDC support at {support}
               """
 
-    send_mail('ISEAGE CDC Support: You have been added to a team',
+    send_mail('ISEAGE CDC Support: Team Created',
               email_body.format(fname=captain.user.first_name, lname=captain.user.last_name,
                                 team=team.name, number=team.number, support=settings.SUPPORT_EMAIL),
               settings.EMAIL_FROM_ADDR,
