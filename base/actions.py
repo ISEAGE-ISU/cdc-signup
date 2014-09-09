@@ -480,9 +480,11 @@ def demote_captain(participant_id):
 def submit_join_request(participant_id, team_id):
     participant = models.Participant.objects.get(pk=participant_id)
     team = models.Team.objects.get(pk=team_id)
-    captains = team.captains()
     participant.requested_team = team
     participant.save()
+    captain_emails = []
+    for captain in team.captains():
+        captain_emails.append(captain.user.email)
 
     email_body = """Hi there captains,
 
@@ -498,15 +500,17 @@ def submit_join_request(participant_id, team_id):
                                 email=participant.user.email,team=team.name,
                                 support=settings.SUPPORT_EMAIL),
               settings.EMAIL_FROM_ADDR,
-              captains.values_list('email', flat=True))
+              captain_emails)
 
     return True
 
 def sumbit_captain_request(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
-    captains = participant.team.captains()
     participant.requests_captain = True
     participant.save()
+    captain_emails = []
+    for captain in participant.team.captains():
+        captain_emails.append(captain.user.email)
 
     email_body = """Hi there captains,
 
@@ -522,6 +526,6 @@ def sumbit_captain_request(participant_id):
                                 email=participant.user.email,team=participant.team.name,
                                 support=settings.SUPPORT_EMAIL),
               settings.EMAIL_FROM_ADDR,
-              captains.values_list('email', flat=True))
+              captain_emails)
 
     return True

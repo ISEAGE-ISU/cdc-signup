@@ -190,8 +190,9 @@ class DashboardView(BaseTemplateView, LoginRequiredMixin):
 
     def get(self, request, context, *args, **kwargs):
         if request.user.participant:
-            if not request.user.participant.team:
-                context['teamless'] = True
+            team = request.user.participant.team
+            if team:
+                context['team'] = team
             if request.user.participant.captain:
                 context['is_captain'] = True
 
@@ -286,6 +287,10 @@ class JoinTeamView(BaseTemplateView, LoginRequiredMixin):
         except:
             raise Http404
 
+        context['widget_data'] = {
+            'title': 'Join Team',
+            'icon': 'fa-question-circle',
+        }
         return self.render_to_response(context)
 
     def post(self, request, context, *args, **kwargs):
@@ -299,12 +304,12 @@ class JoinTeamView(BaseTemplateView, LoginRequiredMixin):
         success = False
         success = actions.submit_join_request(pt.id, team.id)
         if success:
-            messages.success('Request to join {team} has been successfully submitted.'.format(team=team.name))
+            messages.success(request, 'Request to join {team} has been successfully submitted.'.format(team=team.name))
             return redirect('dashboard')
         else:
             messages.error(request, """Whoops! Something went wrong on our end.
             Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
-            return self.render_to_response(context)
+            return redirect('dashboard')
 
 
 class LeaveTeamView(BaseTemplateView, LoginRequiredMixin):
@@ -411,6 +416,10 @@ class ApproveMemberView(BaseTemplateView, LoginRequiredMixin, UserIsCaptainMixin
 
         if participant.requested_team == team:
             context['member'] = participant
+            context['widget_data'] = {
+                'title': 'Confirm approval',
+                'icon': 'fa-question',
+            }
             return self.render_to_response(context)
         else:
             raise Http404
@@ -425,7 +434,7 @@ class ApproveMemberView(BaseTemplateView, LoginRequiredMixin, UserIsCaptainMixin
 
         if participant.requested_team == team:
             if actions.add_user_to_team(team.id, participant_id):
-                messages.success('{first} {last} has been successfully added to your team.'.format(
+                messages.success(request, '{first} {last} has been successfully added to your team.'.format(
                     first=participant.user.first_name,last=participant.user.last_name))
                 return redirect('manage-team')
             else:
@@ -452,6 +461,10 @@ class ApproveCaptainView(BaseTemplateView, LoginRequiredMixin, UserIsCaptainMixi
 
         if participant.requested_team == team:
             context['member'] = participant
+            context['widget_data'] = {
+                'title': 'Confirm approval',
+                'icon': 'fa-question',
+            }
             return self.render_to_response(context)
         else:
             raise Http404

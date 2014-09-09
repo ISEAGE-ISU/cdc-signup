@@ -4,11 +4,11 @@
 {% block content %}
     <div class="row">
         <div class="col-md-11" style="max-width: 700px;">
-            <p>Are you sure you want to approve {{ member.user.first_name }} {{ member.user.last_name }}?</p>
             {% render_widget widget_data %}
+                <p>Are you sure you want to approve {{ member.user.first_name }} {{ member.user.last_name }}?</p>
                 <form class='form-horizontal' action='' method="POST">
                     {% csrf_token %}
-                    <input type="submit" action="{% url "approve-member" member.id %}">
+                    <input type="submit" action="{% url "approve-member" member.id %}" class="btn btn-primary" value="Submit confirmation">
                 </form>
             {% render_widget_bottom %}
         </div>
