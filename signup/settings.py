@@ -4,7 +4,7 @@ import os
 SITE_ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), '..'))
 URL_ROOT = '/'
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -15,19 +15,18 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'signup',                      # Or path to database file if using sqlite3.
-        # The following settings are not used with sqlite3:
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'signup',
         'USER': 'signup',
         'PASSWORD': 'signuppass',
-        'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
-        'PORT': '',                      # Set to empty string for default.
+        'HOST': '',          # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
+        'PORT': '',          # Set to empty string for default.
     }
 }
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['signup.iseage.org',]
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -153,14 +152,13 @@ LOGOUT_URL = URL_ROOT + 'logout/'
 LOGIN_REDIRECT_URL = URL_ROOT
 SESSION_SAVE_EVERY_REQUEST = True  # http://stackoverflow.com/questions/1366146/django-session-expiry
 SESSION_COOKIE_AGE = 60 * 60  # age in seconds
-#SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 DEFAULT_NEXT_URL = "/"
 
 ##############
 # Email
 ##############
-#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'mailhub.iastate.edu'
 EMAIL_PORT = 25
 
@@ -201,8 +199,8 @@ AD_SEARCH_FIELDS = ['mail','givenName','sn','sAMAccountName','memberOf']
 AD_MEMBERSHIP_ADMIN = ['Domain Admins']  # this ad group gets superuser status in django
 AD_MEMBERSHIP_REQ = AD_MEMBERSHIP_ADMIN + [AD_CDCUSER_GROUP]  # only members of these groups can access
 AD_CERT_FILE = False  # this is the certificate of the Certificate Authority issuing your DCs certificate
-AD_DEBUG = True
-AD_LDAP_DEBUG_LEVEL = 2
+AD_DEBUG = False
+AD_LDAP_DEBUG_LEVEL = 0
 AD_DEBUG_FILE = '/var/log/signup/ldap.debug'
 
 AUTHENTICATION_BACKENDS = (
