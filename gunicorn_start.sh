@@ -2,7 +2,7 @@
  
 NAME="signup"                                  # Name of the application
 DJANGODIR=/var/www/cdc-signup             # Django project directory
-SOCKFILE=/var/www/run/gunicorn.sock  # we will communicte using this unix socket
+SOCKFILE=/var/www/var/run/gunicorn.sock  # we will communicte using this unix socket
 USER=signup                                        # the user to run as
 GROUP=signup                                     # the group to run as
 NUM_WORKERS=3                                     # how many worker processes should Gunicorn spawn
