@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from django.db.models import Count
 from django.core.mail import send_mail
 import re
+import email_templates
 
 # For checking that generated passwords meet AD complexity requirements
 UPPER = re.compile('.*[A-Z].*')
@@ -189,17 +190,7 @@ def create_user_account(username, fname, lname, email):
     ldap_connection.unbind_s()
 
     # Send email
-    email_body = """Hi there {fname} {lname},
-
-              Your ISEAGE CDC account has been successfully created!
-              Please use the following credentials to log in at https://signup.iseage.org/login/
-
-              Username: {username}
-              Password: {password}
-
-              Make sure you change your password right away.
-              If you have questions, email CDC support at {support}
-              """
+    email_body = email_templates.ACCOUNT_CREATED
 
     send_mail('Your ISEAGE CDC account',
               email_body.format(fname=fname, lname=lname,username=username, password=password,
@@ -247,12 +238,7 @@ def update_password(participant_id, old_password, new_password):
     # Send email
     participant = models.Participant.objects.get(pk=participant_id)
 
-    email_body = """Hi there {fname} {lname},
-
-              Your password has been successfully updated.
-
-              If you didn't change your password, please contact CDC support at {support} immediately.
-              """
+    email_body = email_templates.PASSWORD_UPDATED
 
     send_mail('ISEAGE CDC Support: Password successfully updated',
               email_body.format(fname=participant.user.first_name, lname=participant.user.last_name,
@@ -287,13 +273,7 @@ def forgot_password(email):
     ldap_connection.unbind_s()
 
     # Send email
-    email_body = """Hi there {fname} {lname},
-
-              Your password has been reset to {password}
-              You should change it right away at https://signup.iseage.org/dashboard/
-
-              If you didn't request a password reset, please contact CDC support at {support} immediately.
-              """
+    email_body = email_templates.PASSWORD_RESET
 
     send_mail('ISEAGE CDC Support: Your password has been reset',
               email_body.format(fname=user.first_name, lname=user.last_name, password=password,
@@ -359,18 +339,7 @@ def create_team(name, captain_id):
     captain.captain = True
     captain.save()
 
-    email_body = """Hi there {fname} {lname},
-
-              Your team has been successfully created.
-              Your team name is: {team}
-              Your team number is: {number}
-
-              You can manage your team by visiting https://signup.iseage.org/manage_team/
-
-              Your team members should create an account and submit a request to join your team.
-
-              If you have questions, email CDC support at {support}
-              """
+    email_body = email_templates.TEAM_CREATED
 
     send_mail('ISEAGE CDC Support: Team Created',
               email_body.format(fname=captain.user.first_name, lname=captain.user.last_name,
@@ -427,17 +396,7 @@ def add_user_to_team(team_id, participant_id):
                                                                     lname=captain.user.last_name,
                                                                     email=captain.user.email)
 
-    email_body = """Hi there {fname} {lname},
-
-              Your request to join a team has been approved.
-              You have been added to Team {number}: {team}
-
-              Be sure to get in contact with your team captain(s) if you haven't already:
-
-              {captains}
-
-              If you have questions, email CDC support at {support}
-              """
+    email_body = email_templates.JOIN_REQUEST_APPROVED
 
     send_mail('ISEAGE CDC Support: You have been added to a team',
               email_body.format(fname=participant.user.first_name, lname=participant.user.last_name,
@@ -489,14 +448,7 @@ def submit_join_request(participant_id, team_id):
     for captain in team.captains():
         captain_emails.append(captain.user.email)
 
-    email_body = """Hi there captains,
-
-              {fname} {lname} ({email}) has requested to join your team, {team}.
-
-              Visit https://signup.iseage.org/manage_team/ to confirm or deny this request.
-
-              If you have questions, email CDC support at {support}
-              """
+    email_body = email_templates.JOIN_REQUEST_SUBMITTED
 
     send_mail('ISEAGE CDC Support: Someone has requested to join your team',
               email_body.format(fname=participant.user.first_name, lname=participant.user.last_name,
@@ -515,14 +467,7 @@ def sumbit_captain_request(participant_id):
     for captain in participant.team.captains():
         captain_emails.append(captain.user.email)
 
-    email_body = """Hi there captains,
-
-              {fname} {lname} ({email}) has requested to become a captain of your team, {team}.
-
-              Visit https://signup.iseage.org/manage_team/ to confirm or deny this request.
-
-              If you have questions, email CDC support at {support}
-              """
+    email_body = email_templates.CAPTAIN_REQUEST_SUBMITTED
 
     send_mail('ISEAGE CDC Support: Someone has requested to become a captain of your team',
               email_body.format(fname=participant.user.first_name, lname=participant.user.last_name,
