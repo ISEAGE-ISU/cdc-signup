@@ -3,7 +3,7 @@ ssl_session_timeout 10m;
 
 upstream green_unicorn {
     #Port you configured green unicorn to use
-    server unix:/var/www/var/run/gunicorn.sock fail_timeout=0;
+    server unix:/var/www/cdc-signup/var/run/gunicorn.sock fail_timeout=0;
 }
 
 server {
