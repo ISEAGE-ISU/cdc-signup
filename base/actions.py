@@ -9,6 +9,8 @@ from django.db.models import Count
 from django.core.mail import send_mail
 import re
 import email_templates
+import smtplib
+import logging
 
 # For checking that generated passwords meet AD complexity requirements
 UPPER = re.compile('.*[A-Z].*')
@@ -190,13 +192,13 @@ def create_user_account(username, fname, lname, email):
     ldap_connection.unbind_s()
 
     # Send email
-    email_body = email_templates.ACCOUNT_CREATED
+    email_body = email_templates.ACCOUNT_CREATED.format(fname=fname, lname=lname,username=username, password=password,
+                                support=settings.SUPPORT_EMAIL)
 
-    send_mail('Your ISEAGE CDC account',
-              email_body.format(fname=fname, lname=lname,username=username, password=password,
-                                support=settings.SUPPORT_EMAIL),
-              settings.EMAIL_FROM_ADDR,
-              [email])
+    try:
+        send_mail('Your ISEAGE CDC account', email_body, settings.EMAIL_FROM_ADDR, [email])
+    except smtplib.SMTPException:
+        logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=email_body))
 
     # All is good
     return True
@@ -238,13 +240,14 @@ def update_password(participant_id, old_password, new_password):
     # Send email
     participant = models.Participant.objects.get(pk=participant_id)
 
-    email_body = email_templates.PASSWORD_UPDATED
-
-    send_mail('ISEAGE CDC Support: Password successfully updated',
-              email_body.format(fname=participant.user.first_name, lname=participant.user.last_name,
-                                support=settings.SUPPORT_EMAIL),
-              settings.EMAIL_FROM_ADDR,
-              [participant.user.email])
+    email = participant.user.email
+    email_body = email_templates.PASSWORD_UPDATED.format(fname=participant.user.first_name,
+                                                         lname=participant.user.last_name,
+                                                         support=settings.SUPPORT_EMAIL)
+    try:
+        send_mail('ISEAGE CDC Support: Password successfully updated', email_body, settings.EMAIL_FROM_ADDR, [email])
+    except smtplib.SMTPException:
+        logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=email_body))
 
     # All done
     return True
@@ -273,13 +276,13 @@ def forgot_password(email):
     ldap_connection.unbind_s()
 
     # Send email
-    email_body = email_templates.PASSWORD_RESET
-
-    send_mail('ISEAGE CDC Support: Your password has been reset',
-              email_body.format(fname=user.first_name, lname=user.last_name, password=password,
-                                support=settings.SUPPORT_EMAIL),
-              settings.EMAIL_FROM_ADDR,
-              [user.email])
+    email = user.email
+    email_body = email_templates.PASSWORD_RESET.format(fname=user.first_name, lname=user.last_name, password=password,
+                                support=settings.SUPPORT_EMAIL)
+    try:
+        send_mail('ISEAGE CDC Support: Your password has been reset', email_body, settings.EMAIL_FROM_ADDR, [email])
+    except smtplib.SMTPException:
+        logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=email_body))
 
     # All done
     return True
@@ -339,13 +342,14 @@ def create_team(name, captain_id):
     captain.captain = True
     captain.save()
 
-    email_body = email_templates.TEAM_CREATED
+    email = captain.user.email
+    email_body = email_templates.TEAM_CREATED.format(fname=captain.user.first_name, lname=captain.user.last_name,
+                                team=team.name, number=team.number, support=settings.SUPPORT_EMAIL)
 
-    send_mail('ISEAGE CDC Support: Team Created',
-              email_body.format(fname=captain.user.first_name, lname=captain.user.last_name,
-                                team=team.name, number=team.number, support=settings.SUPPORT_EMAIL),
-              settings.EMAIL_FROM_ADDR,
-              [captain.user.email])
+    try:
+        send_mail('ISEAGE CDC Support: Team Created', email_body, settings.EMAIL_FROM_ADDR, [email])
+    except smtplib.SMTPException:
+        logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=email_body))
 
     return True
 
@@ -396,14 +400,18 @@ def add_user_to_team(team_id, participant_id):
                                                                     lname=captain.user.last_name,
                                                                     email=captain.user.email)
 
-    email_body = email_templates.JOIN_REQUEST_APPROVED
+    email = participant.user.email
+    email_body = email_templates.JOIN_REQUEST_APPROVED.format(fname=participant.user.first_name,
+                                                              lname=participant.user.last_name,
+                                                              number=team.number,
+                                                              team=team.name,
+                                                              captains=captains,
+                                                              support=settings.SUPPORT_EMAIL)
 
-    send_mail('ISEAGE CDC Support: You have been added to a team',
-              email_body.format(fname=participant.user.first_name, lname=participant.user.last_name,
-                                number=team.number, team=team.name, captains=captains,
-                                support=settings.SUPPORT_EMAIL),
-              settings.EMAIL_FROM_ADDR,
-              [participant.user.email])
+    try:
+        send_mail('ISEAGE CDC Support: You have been added to a team', email_body, settings.EMAIL_FROM_ADDR, [email])
+    except smtplib.SMTPException:
+        logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=email_body))
 
     return True
 
@@ -448,14 +456,18 @@ def submit_join_request(participant_id, team_id):
     for captain in team.captains():
         captain_emails.append(captain.user.email)
 
-    email_body = email_templates.JOIN_REQUEST_SUBMITTED
+    email_body = email_templates.JOIN_REQUEST_SUBMITTED.format(fname=participant.user.first_name,
+                                                               lname=participant.user.last_name,
+                                                               email=participant.user.email,
+                                                               team=team.name,
+                                                               support=settings.SUPPORT_EMAIL)
 
-    send_mail('ISEAGE CDC Support: Someone has requested to join your team',
-              email_body.format(fname=participant.user.first_name, lname=participant.user.last_name,
-                                email=participant.user.email,team=team.name,
-                                support=settings.SUPPORT_EMAIL),
-              settings.EMAIL_FROM_ADDR,
-              captain_emails)
+    try:
+        send_mail('ISEAGE CDC Support: Someone has requested to join your team', email_body, settings.EMAIL_FROM_ADDR,
+                  captain_emails)
+    except smtplib.SMTPException:
+        logging.warning("Failed to send email to captains of {team}:\n{body}".format(team=team.name, body=email_body))
+
 
     return True
 
@@ -467,13 +479,16 @@ def sumbit_captain_request(participant_id):
     for captain in participant.team.captains():
         captain_emails.append(captain.user.email)
 
-    email_body = email_templates.CAPTAIN_REQUEST_SUBMITTED
+    email_body = email_templates.CAPTAIN_REQUEST_SUBMITTED.format(fname=participant.user.first_name,
+                                                                  lname=participant.user.last_name,
+                                                                  email=participant.user.email,
+                                                                  team=participant.team.name,
+                                                                  support=settings.SUPPORT_EMAIL)
 
-    send_mail('ISEAGE CDC Support: Someone has requested to become a captain of your team',
-              email_body.format(fname=participant.user.first_name, lname=participant.user.last_name,
-                                email=participant.user.email,team=participant.team.name,
-                                support=settings.SUPPORT_EMAIL),
-              settings.EMAIL_FROM_ADDR,
-              captain_emails)
+    try:
+        send_mail('ISEAGE CDC Support: Someone has requested to become a captain of your team', email_body,
+                  settings.EMAIL_FROM_ADDR, captain_emails)
+    except smtplib.SMTPException:
+        logging.warning("Failed to send email to captains of {team}:\n{body}".format(team=participant.team.name, body=email_body))
 
     return True
