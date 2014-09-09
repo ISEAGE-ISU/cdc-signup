@@ -167,7 +167,7 @@ class SignupView(BaseTemplateView):
             try:
                 success = actions.create_user_account(username,first,last,email)
             except base.DuplicateName:
-                form.add_error('first_name', """It looks like there's already an account with the same first and last names as you provided.
+                form.add_error('first_name', """It looks like there's already an account with the same first and last names as you provided. \
                 Try including your middle initial or middle name.""")
             except base.UsernameAlreadyExistsError:
                 form.add_error('username', "That username already exists. Please choose another one.")
@@ -177,8 +177,8 @@ class SignupView(BaseTemplateView):
                 messages.success(request, 'Account successfully created. Please check your email for further instructions.')
                 return redirect('site-login')
             else:
-                form.add_error(None, """Whoops! Something went wrong on our end.
-                Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                form.add_error(None, """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
+                If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
 
         return self.get(request, context, form=form)
 
@@ -307,8 +307,8 @@ class JoinTeamView(LoginRequiredMixin, BaseTemplateView):
             messages.success(request, 'Request to join {team} has been successfully submitted.'.format(team=team.name))
             return redirect('dashboard')
         else:
-            messages.error(request, """Whoops! Something went wrong on our end.
-            Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+            messages.error(request, """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
+            If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
             return redirect('dashboard')
 
 
@@ -347,14 +347,14 @@ class TeamCreationView(LoginRequiredMixin, BaseTemplateView):
             except base.TeamAlreadyExistsError:
                 form.add_error('name', "A team with that name already exists. Please choose another name.")
             except base.OutOfTeamNumbersError:
-                form.add_error(None, """There are currently no slots available for new teams.
+                form.add_error(None, """There are currently no slots available for new teams. \
                 Please email {support} and tell us this so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
 
             if success:
                 messages.success(request, 'Team {name} successfully created.'.format(name=name))
                 return redirect('manage-team')
             else:
-                form.add_error(None, """Whoops! Something went wrong on our end.
+                form.add_error(None, """Whoops! Something went wrong on our end. \
                 Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
 
         return self.get(request, context, form=form)
