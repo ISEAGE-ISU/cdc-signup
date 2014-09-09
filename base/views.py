@@ -274,7 +274,7 @@ class TeamListView(LoginRequiredMixin, BaseTemplateView):
         return self.render_to_response(context)
 
 
-class JoinTeamView(LoginRequiredMixin. BaseTemplateView):
+class JoinTeamView(LoginRequiredMixin, BaseTemplateView):
     template_name = 'join_team.html'
     page_title = "Team Join Request"
     breadcrumb = 'Join Team'
