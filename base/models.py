@@ -22,6 +22,18 @@ class Team(models.Model):
     number = models.PositiveIntegerField(default=0)
     name = models.CharField(max_length=50)
 
+    def members(self):
+        return Participant.objects.filter(team=self)
+
+    def captains(self):
+        return self.members().filter(captain=True)
+
+    def requested_members(self):
+        return Participant.objects.filter(requested_team=self)
+
+    def requested_captains(self):
+        return self.members().filter(requests_captain=True)
+
     def __unicode__(self):
         return "Team {number}: {name}".format(number=self.number, name=self.name)
 

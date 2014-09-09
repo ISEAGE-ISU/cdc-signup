@@ -189,10 +189,11 @@ class DashboardView(BaseTemplateView, LoginRequiredMixin):
     breadcrumb = 'Dashboard'
 
     def get(self, request, context, *args, **kwargs):
-        if request.user.participant.team:
-            context['is_member'] = True
-        if request.user.participant.captain:
-            context['is_captain'] = True
+        if request.user.participant:
+            if not request.user.participant.team:
+                context['teamless'] = True
+            if request.user.participant.captain:
+                context['is_captain'] = True
 
         if 'form' in kwargs:
             form = kwargs.pop('form')
@@ -259,11 +260,51 @@ class ForgotPasswordView(BaseTemplateView):
 
 
 class TeamListView(BaseTemplateView, LoginRequiredMixin):
-    pass
+    template_name = 'team_list.html'
+    page_title = "Join Team"
+    breadcrumb = 'Team list'
+
+    def get(self, request, context, *args, **kwargs):
+        context['teams'] = actions.get_current_teams()
+        context['widget_data'] = {
+            'title': 'Team Members',
+            'icon': 'fa-users',
+        }
+        return self.render_to_response(context)
 
 
 class JoinTeamView(BaseTemplateView, LoginRequiredMixin):
-    pass
+    template_name = 'join_team.html'
+    page_title = "Team Join Request"
+    breadcrumb = 'Join Team'
+
+    def get(self, request, context, *args, **kwargs):
+        team_id = kwargs.get('team_id')
+        try:
+            team = models.Team.objects.get(pk=team_id)
+            context['team'] = team
+        except:
+            raise Http404
+
+        return self.render_to_response(context)
+
+    def post(self, request, context, *args, **kwargs):
+        team_id = kwargs.get('team_id')
+        try:
+            team = models.Team.objects.get(pk=team_id)
+        except:
+            raise Http404
+
+        pt = context['participant']
+        success = False
+        success = actions.submit_join_request(pt.id, team.id)
+        if success:
+            messages.success('Request to join {team} has been successfully submitted.'.format(team=team.name))
+            return redirect('dashboard')
+        else:
+            messages.error(request, """Whoops! Something went wrong on our end.
+            Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+            return self.render_to_response(context)
 
 
 class LeaveTeamView(BaseTemplateView, LoginRequiredMixin):
@@ -331,9 +372,9 @@ class CaptainHomeView(BaseTemplateView, LoginRequiredMixin, UserIsCaptainMixin):
         }
 
         team = context['participant'].team
-        context['current_members'] = actions.get_current_members(team.id)
-        context['member_requests'] = actions.get_member_requests(team.id)
-        context['captain_requests'] = actions.get_captain_requests(team.id)
+        context['current_members'] = team.members()
+        context['member_requests'] = team.requested_members()
+        context['captain_requests'] = team.requested_captains()
 
         return self.render_to_response(context)
 

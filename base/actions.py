@@ -5,6 +5,7 @@ import base
 import datetime
 import models
 from django.contrib.auth.models import User
+from django.db.models import Count
 from django.core.mail import send_mail
 import re
 
@@ -14,30 +15,8 @@ LOWER = re.compile('.*[a-z].*')
 NUMERIC = re.compile('.*[0-9].*')
 PASSWORD_LENGTH = 12
 
-def get_current_members(team_id):
-    return models.Participant.objects.filter(team=team_id).order_by('captain')
-
-def get_member_requests(team_id):
-    return models.Participant.objects.filter(requested_team=team_id)
-
-def get_captain_requests(team_id):
-    return models.Participant.objects.filter(team=team_id,requests_captain=True)
-
-def confirm_member_request(participant_id, team_id):
-    participant = models.Participant.objects.get(pk=participant_id)
-    if participant.requested_team.id == team_id:
-        add_user_to_team(team_id, participant_id)
-        return True
-    else:
-        raise base.NoSuchRequest()
-
-def confirm_captain_request(participant_id, team_id):
-    participant = models.Participant.objects.get(pk=participant_id)
-    if participant.team.id == team_id and participant.requests_captain:
-        promote_to_captain(participant_id)
-        return True
-    else:
-        raise base.NoSuchRequest()
+def get_current_teams():
+    return models.Team.objects.annotate(member_count=Count('participant'))
 
 ##########
 # LDAP functions
@@ -438,7 +417,7 @@ def add_user_to_team(team_id, participant_id):
     participant.save()
 
     # Send email
-    captain_list = models.Participant.objects.filter(team_id=team_id).filter(captain=True)
+    captain_list = team.captains()
     captains = ""
     for captain in captain_list:
         captains = captains + "{fname} {lname}  \t{email}\n".format(fname=captain.user.first_name,
@@ -501,7 +480,7 @@ def demote_captain(participant_id):
 def submit_join_request(participant_id, team_id):
     participant = models.Participant.objects.get(pk=participant_id)
     team = models.Team.objects.get(pk=team_id)
-    captains = models.Participant.objects.filter(team_id=team_id).filter(captain=True)
+    captains = team.captains()
     participant.requested_team = team
     participant.save()
 
@@ -521,9 +500,11 @@ def submit_join_request(participant_id, team_id):
               settings.EMAIL_FROM_ADDR,
               captains.values_list('email', flat=True))
 
+    return True
+
 def sumbit_captain_request(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
-    captains = models.Participant.objects.filter(team=participant.team).filter(captain=True)
+    captains = participant.team.captains()
     participant.requests_captain = True
     participant.save()
 
@@ -542,3 +523,5 @@ def sumbit_captain_request(participant_id):
                                 support=settings.SUPPORT_EMAIL),
               settings.EMAIL_FROM_ADDR,
               captains.values_list('email', flat=True))
+
+    return True

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load tt_web %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-11" style="max-width: 800px;">
+            {% render_widget widget_data %}
+                <table class="table table-striped" id="current-teams">
+                    <thead><tr>
+                        <th>Name</th>
+                        <th>Member Count</th>
+                        <th>Actions</th>
+                    </tr></thead>
+                    <tbody>
+                    {% for team in teams %}
+                    <tr id="team-{{ team.id }}">
+                        <td class="name">{{ team.name }}</td>
+                        <td class="count">{{ team.member_count }}</td>
+                        <td>
+                            <a class="btn btn-primary" href="{% url "join-team" team.id %}">Request to join</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% render_widget_bottom %}
+        </div>
+    </div>
+
+{% endblock %}

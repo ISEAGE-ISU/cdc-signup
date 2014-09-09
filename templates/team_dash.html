@@ -49,7 +49,9 @@
                         <td class="first">{{ member.user.first_name }}</td>
                         <td class="last">{{ member.user.last_name }}</td>
                         <td class="email">{{ member.user.email }}</td>
-                        <td class="approve">{% url "approve-member" member.id %}</td>
+                        <td class="approve">
+                            <a class="btn btn-primary" href="{% url "approve-member" member.id %}">Approve member request</a>
+                        </td>
                     </tr>
                     {% endfor %}
                     </tbody>
@@ -70,7 +72,9 @@
                         <td class="first">{{ member.user.first_name }}</td>
                         <td class="last">{{ member.user.last_name }}</td>
                         <td class="email">{{ member.user.email }}</td>
-                        <td class="approve">{% url "approve-captain" member.id %}</td>
+                        <td class="approve">
+                            <a class="btn btn-primary" href="{% url "approve-captain" member.id %}">Approve captain request</a>
+                        </td>
                     </tr>
                     {% endfor %}
                     </tbody>
