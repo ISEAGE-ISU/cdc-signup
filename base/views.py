@@ -271,10 +271,14 @@ class TeamListView(LoginRequiredMixin, BaseTemplateView):
     breadcrumb = 'Team list'
 
     def get(self, request, context, *args, **kwargs):
-        context['teams'] = actions.get_current_teams()
+        teams = actions.get_current_teams()
+        if len(teams):
+            context['teams'] = actions.get_current_teams()
+        else:
+            context['no_teams'] = True
         context['widget_data'] = {
-            'title': 'Team Members',
-            'icon': 'fa-users',
+            'title': 'Teams',
+            'icon': 'fa-list',
         }
         return self.render_to_response(context)
 

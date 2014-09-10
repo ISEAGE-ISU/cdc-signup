@@ -5,6 +5,9 @@
     <div class="row">
         <div class="col-md-11" style="max-width: 800px;">
             {% render_widget widget_data %}
+            {% if no_teams %}
+                <p>It looks like there aren't any teams yet. If you want, you can <a href="{% url "create-team" %}">make a new one yourself</a>.</p>
+            {% else %}
                 <table class="table table-striped" id="current-teams">
                     <thead><tr>
                         <th>Name</th>
@@ -23,6 +26,7 @@
                     {% endfor %}
                     </tbody>
                 </table>
+            {% endif %}
             {% render_widget_bottom %}
         </div>
     </div>
