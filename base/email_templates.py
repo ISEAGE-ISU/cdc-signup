@@ -31,7 +31,7 @@ Your team has been successfully created.
 Your team name is: {team}
 Your team number is: {number}
 
-You can manage your team by visiting https://signup.iseage.org/manage_team/
+You can manage your team by visiting https://signup.iseage.org/dasboard/manage_team/
 
 Your team members should create an account and submit a request to join your team.
 
@@ -50,11 +50,20 @@ Be sure to get in contact with your team captain(s) if you haven't already:
 If you have questions, email CDC support at {support}
 """
 
+CAPTAIN_REQUEST_APPROVED="""Hi there {fname} {lname},
+
+Your request to be promoted to captain has been approved.
+
+Visit https://signup.iseage.org/dashboard/manage_team/ to manage your team.
+
+If you have questions, email CDC support at {support}
+"""
+
 JOIN_REQUEST_SUBMITTED="""Hi there captains,
 
 {fname} {lname} ({email}) has requested to join your team, {team}.
 
-Visit https://signup.iseage.org/manage_team/ to confirm or deny this request.
+Visit https://signup.iseage.org/dashboard/manage_team/ to confirm or deny this request.
 
 If you have questions, email CDC support at {support}
 """
@@ -63,7 +72,7 @@ CAPTAIN_REQUEST_SUBMITTED="""Hi there captains,
 
 {fname} {lname} ({email}) has requested to become a captain of your team, {team}.
 
-Visit https://signup.iseage.org/manage_team/ to confirm or deny this request.
+Visit https://signup.iseage.org/dashboard/manage_team/ to confirm or deny this request.
 
 If you have questions, email CDC support at {support}
 """

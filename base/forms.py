@@ -26,10 +26,21 @@ class ChangePasswordForm(forms.Form):
     new_password = forms.CharField(widget=forms.PasswordInput(), required=True)
     new_password_again = forms.CharField(widget=forms.PasswordInput(), required=True)
 
+    class Meta:
+        fieldsets = [{
+                'id':'update-password',
+                'legend':'Change Password',
+                'title': 'Your password should be at least 8 characters long.<br>' +
+                         'Passwords must contain a lowercase letter, an uppercase letter, and a number or symbol.'
+        }]
+
     def clean(self):
         cleaned_data = super(ChangePasswordForm, self).clean()
         if cleaned_data.get('new_password') != cleaned_data.get('new_password_again'):
             raise forms.ValidationError("The passwords you inputted do not match.")
+
+
+
 
 
 class ForgotPasswordForm(forms.Form):

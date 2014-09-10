@@ -138,7 +138,7 @@ span.blue {
 
 /* Notifications */
 .notifications.top-center {
-    top:45px;
+    top:140px;
     left:35%;
     width:30%;
     z-index: 99999;

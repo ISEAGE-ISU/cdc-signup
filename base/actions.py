@@ -440,7 +440,20 @@ def remove_user_from_team(team_id, participant_id):
 def promote_to_captain(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
     participant.captain = True
+    participant.requests_captain = False
     participant.save()
+
+    email = participant.user.email
+    email_body = email_templates.CAPTAIN_REQUEST_APPROVED.format(fname=participant.user.first_name,
+                                                                 lname=participant.user.last_name,
+                                                                 support=settings.SUPPORT_EMAIL)
+
+    try:
+        send_mail('ISEAGE CDC Support: You have been promoted to captain', email_body, settings.EMAIL_FROM_ADDR, [email])
+    except smtplib.SMTPException:
+        logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=email_body))
+
+    return True
 
 def demote_captain(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)

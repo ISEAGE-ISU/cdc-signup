@@ -124,12 +124,15 @@ class BaseTemplateView(BaseView, TemplateResponseMixin):
 def login(request):
     this_breadcrumb = '<a href="%s" class="current">%s</a>' % ('/login', "Login")
     crumbs = mark_safe(breadcrumbs.render_breadcrumbs("/login/", {}) + this_breadcrumb)
-    context={
-        'page_title':"Login",
-        'breadcrumbs':crumbs,
+    context= {
+        'page_title': "Login",
+        'breadcrumbs': crumbs,
     }
     return auth_views.login(request, template_name='login.html', extra_context=context)
 
+def logout(request):
+    messages.success(request, "You have been successfully logged out.")
+    return auth_views.logout(request, next_page='site-index')
 
 class IndexView(BaseTemplateView):
     template_name = 'index.html'
@@ -193,6 +196,8 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
             team = request.user.participant.team
             if team:
                 context['team'] = team
+                context['current_members'] = team.members()
+                context['captain_requested'] = request.user.participant.requests_captain
             if request.user.participant.captain:
                 context['is_captain'] = True
 
@@ -310,6 +315,39 @@ class JoinTeamView(LoginRequiredMixin, BaseTemplateView):
             messages.error(request, """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
             If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
             return redirect('dashboard')
+
+
+class RequestCaptainView(LoginRequiredMixin, BaseTemplateView):
+    template_name = 'request_captain.html'
+    page_title = "Request Captain"
+    breadcrumb = 'Request Captain'
+
+    def get(self, request, context, *args, **kwargs):
+        team = request.user.participant.team
+        if team:
+            context['team'] = team
+            context['widget_data'] = {
+                'title': 'Confirm request',
+                'icon': 'fa-question',
+            }
+            return self.render_to_response(context)
+        else:
+            messages.error(request, "You must join a team before requesting to become a captain.")
+            return redirect('dashboard')
+
+    def post(self, request, context, *args, **kwargs):
+        team = request.user.participant.team
+        if team:
+            success = actions.sumbit_captain_request(request.user.participant.id)
+            if success:
+                messages.success(request, "Captain request successfully submitted.")
+            else:
+                messages.error(request, """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
+                If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                return self.render_to_response(context)
+        else:
+            messages.error(request, "You must join a team before requesting to become a captain.")
+        return redirect('dashboard')
 
 
 class LeaveTeamView(LoginRequiredMixin, BaseTemplateView):
@@ -438,7 +476,7 @@ class ApproveMemberView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView
                     first=participant.user.first_name,last=participant.user.last_name))
                 return redirect('manage-team')
             else:
-                messages.error(request, """Whoops! Something went wrong on our end.
+                messages.error(request, """Whoops! Something went wrong on our end. \
                 Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
                 return self.render_to_response(context)
         else:
@@ -459,7 +497,7 @@ class ApproveCaptainView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateVie
         except:
             raise Http404
 
-        if participant.requested_team == team:
+        if participant.team.id == team.id and participant.requests_captain:
             context['member'] = participant
             context['widget_data'] = {
                 'title': 'Confirm approval',
@@ -476,14 +514,18 @@ class ApproveCaptainView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateVie
             participant = models.Participant.objects.get(pk=participant_id)
         except:
             raise Http404
-        if participant.requested_team == team:
-            if actions.add_user_to_team(team.id, participant_id):
-                messages.success('{first} {last} has been successfully promoted to captain.'.format(
+        if participant.team.id == team.id and participant.requests_captain:
+            if actions.promote_to_captain(participant.id):
+                messages.success(request, '{first} {last} has been successfully promoted to captain.'.format(
                     first=participant.user.first_name,last=participant.user.last_name))
                 return redirect('manage-team')
             else:
-                messages.error(request, """Whoops! Something went wrong on our end.
+                messages.error(request, """Whoops! Something went wrong on our end. \
                 Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                context['widget_data'] = {
+                    'title': 'Confirm approval',
+                    'icon': 'fa-question',
+                }
                 return self.render_to_response(context)
         else:
             raise Http404
