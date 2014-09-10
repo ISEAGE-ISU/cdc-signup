@@ -14,3 +14,5 @@ AD_CDCUSER_GROUP = 'Test CDC Users'
 
 AD_BLUE_TEAM_PREFIX = "Test Team "
 AD_BLUE_TEAM_FORMAT = AD_BLUE_TEAM_PREFIX + "{number}"
+AD_MEMBERSHIP_ADMIN = ['Domain Admins']  # this ad group gets superuser status in django
+AD_MEMBERSHIP_REQ = AD_MEMBERSHIP_ADMIN + [AD_CDCUSER_GROUP]
