@@ -13,10 +13,26 @@ Designed for Ubuntu 14.04 and Python 2.7
 apt-get install nginx mysql-server memcached supervisor python-pip python-dev libmysqlclient-dev libldap2-dev libxml2-dev libsasl2-dev libssl-dev
 ```
 
+Note: for development purposes you may omit nginx, memcached, and supervisor and just use python manage.py runserver instead
+
 ##Install requirements##
 
 ```bash
 pip install -r requirements.txt
+```
+
+##Local settings##
+
+###Production###
+Copy signup/local_settings_prod.py to signup/local_settings.py and set a random database password and secret key
+
+###Development###
+Copy signup/local_settings_dev.py to signup/local_settings.py
+
+##Sync Database##
+
+```bash
+python manage.py syncdb
 ```
 
 ##Setup supervisor##
