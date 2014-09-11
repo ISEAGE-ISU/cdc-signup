@@ -180,7 +180,7 @@ class SignupView(BaseTemplateView):
                 messages.success(request, 'Account successfully created. Please check your email for further instructions.')
                 return redirect('site-login')
             else:
-                form.add_error(None, """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
+                messages.error(request, """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
                 If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
 
         return self.get(request, context, form=form)
@@ -193,6 +193,9 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
 
     def get(self, request, context, *args, **kwargs):
         if request.user.participant:
+            requested_team = request.user.participant.requested_team
+            if requested_team:
+                context['requested_team'] = requested_team
             team = request.user.participant.team
             if team:
                 context['team'] = team
@@ -229,7 +232,7 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
                 messages.success(request, 'Password successfully updated.')
                 return redirect('site-login')
             else:
-                form.add_error(None, """Whoops! Something went wrong on our end.
+                messages.error(request, """Whoops! Something went wrong on our end.
                 Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
 
         return self.get(request, context, form=form)
@@ -355,7 +358,36 @@ class RequestCaptainView(LoginRequiredMixin, BaseTemplateView):
 
 
 class LeaveTeamView(LoginRequiredMixin, BaseTemplateView):
-    pass
+    template_name = 'leave_team.html'
+    page_title = "Leave Team"
+    breadcrumb = 'Leave Team'
+
+    def get(self, request, context, *args, **kwargs):
+        team = request.user.participant.team
+        if team:
+            context['team'] = team
+            context['widget_data'] = {
+                'title': 'Confirm request',
+                'icon': 'fa-question',
+            }
+            return self.render_to_response(context)
+        else:
+            messages.error(request, "You aren't currently a member of a team.")
+            return redirect('dashboard')
+
+    def post(self, request, context, *args, **kwargs):
+        team = request.user.participant.team
+        if team:
+            success = actions.leave_team(request.user.participant.id)
+            if success:
+                messages.success(request, "You have successfully left {name}.".format(name=team.name))
+            else:
+                messages.error(request, """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
+                If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                return self.render_to_response(context)
+        else:
+            messages.error(request, "You aren't currently a member of a team.")
+        return redirect('dashboard')
 
 
 ##########
@@ -388,15 +420,17 @@ class TeamCreationView(LoginRequiredMixin, BaseTemplateView):
                 success = actions.create_team(name, pt.id)
             except base.TeamAlreadyExistsError:
                 form.add_error('name', "A team with that name already exists. Please choose another name.")
+                return self.get(request, context, form=form)
             except base.OutOfTeamNumbersError:
                 form.add_error(None, """There are currently no slots available for new teams. \
                 Please email {support} and tell us this so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                return self.get(request, context, form=form)
 
             if success:
                 messages.success(request, 'Team {name} successfully created.'.format(name=name))
                 return redirect('manage-team')
             else:
-                form.add_error(None, """Whoops! Something went wrong on our end. \
+                messages.error(request, """Whoops! Something went wrong on our end. \
                 Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
 
         return self.get(request, context, form=form)
@@ -416,6 +450,10 @@ class CaptainHomeView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView):
         context['widget_data'] = {
             'title': 'Team Members',
             'icon': 'fa-users',
+        }
+        context['danger_widget_data'] = {
+            'title': 'Danger area',
+            'icon': 'fa-warning',
         }
 
         team = context['participant'].team
@@ -533,3 +571,77 @@ class ApproveCaptainView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateVie
                 return self.render_to_response(context)
         else:
             raise Http404
+
+
+class StepDownView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView):
+    template_name = 'step_down.html'
+    page_title = "Step Down as Captain"
+    breadcrumb = 'Step down'
+
+    def get(self, request, context, *args, **kwargs):
+        team = request.user.participant.team
+        if team:
+            context['team'] = team
+            context['widget_data'] = {
+                'title': 'Confirm action',
+                'icon': 'fa-question',
+            }
+            return self.render_to_response(context)
+        else:
+            messages.error(request, "You aren't currently a member of a team.")
+            return redirect('dashboard')
+
+    def post(self, request, context, *args, **kwargs):
+        team = request.user.participant.team
+        context['widget_data'] = {
+                'title': 'Confirm action',
+                'icon': 'fa-question',
+        }
+        if team:
+            try:
+                success = actions.demote_captain(request.user.participant.id)
+            except base.OnlyRemainingCaptainError:
+                messages.error(request, "You are the only remaining captain of this team. You must promote someone else to captain before stepping down.")
+                return redirect('dashboard')
+            if success:
+                messages.success(request, "You have successfully stepped down as a captain of {name}.".format(name=team.name))
+            else:
+                messages.error(request, """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
+                If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                return self.render_to_response(context)
+        else:
+            messages.error(request, "You aren't currently a member of a team.")
+        return redirect('dashboard')
+
+class DisbandTeamView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView):
+    template_name = 'disband.html'
+    page_title = "Disband Team"
+    breadcrumb = 'Disband team'
+
+    def get(self, request, context, *args, **kwargs):
+        team = request.user.participant.team
+        if team:
+            context['team'] = team
+            context['widget_data'] = {
+                'title': 'Disband team',
+                'icon': 'fa-warning',
+            }
+            return self.render_to_response(context)
+        else:
+            messages.error(request, "You aren't currently a member of a team.")
+            return redirect('dashboard')
+
+    def post(self, request, context, *args, **kwargs):
+        team = request.user.participant.team
+        if team:
+            name = team.name
+            success = actions.disband_team(request.user.participant.id)
+            if success:
+                messages.success(request, "{name} has been successfully disbanded.".format(name=name))
+            else:
+                messages.error(request, """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
+                If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                return self.render_to_response(context)
+        else:
+            messages.error(request, "You aren't currently a member of a team.")
+        return redirect('dashboard')

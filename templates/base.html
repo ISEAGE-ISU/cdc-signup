@@ -91,10 +91,17 @@
             var that = $(this);
             var message = that.attr('data-row');
             var color = that.attr('title');
+            var fade = { enabled: false };
+            if (color == 'error') {
+                color = 'danger';
+            }
+            else if (color == 'success') {
+                fade = { enabled: true, delay: 6000 };
+            }
             that.notify({
                 message: {text: message},
                 type: color,
-                fadeOut: { enabled: true, delay: 6000 }
+                fadeOut: fade
             }).show();
         });
     });

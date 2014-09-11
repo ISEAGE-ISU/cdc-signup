@@ -34,6 +34,22 @@ class Team(models.Model):
     def requested_captains(self):
         return self.members().filter(requests_captain=True)
 
+    def delete_and_members(self):
+        rc = self.requested_captains()
+        for member in rc:
+            member.requests_captain = False
+            member.save()
+        r = self.requested_members()
+        for participant in r:
+            participant.requested_team = None
+            participant.save()
+        m = self.members()
+        for member in m:
+            member.team = None
+            member.captain = False
+            member.save()
+        self.delete()
+
     def __unicode__(self):
         return "Team {number}: {name}".format(number=self.number, name=self.name)
 

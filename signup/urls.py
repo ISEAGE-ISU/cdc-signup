@@ -31,10 +31,12 @@ urlpatterns = patterns('',
     url(r'^dashboard/join_team/(?P<team_id>[0-9-_:]+)/$', views.JoinTeamView.as_view(), name='join-team'),
     url(r'^dashboard/leave_team/$', views.LeaveTeamView.as_view(), name='leave-team'),
     url(r'^dashboard/request_captain/$', views.RequestCaptainView.as_view(), name='request-promotion'),
+    url(r'^dashboard/step_down/$', views.StepDownView.as_view(), name='step-down'),
     url(r'^dashboard/create_team/$', views.TeamCreationView.as_view(), name='create-team'),
 
     url(r'^dashboard/manage_team/$', views.CaptainHomeView.as_view(), name='manage-team'),
     url(r'^dashboard/manage_team/approve_member/(?P<participant_id>[0-9-_:]+)/$', views.ApproveMemberView.as_view(), name='approve-member'),
     url(r'^dashboard/manage_team/approve_captain/(?P<participant_id>[0-9-_:]+)/$', views.ApproveCaptainView.as_view(), name='approve-captain'),
+    url(r'^dashboard/manage_team/disband/$', views.DisbandTeamView.as_view(), name='disband-team'),
 
 )

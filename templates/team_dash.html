@@ -82,6 +82,10 @@
             {% endif %}
             {% render_widget_bottom %}
 
+            {% render_widget danger_widget_data %}
+                <a class="btn btn-danger" href="{% url "disband-team" %}">Disband team</a>
+            {% render_widget_bottom %}
+
         </div>
     </div>
 {% endblock %}

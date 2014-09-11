@@ -76,3 +76,26 @@ Visit https://signup.iseage.org/dashboard/manage_team/ to confirm or deny this r
 
 If you have questions, email CDC support at {support}
 """
+
+LEFT_TEAM="""Hi there captains,
+
+{fname} {lname} ({email}) has left your team, {team}.
+
+If you have questions, email CDC support at {support}
+"""
+
+STEPPED_DOWN="""Hi there captains,
+
+{fname} {lname} has stepped down as a captain of your team, {team}.
+
+If you have questions, email CDC support at {support}
+"""
+
+TEAM_DISBANDED="""Hi there members,
+
+Your team, {team}, has been disbanded.
+
+If you wish to join or create another team, please visit https://signup.iseage.org/dashboard/
+
+If you have questions, email CDC support at {support}
+"""

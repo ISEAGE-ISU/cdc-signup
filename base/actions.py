@@ -437,13 +437,15 @@ def add_user_to_team(team_id, participant_id):
 
     return True
 
-def remove_user_from_team(team_id, participant_id):
+def leave_team(participant_id):
     ldap_connection = admin_bind()
     if not ldap_connection:
         return False
 
+    participant = models.Participant.objects.get(pk=participant_id)
+    team = participant.team
     user_dn = get_user_dn(participant_id)
-    group_dn = get_group_dn(team_id)
+    group_dn = get_group_dn(team.id)
 
     ml = [(ldap.MOD_DELETE, 'member', user_dn)]
     try:
@@ -455,9 +457,27 @@ def remove_user_from_team(team_id, participant_id):
 
     ldap_connection.unbind_s()
 
-    participant = models.Participant.objects.get(pk=participant_id)
     participant.team = None
+    participant.requested_team = None
+    participant.captain = False
+    participant.requests_captain = False
     participant.save()
+
+    captain_emails = []
+    for captain in team.captains():
+        captain_emails.append(captain.user.email)
+
+    email_body = email_templates.LEFT_TEAM.format(fname=participant.user.first_name,
+                                                  lname=participant.user.last_name,
+                                                  email=participant.user.email,
+                                                  team=team.name,
+                                                  support=settings.SUPPORT_EMAIL)
+
+    try:
+        send_mail('ISEAGE CDC Support: A member has left your team', email_body, settings.EMAIL_FROM_ADDR, captain_emails)
+    except smtplib.SMTPException:
+        logging.warning("Failed to send email to captains of {team}:\n{body}".format(team=team.name, body=email_body))
+
     return True
 
 def promote_to_captain(participant_id):
@@ -480,8 +500,29 @@ def promote_to_captain(participant_id):
 
 def demote_captain(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
+    team = participant.team
+
+    if len(team.captains()) < 2:
+        raise base.OnlyRemainingCaptainError()
+
     participant.captain = False
     participant.save()
+
+    captain_emails = []
+    for captain in team.captains():
+        captain_emails.append(captain.user.email)
+
+    email_body = email_templates.STEPPED_DOWN.format(fname=participant.user.first_name,
+                                                     lname=participant.user.last_name,
+                                                     team=team.name,
+                                                     support=settings.SUPPORT_EMAIL)
+
+    try:
+        send_mail('ISEAGE CDC Support: A member has stepped down as captain', email_body, settings.EMAIL_FROM_ADDR, captain_emails)
+    except smtplib.SMTPException:
+        logging.warning("Failed to send email to captains of {team}:\n{body}".format(team=team.name, body=email_body))
+
+    return True
 
 def submit_join_request(participant_id, team_id):
     participant = models.Participant.objects.get(pk=participant_id)
@@ -526,5 +567,40 @@ def sumbit_captain_request(participant_id):
                   settings.EMAIL_FROM_ADDR, captain_emails)
     except smtplib.SMTPException:
         logging.warning("Failed to send email to captains of {team}:\n{body}".format(team=participant.team.name, body=email_body))
+
+    return True
+
+def disband_team(participant_id):
+    participant = models.Participant.objects.get(pk=participant_id)
+    team = participant.team
+    member_emails = []
+    ldap_connection = admin_bind()
+
+    group_dn = get_group_dn(team.id)
+
+    for member in team.members():
+        user_dn = get_user_dn(member.id)
+        ml = [(ldap.MOD_DELETE, 'member', user_dn)]
+        try:
+            ldap_connection.modify_s(group_dn, ml)
+        except ldap.LDAPError as e:
+            ldap_debug_write("Error removing user from group: " + str(e))
+            ldap_connection.unbind_s()
+            return False
+
+        member_emails.append(member.user.email)
+
+    ldap_connection.unbind_s()
+
+    name = team.name
+    team.delete_and_members()
+
+    email_body = email_templates.TEAM_DISBANDED.format(team=name, support=settings.SUPPORT_EMAIL)
+
+    try:
+        send_mail('ISEAGE CDC Support: Your team has been disbanded', email_body,
+                  settings.EMAIL_FROM_ADDR, member_emails)
+    except smtplib.SMTPException:
+        logging.warning("Failed to send email to members of {team}:\n{body}".format(team=name, body=email_body))
 
     return True

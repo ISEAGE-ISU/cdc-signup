@@ -94,3 +94,6 @@ class TeamAlreadyExistsError(Exception):
 class PasswordMismatchError(Exception):
     pass
 
+
+class OnlyRemainingCaptainError(Exception):
+    pass
