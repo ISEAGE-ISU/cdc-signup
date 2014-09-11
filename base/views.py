@@ -141,7 +141,10 @@ class IndexView(BaseTemplateView):
 
     def get(self, request, context, *args, **kwargs):
         if request.user.is_authenticated():
-            return redirect('dashboard')
+            if request.user.is_superuser:
+                return redirect('admin:index')
+            else:
+                return redirect('dashboard')
 
         return self.render_to_response(context)
 
