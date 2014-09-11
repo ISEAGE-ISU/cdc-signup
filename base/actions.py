@@ -45,17 +45,27 @@ def initialize_ldap():
     return l
 
 def admin_bind():
-    l = initialize_ldap()
-    try:
-        admin_dn = base.get_global_setting('administrator_bind_dn')
-        admin_pw = base.get_global_setting('administrator_bind_pw')
-        l.simple_bind_s(admin_dn, admin_pw)
+    # As long as the password didn't fail, attempt this many times to do the bind
+    num_retries = 2
 
-    except ldap.LDAPError as e:
-        ldap_debug_write("Couldn't bind as admin to LDAP server: " + str(e))
-        return None
-
-    return l
+    for i in range(num_retries + 1):
+        l = initialize_ldap()
+        try:
+            admin_dn = base.get_global_setting('administrator_bind_dn')
+            admin_pw = base.get_global_setting('administrator_bind_pw')
+            l.simple_bind_s(admin_dn, admin_pw)
+        except ldap.INVALID_CREDENTIALS:
+            ldap_debug_write("Failed to authenticate current password for admin account specified in settings")
+            l.unbind_s()
+            return None
+        except ldap.LDAPError as e:
+            ldap_debug_write("[Attempt " + str(i + 1) + "] Couldn't bind as admin to LDAP server: " + str(e))
+            l.unbind_s()
+            if i < num_retries:
+                continue
+            else:
+                return None
+        return l
 
 def ldap_debug_write(message):
     """ handle debug messages """
@@ -127,6 +137,7 @@ def create_user_account(username, fname, lname, email):
     # Check the results
     if len(user_results) != 0 and user_results[0][0] is not None:
         ldap_debug_write("User " + username + " already exists in AD: " + user_results[0][1]['distinguishedName'][0])
+        l.unbind_s()
         raise base.UsernameAlreadyExistsError()
 
     user_dn = 'CN={first} {last},OU={ou},{search}'.format(first=fname, last=lname,
@@ -161,10 +172,12 @@ def create_user_account(username, fname, lname, email):
         ldap_connection.add_s(user_dn, user_ldif)
     except ldap.ALREADY_EXISTS as e:
         ldap_debug_write("That DN already exists: " + str(e))
+        ldap_connection.unbind_s()
         raise base.DuplicateName()
 
     except ldap.LDAPError as e:
         ldap_debug_write("Error adding new user: " + str(e))
+        l.unbind_s()
         return False
 
     # Add user to CDCUsers group
@@ -172,6 +185,7 @@ def create_user_account(username, fname, lname, email):
         ldap_connection.modify_s(cdcuser_group_dn, add_member)
     except ldap.LDAPError as e:
         ldap_debug_write("Error adding user to CDCUsers group: " + str(e))
+        ldap_connection.unbind_s()
         return False
 
     # Add the password
@@ -179,6 +193,7 @@ def create_user_account(username, fname, lname, email):
         ldap_connection.modify_s(user_dn, add_pass)
     except ldap.LDAPError as e:
         ldap_debug_write("Error setting password: " + str(e))
+        ldap_connection.unbind_s()
         return False
 
     # Change the account back to enabled
@@ -186,6 +201,7 @@ def create_user_account(username, fname, lname, email):
         ldap_connection.modify_s(user_dn, mod_acct)
     except ldap.LDAPError as e:
         ldap_debug_write("Error enabling user: " + str(e))
+        ldap_connection.unbind_s()
         return False
 
     # LDAP unbind
@@ -212,9 +228,11 @@ def update_password(participant_id, old_password, new_password):
         l.simple_bind_s(user_dn, old_password)
     except ldap.INVALID_CREDENTIALS:
         ldap_debug_write("Failed to authenticate current password for " + user_dn)
+        l.unbind_s()
         raise base.PasswordMismatchError()
     except ldap.LDAPError as e:
         ldap_debug_write("Couldn't bind as user {dn} - ".format(dn=user_dn) + str(e))
+        l.unbind_s()
         return False
 
     # If we got this far, auth was successful
@@ -232,6 +250,7 @@ def update_password(participant_id, old_password, new_password):
         ldap_connection.modify_s(user_dn, ml)
     except ldap.LDAPError as e:
         ldap_debug_write("Error setting password: " + str(e))
+        ldap_connection.unbind_s()
         return False
 
     # If we're here, the password change succeeded
@@ -270,6 +289,7 @@ def forgot_password(email):
         ldap_connection.modify_s(user_dn, ml)
     except ldap.LDAPError as e:
         ldap_debug_write("Error resetting password: " + str(e))
+        ldap_connection.unbind_s()
         return False
 
     # If we're here, the password change succeeded
@@ -330,6 +350,7 @@ def create_team(name, captain_id):
         ldap_connection.modify_s(group_dn, ml)
     except ldap.LDAPError as e:
         ldap_debug_write("Error adding user to group: " + str(e))
+        ldap_connection.unbind_s()
         return False
 
     ldap_connection.unbind_s()
@@ -381,6 +402,7 @@ def add_user_to_team(team_id, participant_id):
         ldap_connection.modify_s(group_dn, ml)
     except ldap.LDAPError as e:
         ldap_debug_write("Error adding user to group: " + str(e))
+        ldap_connection.unbind_s()
         return False
 
     ldap_connection.unbind_s()
@@ -428,6 +450,7 @@ def remove_user_from_team(team_id, participant_id):
         ldap_connection.modify_s(group_dn, ml)
     except ldap.LDAPError as e:
         ldap_debug_write("Error removing user from group: " + str(e))
+        ldap_connection.unbind_s()
         return False
 
     ldap_connection.unbind_s()
