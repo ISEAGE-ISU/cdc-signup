@@ -1,6 +1,7 @@
 import ldap
 from ldap import modlist
 from signup import settings
+from signup import auth as ad_auth
 import base
 import datetime
 import models
@@ -206,6 +207,10 @@ def create_user_account(username, fname, lname, email):
 
     # LDAP unbind
     ldap_connection.unbind_s()
+
+    # Ensure the account exists locally
+    auth_obj =  ad_auth.ActiveDirectoryAuthenticationBackend
+    auth_obj.get_or_create_user(username, password)
 
     # Send email
     email_body = email_templates.ACCOUNT_CREATED.format(fname=fname, lname=lname,username=username, password=password,
