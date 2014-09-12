@@ -10,7 +10,7 @@ class ParticipantAdmin(admin.ModelAdmin):
         for participant in queryset:
             user = participant.user
             if not user.is_superuser:
-                emails.append(user.email)
+                emails.append(user.email + ', ')
         return HttpResponse(content=emails)
 
     get_participant_emails.short_description = "Get email list"
