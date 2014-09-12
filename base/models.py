@@ -34,6 +34,22 @@ class Team(models.Model):
     def requested_captains(self):
         return self.members().filter(requests_captain=True)
 
+    def captain_names(self):
+        names = ''
+        for captain in self.captains():
+            if len(names):
+                names = names + ', '
+            names = names + captain.user.get_full_name()
+        return names
+
+    def captain_emails(self):
+        emails = ''
+        for captain in self.captains():
+            if len(emails):
+                emails = emails + ', '
+            emails = emails + captain.user.email
+        return emails
+
     def delete_and_members(self):
         rc = self.requested_captains()
         for member in rc:

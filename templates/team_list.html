@@ -3,7 +3,7 @@
 
 {% block content %}
     <div class="row">
-        <div class="col-md-11" style="max-width: 800px;">
+        <div class="col-md-11">
             {% render_widget widget_data %}
             {% if no_teams %}
                 <p>It looks like there aren't any teams yet. If you want, you can <a href="{% url "create-team" %}">make a new one yourself</a>.</p>
@@ -12,6 +12,8 @@
                     <thead><tr>
                         <th>Name</th>
                         <th>Member Count</th>
+                        <th>Captains</th>
+                        <th>Captain Emails</th>
                         <th>Actions</th>
                     </tr></thead>
                     <tbody>
@@ -19,6 +21,8 @@
                     <tr id="team-{{ team.id }}">
                         <td class="name">{{ team.name }}</td>
                         <td class="count">{{ team.member_count }}</td>
+                        <td class="captains">{{ team.captain_names }}</td>
+                        <td class="captain-emails">{{ team.captain_emails }}</td>
                         <td>
                             <a class="btn btn-primary" href="{% url "join-team" team.id %}">Request to join</a>
                         </td>

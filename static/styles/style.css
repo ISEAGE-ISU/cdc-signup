@@ -169,7 +169,8 @@ span.blue {
 .form-horizontal input[type="file"],
 .form-horizontal textarea,
 .form-horizontal input .uneditable-input {
-    width: 234px;
+    min-width: 30%;
+    max-width: 50%;
 }
 
 .form-horizontal textarea {
