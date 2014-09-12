@@ -209,7 +209,7 @@ def create_user_account(username, fname, lname, email):
     ldap_connection.unbind_s()
 
     # Ensure the account exists locally
-    auth_obj =  ad_auth.ActiveDirectoryAuthenticationBackend
+    auth_obj =  ad_auth.ActiveDirectoryAuthenticationBackend()
     auth_obj.get_or_create_user(username, password)
 
     # Send email
