@@ -137,7 +137,7 @@ def create_user_account(username, fname, lname, email):
     # Check the results
     if len(user_results) != 0 and user_results[0][0] is not None:
         ldap_debug_write("User " + username + " already exists in AD: " + user_results[0][1]['distinguishedName'][0])
-        l.unbind_s()
+        ldap_connection.unbind_s()
         raise base.UsernameAlreadyExistsError()
 
     user_dn = 'CN={first} {last},OU={ou},{search}'.format(first=fname, last=lname,
