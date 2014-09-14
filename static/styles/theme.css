@@ -1046,7 +1046,7 @@ form {
 
 
 /* Responsive design */
-@media (max-width: 480px) {
+@media (max-width: 530px) {
     #header {
         height: auto;
         margin-bottom: 20px;
@@ -1119,7 +1119,7 @@ form {
     }
 }
 
-@media (min-width: 481px) and (max-width: 767px) {
+@media (min-width: 531px) and (max-width: 767px) {
     #header h1 {
         top: 3px;
     }
