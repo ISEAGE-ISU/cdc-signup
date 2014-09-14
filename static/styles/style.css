@@ -29,6 +29,12 @@ dd {
 
 }
 
+caption {
+    font-size: 18px;
+    font-weight: bold;
+    padding: 3px;
+}
+
 /* Bootstrap overrides */
 .container-fluid .row-fluid .container-fluid .row-fluid:first-child {
      margin-top: 0;
@@ -138,9 +144,6 @@ span.blue {
 
 /* Notifications */
 .notifications.top-center {
-    top:140px;
-    left:35%;
-    width:30%;
     z-index: 99999;
 }
 
@@ -169,8 +172,7 @@ span.blue {
 .form-horizontal input[type="file"],
 .form-horizontal textarea,
 .form-horizontal input .uneditable-input {
-    min-width: 30%;
-    max-width: 50%;
+    width: 100%;
 }
 
 .form-horizontal textarea {
@@ -187,7 +189,9 @@ span.blue {
 }
 
 .widget-content.nopadding .form-actions {
-    padding-left: 8.33333333%;
+    margin-left: 200px;
+    padding-left: 20px;
+    padding-right: 20px;
 }
 
 .form-horizontal .form-actions .delete-button {

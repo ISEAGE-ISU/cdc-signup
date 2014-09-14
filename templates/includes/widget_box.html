@@ -7,9 +7,11 @@
     </div>
 
     <div class="widget-content nopadding">
+        {% if widget_description %}
         <div class="widget-content" style="border-bottom: none;">
             {{ widget_description }}
         </div>
+        {% endif %}
 
         {{ widget_content }}
 

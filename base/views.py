@@ -280,12 +280,6 @@ class TeamListView(LoginRequiredMixin, BaseTemplateView):
         teams = actions.get_current_teams()
         if len(teams):
             context['teams'] = actions.get_current_teams()
-        else:
-            context['no_teams'] = True
-        context['widget_data'] = {
-            'title': 'Teams',
-            'icon': 'fa-list',
-        }
         return self.render_to_response(context)
 
 

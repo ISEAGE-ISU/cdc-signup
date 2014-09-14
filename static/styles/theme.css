@@ -27,11 +27,11 @@ a:hover {
 
 /* Header */
 #header {
-    height: 177px;
     position: relative;
     width: 100%;
     padding-top: 10px;
     padding-left: 10px;
+    margin-bottom: 25px;
 }
 
 #header h1 {
@@ -46,6 +46,15 @@ a:hover {
 
 #header h1 a {
     display: block;
+}
+
+#logo img {
+    max-height: 80px;
+}
+
+#logo h1  {
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 /* Search input */
@@ -155,12 +164,12 @@ a:hover {
     border-top-left-radius: 8px;
     height: 80px;
     width: 100%;
-    margin-top: -38px;
     z-index: 20;
 }
 
 #content-header h1 {
     color: #555555;
+    padding-top: 6px;
     font-size: 28px;
     font-weight: normal;
     float: left;
@@ -1038,10 +1047,28 @@ form {
 
 /* Responsive design */
 @media (max-width: 480px) {
+    #header {
+        height: auto;
+        margin-bottom: 20px;
+    }
+
     #header h1 {
         top: auto;
         left: auto;
         margin: 3px auto;
+    }
+
+    #logo img {
+        height: 40px;
+    }
+
+    #logo h1  {
+        font-size: 36px;
+    }
+
+    .notifications.top-center {
+        left:5%;
+        width:90%;
     }
     #user-nav {
         position: relative;
@@ -1064,25 +1091,19 @@ form {
     }
     #content-header {
         margin-top: 0;
-        height: 140px;
-        text-align: center;
     }
     #content-header h1, #content-header .btn-group {
         float: none;
     }
     #content-header h1 {
         display: block;
-        text-align: center;
         margin-left: auto;
-        margin-top: 0;
-        padding-top: 15px;
+        padding-left: 10px;
         width: 100%;
     }
     #content-header .btn-group {
-        margin-top: 70px;
         margin-bottom: 0;
         margin-right: 0;
-        left: 30%;
     }
     .widget-title .buttons > .btn {
         width: 11px;
@@ -1096,20 +1117,35 @@ form {
         margin-left: 0;
         padding: 10px 30px;
     }
-    .form-actions {
-        text-align: center;
-    }
 }
 
 @media (min-width: 481px) and (max-width: 767px) {
     #header h1 {
         top: 3px;
     }
+
+    #logo img {
+        height: 60px;
+    }
+
+    #logo h1  {
+        font-size: 54px;
+    }
+
+    .notifications.top-center {
+        left:10%;
+        width:80%;
+    }
+
     #content {
-        margin-left: 43px;
+        margin-left: 10px !important;
     }
 }
 @media (max-width: 600px) {
+    input {
+        font-size: 18px;
+    }
+
     .widget-title .buttons {
         float: left;
     }
@@ -1125,19 +1161,34 @@ form {
         height: auto;
         width: auto;
     }
-
 }
 @media (max-width: 767px) {
     body {
         padding: 0 !important;
     }
     .container-fluid {
-        padding-left: 20px;
-        padding-right: 20px;
+        padding-left: 0;
+        padding-right: 0;
     }
     #search { display: none; }
     #user-nav > ul > li > a > span.text {
         display: none;
+    }
+
+    .notifications.top-center {
+        top: 10px;
+    }
+
+    .form-actions {
+        text-align: right;
+        margin-left: 0 !important;
+    }
+}
+@media (min-width: 768px) {
+    .notifications.top-center {
+        left:35%;
+        width:30%;
+        top:140px;
     }
 }
 @media (min-width: 768px) and (max-width: 979px) {

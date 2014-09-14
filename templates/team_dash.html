@@ -5,7 +5,7 @@
     <h3>Manage <i>{{ participant.team.name }}</i> (Team {{ participant.team.number }})</h3>
 
     <div class="row">
-        <div class="col-md-6" style="max-width: 700px;">
+        <div class="col-md-11" style="max-width: 800px;">
             <form class='form-horizontal' action='' method="POST">
                 {% csrf_token %}
                 {% render_form_widget form title="Rename Team" icon="fa-edit" %}
@@ -16,69 +16,76 @@
         <div class="col-md-11">
             {% render_widget widget_data %}
                 <h4>Current Members</h4>
-                <table class="table table-striped" id="current-members">
-                    <thead><tr>
-                        <th>First</th>
-                        <th>Last</th>
-                        <th>Email</th>
-                        <th>Captain</th>
-                    </tr></thead>
-                    <tbody>
-                    {% for member in current_members %}
-                    <tr id="member-{{ member.id }}">
-                        <td class="first">{{ member.user.first_name }}</td>
-                        <td class="last">{{ member.user.last_name }}</td>
-                        <td class="email">{{ member.user.email }}</td>
-                        {% if member.captain %}<td data-id="true" class="is-captain">Yes</td>{% else %}<td data-id="false" class="is-captain">No</td>{% endif %}
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="current-members">
+                        <thead><tr>
+                            <th>First</th>
+                            <th>Last</th>
+                            <th>Email</th>
+                            <th>Captain</th>
+                        </tr></thead>
+                        <tbody>
+                        {% for member in current_members %}
+                        <tr id="member-{{ member.id }}">
+                            <td class="first">{{ member.user.first_name }}</td>
+                            <td class="last">{{ member.user.last_name }}</td>
+                            <td class="email">{{ member.user.email }}</td>
+                            {% if member.captain %}<td data-id="true" class="is-captain">Yes</td>{% else %}<td data-id="false" class="is-captain">No</td>{% endif %}
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
             {% if member_requests %}
                 <h4>Member Requests</h4>
-                <table class="table table-striped" id="member-requests">
-                    <thead><tr>
-                        <th>First</th>
-                        <th>Last</th>
-                        <th>Email</th>
-                        <th>Actions</th>
-                    </tr></thead>
-                    <tbody>
-                    {% for member in member_requests %}
-                    <tr id="member-{{ member.id }}">
-                        <td class="first">{{ member.user.first_name }}</td>
-                        <td class="last">{{ member.user.last_name }}</td>
-                        <td class="email">{{ member.user.email }}</td>
-                        <td class="approve">
-                            <a class="btn btn-primary" href="{% url "approve-member" member.id %}">Approve member request</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="member-requests">
+                        <thead><tr>
+                            <th>First</th>
+                            <th>Last</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                        </tr></thead>
+                        <tbody>
+                        {% for member in member_requests %}
+                        <tr id="member-{{ member.id }}">
+                            <td class="first">{{ member.user.first_name }}</td>
+                            <td class="last">{{ member.user.last_name }}</td>
+                            <td class="email">{{ member.user.email }}</td>
+                            <td class="approve">
+                                <a class="btn btn-primary" href="{% url "approve-member" member.id %}">Approve member request</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% endif %}
             {% if captain_requests %}
                 <h4>Captain Requests</h4>
-                <table class="table table-striped" id="member-requests">
-                    <thead><tr>
-                        <th>First</th>
-                        <th>Last</th>
-                        <th>Email</th>
-                        <th>Actions</th>
-                    </tr></thead>
-                    <tbody>
-                    {% for member in captain_requests %}
-                    <tr id="member-{{ member.id }}">
-                        <td class="first">{{ member.user.first_name }}</td>
-                        <td class="last">{{ member.user.last_name }}</td>
-                        <td class="email">{{ member.user.email }}</td>
-                        <td class="approve">
-                            <a class="btn btn-primary" href="{% url "approve-captain" member.id %}">Approve captain request</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="member-requests">
+                        <thead><tr>
+                            <th>First</th>
+                            <th>Last</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                        </tr></thead>
+                        <tbody>
+                        {% for member in captain_requests %}
+                        <tr id="member-{{ member.id }}">
+                            <td class="first">{{ member.user.first_name }}</td>
+                            <td class="last">{{ member.user.last_name }}</td>
+                            <td class="email">{{ member.user.email }}</td>
+                            <td class="approve">
+                                <a class="btn btn-primary" href="{% url "approve-captain" member.id %}">Approve captain request</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% endif %}
             {% render_widget_bottom %}
 

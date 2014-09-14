@@ -3,7 +3,7 @@
 
 {% block content %}
     <div class="row">
-        <div class="col-md-11" style="max-width: 700px;">
+        <div class="col-md-12" style="max-width: 700px;">
             {% render_widget widget_data %}
                 {% if requested_team %}
                 <p>Your request to join {{ requested_team.name }} is pending approval.</p>
@@ -49,7 +49,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-md-11" style="max-width: 700px;">
+        <div class="col-md-12" style="max-width: 700px;">
             <form class='form-horizontal' action='' method="POST">
                 {% render_form_widget form title="Change password" icon="fa-edit" %}
                 {% csrf_token %}
