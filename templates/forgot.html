@@ -3,10 +3,12 @@
 
 {% block content %}
 
-    <form class='form-horizontal' action='' method="POST">
-        {% csrf_token %}
-        {% render_form_widget form icon="fa-edit" %}
-    </form>
+    <div class="col-md-6">
+        <form class='form-horizontal' action='' method="POST">
+            {% csrf_token %}
+            {% render_form_widget form icon="fa-edit" %}
+        </form>
+    </div>
 
 {% endblock %}
 
