@@ -173,6 +173,7 @@ span.blue {
 .form-horizontal textarea,
 .form-horizontal input .uneditable-input {
     width: 100%;
+    max-width: 400px;
 }
 
 .form-horizontal textarea {
