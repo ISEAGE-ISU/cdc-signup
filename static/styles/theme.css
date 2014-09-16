@@ -1186,8 +1186,8 @@ form {
 }
 @media (min-width: 768px) {
     .notifications.top-center {
-        left:35%;
-        width:30%;
+        left:25%;
+        width:50%;
         top:140px;
     }
 }
