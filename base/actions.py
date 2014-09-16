@@ -19,8 +19,10 @@ LOWER = re.compile('.*[a-z].*')
 NUMERIC = re.compile('.*[0-9].*')
 PASSWORD_LENGTH = 12
 
+
 def get_current_teams():
     return models.Team.objects.annotate(member_count=Count('participant'))
+
 
 ##########
 # LDAP functions
@@ -45,12 +47,14 @@ def initialize_ldap():
 
     return l
 
+
 def admin_bind():
     # As long as the password didn't fail, attempt this many times to do the bind
     num_retries = 2
 
     for i in range(num_retries + 1):
         l = initialize_ldap()
+        ldap_debug_write("*****Initializing admin bind*****")
         try:
             admin_dn = base.get_global_setting('administrator_bind_dn')
             admin_pw = base.get_global_setting('administrator_bind_pw')
@@ -68,6 +72,30 @@ def admin_bind():
                 return None
         return l
 
+
+# Decorator to automatically handle setting up/tearing down an admin LDAP session if none is provided
+def ldap_admin_bind(func):
+
+    def false_func(*args, **kwargs):
+        return False
+
+    def session(*args, **kwargs):
+        ldap_connection = admin_bind()
+        if not ldap_connection:
+            return false_func
+
+        kwargs.update(ldap_connection=ldap_connection)
+
+        try:
+            ret = func(*args, **kwargs)
+        except:
+            raise
+        finally:
+            ldap_connection.unbind_s()
+        return ret
+    return session
+
+
 def ldap_debug_write(message):
     """ handle debug messages """
     debug_file = settings.AD_DEBUG_FILE
@@ -76,6 +104,7 @@ def ldap_debug_write(message):
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
         fObj.write("%s\t%s\n" % (now,message))
         fObj.close()
+
 
 def get_user_dn(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
@@ -86,6 +115,7 @@ def get_user_dn(participant_id):
                                                       base_dn=settings.AD_BASE_DN)
     return user_dn
 
+
 def get_group_dn(team_id):
     team = models.Team.objects.get(pk=team_id)
     group = settings.AD_BLUE_TEAM_FORMAT.format(number=team.number)
@@ -93,6 +123,51 @@ def get_group_dn(team_id):
                                                      ou=settings.AD_CDCUSER_OU,
                                                      base_dn=settings.AD_BASE_DN)
     return group_dn
+
+
+@ldap_admin_bind
+def add_user_to_group(user_dn, group_dn, ldap_connection):
+    ml = [(ldap.MOD_ADD, 'member', user_dn)]
+    try:
+        ldap_connection.modify_s(group_dn, ml)
+    except ldap.LDAPError as e:
+        ldap_debug_write("Error adding user to group: " + str(e))
+        return False
+
+    return True
+
+
+@ldap_admin_bind
+def remove_user_from_group(user_dn, group_dn, ldap_connection):
+    ml = [(ldap.MOD_DELETE, 'member', user_dn)]
+    try:
+        ldap_connection.modify_s(group_dn, ml)
+    except ldap.LDAPError as e:
+        ldap_debug_write("Error removing user from group: " + str(e))
+        return False
+    return True
+
+
+@ldap_admin_bind
+def set_password(user_dn, password, ldap_connection):
+    if not password:
+        return False
+
+    # Prep the password
+    unicode_pass = ('\"' + password + '\"').encode('iso-8859-1')
+    password_value = unicode_pass.encode('utf-16-le')
+    ml = [(ldap.MOD_REPLACE, 'unicodePwd', [password_value])]
+
+    # Change the password
+    try:
+        ldap_connection.modify_s(user_dn, ml)
+    except ldap.LDAPError as e:
+        ldap_debug_write("Error setting password: " + str(e))
+        return False
+
+    # If we're here, the password set succeeded
+    return True
+
 
 ##########
 # User accounts
@@ -105,20 +180,9 @@ def generate_password():
         if UPPER.match(password) and LOWER.match(password) and NUMERIC.match(password):
             return password
 
-def make_password_modlist(password):
-    if password:
-        # Prep the password
-        unicode_pass = ('\"' + password + '\"').encode('iso-8859-1')
-        password_value = unicode_pass.encode('utf-16-le')
-        add_pass = [(ldap.MOD_REPLACE, 'unicodePwd', [password_value])]
-        return add_pass
-    return None
 
-def create_user_account(username, fname, lname, email):
-    ldap_connection = admin_bind()
-    if not ldap_connection:
-        return False
-
+@ldap_admin_bind
+def create_user_account(username, fname, lname, email, ldap_connection):
     base_dn = settings.AD_BASE_DN
     cdcuser_ou = settings.AD_CDCUSER_OU
 
@@ -138,7 +202,6 @@ def create_user_account(username, fname, lname, email):
     # Check the results
     if len(user_results) != 0 and user_results[0][0] is not None:
         ldap_debug_write("User " + username + " already exists in AD: " + user_results[0][1]['distinguishedName'][0])
-        ldap_connection.unbind_s()
         raise base.UsernameAlreadyExistsError()
 
     user_dn = 'CN={first} {last},OU={ou},{search}'.format(first=fname, last=lname,
@@ -157,7 +220,6 @@ def create_user_account(username, fname, lname, email):
     user_ldif = modlist.addModlist(user_attrs)
 
     password = generate_password()
-    add_pass = make_password_modlist(password)
 
     # New group membership
     add_member = [(ldap.MOD_ADD, 'member', user_dn)]
@@ -173,12 +235,10 @@ def create_user_account(username, fname, lname, email):
         ldap_connection.add_s(user_dn, user_ldif)
     except ldap.ALREADY_EXISTS as e:
         ldap_debug_write("That DN already exists: " + str(e))
-        ldap_connection.unbind_s()
         raise base.DuplicateName()
 
     except ldap.LDAPError as e:
         ldap_debug_write("Error adding new user: " + str(e))
-        l.unbind_s()
         return False
 
     # Add user to CDCUsers group
@@ -186,15 +246,18 @@ def create_user_account(username, fname, lname, email):
         ldap_connection.modify_s(cdcuser_group_dn, add_member)
     except ldap.LDAPError as e:
         ldap_debug_write("Error adding user to CDCUsers group: " + str(e))
-        ldap_connection.unbind_s()
         return False
 
-    # Add the password
+    # Prep the password
+    unicode_pass = ('\"' + password + '\"').encode('iso-8859-1')
+    password_value = unicode_pass.encode('utf-16-le')
+    ml = [(ldap.MOD_REPLACE, 'unicodePwd', [password_value])]
+
+    # Set the password
     try:
-        ldap_connection.modify_s(user_dn, add_pass)
+        ldap_connection.modify_s(user_dn, ml)
     except ldap.LDAPError as e:
         ldap_debug_write("Error setting password: " + str(e))
-        ldap_connection.unbind_s()
         return False
 
     # Change the account back to enabled
@@ -202,18 +265,14 @@ def create_user_account(username, fname, lname, email):
         ldap_connection.modify_s(user_dn, mod_acct)
     except ldap.LDAPError as e:
         ldap_debug_write("Error enabling user: " + str(e))
-        ldap_connection.unbind_s()
         return False
-
-    # LDAP unbind
-    ldap_connection.unbind_s()
 
     # Ensure the account exists locally
     auth_obj =  ad_auth.ActiveDirectoryAuthenticationBackend()
     auth_obj.get_or_create_user(username, password)
 
     # Send email
-    email_body = email_templates.ACCOUNT_CREATED.format(fname=fname, lname=lname,username=username, password=password,
+    email_body = email_templates.ACCOUNT_CREATED.format(fname=fname, lname=lname, username=username, password=password,
                                 support=settings.SUPPORT_EMAIL)
 
     try:
@@ -223,6 +282,7 @@ def create_user_account(username, fname, lname, email):
 
     # All is good
     return True
+
 
 def update_password(participant_id, old_password, new_password):
     # Check that the current password is correct
@@ -243,23 +303,9 @@ def update_password(participant_id, old_password, new_password):
     # If we got this far, auth was successful
     l.unbind_s()
 
-    # Prep the password
-    ml = make_password_modlist(new_password)
-
-    ldap_connection = admin_bind()
-    if not ldap_connection:
+    success = set_password(user_dn, new_password)
+    if not success:
         return False
-
-    # Change the password
-    try:
-        ldap_connection.modify_s(user_dn, ml)
-    except ldap.LDAPError as e:
-        ldap_debug_write("Error setting password: " + str(e))
-        ldap_connection.unbind_s()
-        return False
-
-    # If we're here, the password change succeeded
-    ldap_connection.unbind_s()
 
     # Send email
     participant = models.Participant.objects.get(pk=participant_id)
@@ -268,6 +314,7 @@ def update_password(participant_id, old_password, new_password):
     email_body = email_templates.PASSWORD_UPDATED.format(fname=participant.user.first_name,
                                                          lname=participant.user.last_name,
                                                          support=settings.SUPPORT_EMAIL)
+
     try:
         send_mail('ISEAGE CDC Support: Password successfully updated', email_body, settings.EMAIL_FROM_ADDR, [email])
     except smtplib.SMTPException:
@@ -276,29 +323,15 @@ def update_password(participant_id, old_password, new_password):
     # All done
     return True
 
+
 def forgot_password(email):
     user = User.objects.get(email=email)
-
-    ldap_connection = admin_bind()
-    if not ldap_connection:
-        return False
-
     user_dn = get_user_dn(user.participant.id)
-
     password = generate_password()
-    ml = make_password_modlist(password)
 
-    # Change the password
-    ldap_debug_write("Resetting password for " + user_dn)
-    try:
-        ldap_connection.modify_s(user_dn, ml)
-    except ldap.LDAPError as e:
-        ldap_debug_write("Error resetting password: " + str(e))
-        ldap_connection.unbind_s()
+    success = set_password(user_dn, password)
+    if not success:
         return False
-
-    # If we're here, the password change succeeded
-    ldap_connection.unbind_s()
 
     # Send email
     email = user.email
@@ -336,29 +369,13 @@ def assign_team_number(team_id):
 
     return True
 
+
 def create_team(name, captain_id):
     team, created = models.Team.objects.get_or_create(name=name)
     if not created:
         raise base.TeamAlreadyExistsError()
 
     assign_team_number(team.id)
-
-    ldap_connection = admin_bind()
-    if not ldap_connection:
-        return False
-
-    user_dn = get_user_dn(captain_id)
-    group_dn = get_group_dn(team.id)
-
-    ml = [(ldap.MOD_ADD, 'member', user_dn)]
-    try:
-        ldap_connection.modify_s(group_dn, ml)
-    except ldap.LDAPError as e:
-        ldap_debug_write("Error adding user to group: " + str(e))
-        ldap_connection.unbind_s()
-        return False
-
-    ldap_connection.unbind_s()
 
     # Reload so we get the correct number
     team = models.Team.objects.get(pk=team.id)
@@ -379,6 +396,7 @@ def create_team(name, captain_id):
 
     return True
 
+
 def rename_team(team_id, new_name):
     exists = True
     try:
@@ -394,27 +412,11 @@ def rename_team(team_id, new_name):
     team.save()
     return True
 
+
 def add_user_to_team(team_id, participant_id):
-    ldap_connection = admin_bind()
-    if not ldap_connection:
-        return False
-
-    user_dn = get_user_dn(participant_id)
-    group_dn = get_group_dn(team_id)
-
-    ml = [(ldap.MOD_ADD, 'member', user_dn)]
-    try:
-        ldap_connection.modify_s(group_dn, ml)
-    except ldap.LDAPError as e:
-        ldap_debug_write("Error adding user to group: " + str(e))
-        ldap_connection.unbind_s()
-        return False
-
-    ldap_connection.unbind_s()
-
-
     participant = models.Participant.objects.get(pk=participant_id)
     team = models.Team.objects.get(pk=team_id)
+
     participant.team = team
     participant.requested_team = None
     participant.save()
@@ -442,25 +444,10 @@ def add_user_to_team(team_id, participant_id):
 
     return True
 
-def leave_team(participant_id):
-    ldap_connection = admin_bind()
-    if not ldap_connection:
-        return False
 
+def leave_team(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
     team = participant.team
-    user_dn = get_user_dn(participant_id)
-    group_dn = get_group_dn(team.id)
-
-    ml = [(ldap.MOD_DELETE, 'member', user_dn)]
-    try:
-        ldap_connection.modify_s(group_dn, ml)
-    except ldap.LDAPError as e:
-        ldap_debug_write("Error removing user from group: " + str(e))
-        ldap_connection.unbind_s()
-        return False
-
-    ldap_connection.unbind_s()
 
     participant.team = None
     participant.requested_team = None
@@ -485,11 +472,10 @@ def leave_team(participant_id):
 
     return True
 
+
 def promote_to_captain(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
-    participant.captain = True
-    participant.requests_captain = False
-    participant.save()
+    participant.promote()
 
     email = participant.user.email
     email_body = email_templates.CAPTAIN_REQUEST_APPROVED.format(fname=participant.user.first_name,
@@ -503,6 +489,7 @@ def promote_to_captain(participant_id):
 
     return True
 
+
 def demote_captain(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
     team = participant.team
@@ -510,8 +497,7 @@ def demote_captain(participant_id):
     if len(team.captains()) < 2:
         raise base.OnlyRemainingCaptainError()
 
-    participant.captain = False
-    participant.save()
+    participant.demote()
 
     captain_emails = []
     for captain in team.captains():
@@ -529,11 +515,13 @@ def demote_captain(participant_id):
 
     return True
 
+
 def submit_join_request(participant_id, team_id):
     participant = models.Participant.objects.get(pk=participant_id)
     team = models.Team.objects.get(pk=team_id)
-    participant.requested_team = team
-    participant.save()
+
+    participant.request_team(team)
+
     captain_emails = []
     for captain in team.captains():
         captain_emails.append(captain.user.email)
@@ -550,13 +538,14 @@ def submit_join_request(participant_id, team_id):
     except smtplib.SMTPException:
         logging.warning("Failed to send email to captains of {team}:\n{body}".format(team=team.name, body=email_body))
 
-
     return True
+
 
 def sumbit_captain_request(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
-    participant.requests_captain = True
-    participant.save()
+
+    participant.request_captain()
+
     captain_emails = []
     for captain in participant.team.captains():
         captain_emails.append(captain.user.email)
@@ -575,30 +564,17 @@ def sumbit_captain_request(participant_id):
 
     return True
 
+
 def disband_team(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
+    if not participant.captain:
+        return False
+
     team = participant.team
-    member_emails = []
-    ldap_connection = admin_bind()
-
-    group_dn = get_group_dn(team.id)
-
-    for member in team.members():
-        user_dn = get_user_dn(member.id)
-        ml = [(ldap.MOD_DELETE, 'member', user_dn)]
-        try:
-            ldap_connection.modify_s(group_dn, ml)
-        except ldap.LDAPError as e:
-            ldap_debug_write("Error removing user from group: " + str(e))
-            ldap_connection.unbind_s()
-            return False
-
-        member_emails.append(member.user.email)
-
-    ldap_connection.unbind_s()
-
     name = team.name
-    team.delete_and_members()
+    member_emails = team.member_email_list()
+
+    team.delete()
 
     email_body = email_templates.TEAM_DISBANDED.format(team=name, support=settings.SUPPORT_EMAIL)
 

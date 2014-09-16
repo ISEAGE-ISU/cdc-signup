@@ -1,15 +1,8 @@
 from django.db import models
 from django.contrib.auth import models as auth_models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save, pre_delete
 from django.dispatch import receiver
-
-
-########
-# Signal for automatically making Participant objects
-########
-@receiver(post_save, sender=auth_models.User)
-def create_participant(sender, instance, **kwargs):
-    Participant.objects.get_or_create(user=instance)
+from base import actions
 
 
 class GlobalSettings(models.Model):
@@ -34,6 +27,12 @@ class Team(models.Model):
     def requested_captains(self):
         return self.members().filter(requests_captain=True)
 
+    def member_email_list(self):
+        member_emails = []
+        for member in self.members():
+            member_emails.append(member.user.email)
+        return member_emails
+
     def captain_names(self):
         names = ''
         for captain in self.captains():
@@ -50,22 +49,6 @@ class Team(models.Model):
             emails = emails + captain.user.email
         return emails
 
-    def delete_and_members(self):
-        rc = self.requested_captains()
-        for member in rc:
-            member.requests_captain = False
-            member.save()
-        r = self.requested_members()
-        for participant in r:
-            participant.requested_team = None
-            participant.save()
-        m = self.members()
-        for member in m:
-            member.team = None
-            member.captain = False
-            member.save()
-        self.delete()
-
     def __unicode__(self):
         return "Team {number}: {name}".format(number=self.number, name=self.name)
 
@@ -80,5 +63,80 @@ class Participant(models.Model):
     def user_is_captain(self):
         return self.captain or self.user.is_superuser
 
+    def request_team(self, team):
+        if not self.team:
+            self.requested_team = team
+            self.save(update_fields=['requested_team'])
+
+    def request_promotion(self):
+        if not self.requests_captain:
+            self.requests_captain = True
+            self.save(update_fields=['requests_captain'])
+
+    def promote(self):
+        if not self.captain:
+            self.captain = True
+            self.requests_captain = False
+            self.save(update_fields=['captain', 'requests_captain'])
+
+    def demote(self):
+        if self.captain:
+            self.captain = False
+            self.save(update_fields=['captain'])
+
     def __unicode__(self):
         return "{username} ({name})".format(username=self.user.get_username(), name=self.user.get_full_name())
+
+
+########
+# Signals
+########
+@receiver(post_save, sender=auth_models.User)
+def create_participant(sender, instance, **kwargs):
+    Participant.objects.get_or_create(user=instance)
+
+
+@receiver(pre_save, sender=Participant)
+def remove_old_ad_group(sender, instance, **kwargs):
+    fields = kwargs.get('update_fields', None)
+    if fields:
+        if not 'team' in fields:
+            return
+
+    current = Participant.objects.get(pk=instance.id)
+    team = current.team
+    if team:
+        user_dn = actions.get_user_dn(instance.id)
+        group_dn = actions.get_group_dn(team.id)
+        actions.remove_user_from_group(user_dn, group_dn)
+
+
+@receiver(post_save, sender=Participant)
+def add_new_ad_group(sender, instance, **kwargs):
+    fields = kwargs.get('update_fields', None)
+    if fields:
+        if not 'team' in fields:
+            return
+
+    team = instance.team
+    if team:
+        user_dn = actions.get_user_dn(instance.id)
+        group_dn = actions.get_group_dn(team.id)
+        actions.add_user_to_group(user_dn, group_dn)
+
+
+@receiver(pre_delete, sender=Team)
+def remove_members(sender, instance, **kwargs):
+    rc = instance.requested_captains()
+    for member in rc:
+        member.requests_captain = False
+        member.save(update_fields=['requests_captain'])
+    r = instance.requested_members()
+    for participant in r:
+        participant.requested_team = None
+        participant.save(update_fields=['requested_team'])
+    m = instance.members()
+    for member in m:
+        member.team = None
+        member.captain = False
+        member.save()
