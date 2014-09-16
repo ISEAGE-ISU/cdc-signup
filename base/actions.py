@@ -326,7 +326,8 @@ def update_password(participant_id, old_password, new_password):
 
 def forgot_password(email):
     user = User.objects.get(email=email)
-    user_dn = get_user_dn(user.participant.id)
+    participant = models.Participant.objects.get_or_create(user=user)
+    user_dn = get_user_dn(participant.id)
     password = generate_password()
 
     success = set_password(user_dn, password)
