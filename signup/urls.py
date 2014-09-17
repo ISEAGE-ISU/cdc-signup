@@ -1,11 +1,14 @@
 from django.conf.urls import patterns, include, url
 from base import views
-
-from django.contrib.auth.views import logout
+from signup import settings
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
+
+handler403 = 'signup.errors.error403'
+handler404 = 'signup.errors.error404'
+handler500 = 'signup.errors.error500'
 
 urlpatterns = patterns('',
     # Examples:
@@ -40,3 +43,10 @@ urlpatterns = patterns('',
     url(r'^dashboard/manage_team/disband/$', views.DisbandTeamView.as_view(), name='disband-team'),
 
 )
+
+if settings.DEBUG:
+    urlpatterns += patterns('',
+        url(r'^403/$', 'signup.errors.error403', name='403'),
+        url(r'^404/$', 'signup.errors.error404', name='404'),
+        url(r'^500/$', 'signup.errors.error500', name='500'),
+    )
