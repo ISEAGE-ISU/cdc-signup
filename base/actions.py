@@ -545,7 +545,7 @@ def submit_join_request(participant_id, team_id):
 def sumbit_captain_request(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
 
-    participant.request_captain()
+    participant.request_promotion()
 
     captain_emails = []
     for captain in participant.team.captains():
