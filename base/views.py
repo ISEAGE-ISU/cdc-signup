@@ -267,6 +267,9 @@ class ForgotPasswordView(BaseTemplateView):
             if success:
                 messages.success(request, 'Password successfully reset. Please check your email for further instructions.')
                 return redirect('site-login')
+            else:
+                messages.error(request, """Whoops! Something went wrong on our end.
+                Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
 
         return self.get(request, context, form=form)
 

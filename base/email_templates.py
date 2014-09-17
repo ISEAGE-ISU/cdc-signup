@@ -22,8 +22,12 @@ If you didn't change your password, please contact CDC support at {support} imme
 
 PASSWORD_RESET="""Hi there {fname} {lname},
 
-Your password has been reset to {password}
-You should change it right away at https://signup.iseage.org/dashboard/
+Your password has been reset. Here are your new credentials:
+
+Username: {username}
+Password: {password}
+
+You should change your password right away at https://signup.iseage.org/dashboard/
 
 If you didn't request a password reset, please contact CDC support at {support} immediately.
 """

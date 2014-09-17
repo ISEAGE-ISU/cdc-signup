@@ -325,23 +325,28 @@ def update_password(participant_id, old_password, new_password):
 
 
 def forgot_password(email):
-    user = User.objects.get(email=email)
-    participant, created = models.Participant.objects.get_or_create(user=user)
-    user_dn = get_user_dn(participant.id)
-    password = generate_password()
+    users = User.objects.filter(email=email)
+    if len(users) < 1:
+        raise User.DoesNotExist()
+    for user in users:
+        participant, created = models.Participant.objects.get_or_create(user=user)
+        user_dn = get_user_dn(participant.id)
+        password = generate_password()
 
-    success = set_password(user_dn, password)
-    if not success:
-        return False
+        success = set_password(user_dn, password)
+        if not success:
+            return False
 
-    # Send email
-    email = user.email
-    email_body = email_templates.PASSWORD_RESET.format(fname=user.first_name, lname=user.last_name, password=password,
-                                support=settings.SUPPORT_EMAIL)
-    try:
-        send_mail('ISEAGE CDC Support: Your password has been reset', email_body, settings.EMAIL_FROM_ADDR, [email])
-    except smtplib.SMTPException:
-        logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=email_body))
+        # Send email
+        username = user.get_username()
+        email = user.email
+        email_body = email_templates.PASSWORD_RESET.format(fname=user.first_name, lname=user.last_name,
+                                                           username=username, password=password,
+                                                           support=settings.SUPPORT_EMAIL)
+        try:
+            send_mail('ISEAGE CDC Support: Your password has been reset', email_body, settings.EMAIL_FROM_ADDR, [email])
+        except smtplib.SMTPException:
+            logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=email_body))
 
     # All done
     return True
