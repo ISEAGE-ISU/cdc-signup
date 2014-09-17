@@ -109,7 +109,10 @@ def remove_old_ad_group(sender, instance, **kwargs):
         if not 'team' in fields:
             return
 
-    current, created = Participant.objects.get_or_create(pk=instance.id)
+    try:
+        current = Participant.objects.get(pk=instance.id)
+    except Participant.DoesNotExist:
+        return
     team = current.team
     if team:
         user_dn = actions.get_user_dn(instance.id)
