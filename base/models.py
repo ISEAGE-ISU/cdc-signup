@@ -52,6 +52,9 @@ class Team(models.Model):
     def __unicode__(self):
         return "Team {number}: {name}".format(number=self.number, name=self.name)
 
+    class Meta:
+        ordering = ['number']
+
 
 class Participant(models.Model):
     user = models.OneToOneField(auth_models.User)
@@ -86,6 +89,9 @@ class Participant(models.Model):
 
     def __unicode__(self):
         return "{username} ({name})".format(username=self.user.get_username(), name=self.user.get_full_name())
+
+    class Meta:
+        ordering = ['team']
 
 
 ########

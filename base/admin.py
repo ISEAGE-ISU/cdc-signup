@@ -4,6 +4,7 @@ from django.http import HttpResponse
 
 
 class ParticipantAdmin(admin.ModelAdmin):
+    list_display = ('__unicode__', 'team', 'captain', 'requested_team', 'requests_captain')
     actions = ['get_participant_emails']
 
     def get_participant_emails(self, request, queryset):
@@ -23,6 +24,7 @@ class ParticipantInline(admin.TabularInline):
 
 
 class TeamAdmin(admin.ModelAdmin):
+    list_display = ('number', 'name')
     inlines = [
         ParticipantInline,
     ]
