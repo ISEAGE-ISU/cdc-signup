@@ -62,6 +62,11 @@ class Participant(models.Model):
     captain = models.BooleanField(default=False)
     requested_team = models.ForeignKey('Team', related_name='requested_team', blank=True, null=True)
     requests_captain = models.BooleanField(default=False)
+    checked_in = models.BooleanField(default=False)
+
+    def check_in(self):
+        self.checked_in = True
+        self.save(update_fields=['checked_in'])
 
     def user_is_captain(self):
         return self.captain or self.user.is_superuser
