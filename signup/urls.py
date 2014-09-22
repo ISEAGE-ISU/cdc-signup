@@ -30,6 +30,7 @@ urlpatterns = patterns('',
 
     url(r'^dashboard/$', views.DashboardView.as_view(), name='dashboard'),
 
+    url(r'^dashboard/check_in/$', views.CheckInView.as_view(), name='check-in'),
     url(r'^dashboard/join_team/$', views.TeamListView.as_view(), name='team-list'),
     url(r'^dashboard/join_team/(?P<team_id>[0-9-_:]+)/$', views.JoinTeamView.as_view(), name='join-team'),
     url(r'^dashboard/leave_team/$', views.LeaveTeamView.as_view(), name='leave-team'),

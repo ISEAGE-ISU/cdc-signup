@@ -4,7 +4,7 @@ from django.http import HttpResponse
 
 
 class ParticipantAdmin(admin.ModelAdmin):
-    list_display = ('__unicode__', 'team', 'captain', 'requested_team', 'requests_captain')
+    list_display = ('__unicode__', 'team', 'checked_in', 'captain', 'requested_team', 'requests_captain')
     actions = ['get_participant_emails']
 
     def get_participant_emails(self, request, queryset):

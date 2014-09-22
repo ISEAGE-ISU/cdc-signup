@@ -14,6 +14,15 @@ from base import breadcrumbs
 import forms as base_forms
 import actions
 import models
+from django.utils import timezone
+
+
+TRY_AGAIN = """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
+If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL)
+
+WHOOPS = """Whoops! Something went wrong on our end. \
+Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL)
+
 
 ##########
 # Base Classes
@@ -183,8 +192,7 @@ class SignupView(BaseTemplateView):
                 messages.success(request, 'Account successfully created. Please check your email for further instructions.')
                 return redirect('site-login')
             else:
-                messages.error(request, """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
-                If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                messages.error(request, TRY_AGAIN)
 
         return self.get(request, context, form=form)
 
@@ -195,16 +203,22 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
     breadcrumb = 'Dashboard'
 
     def get(self, request, context, *args, **kwargs):
-        if request.user.participant:
-            requested_team = request.user.participant.requested_team
+        participant = request.user.participant
+        if participant:
+            if not participant.checked_in:
+                now = timezone.now()
+                check_in_date = base.get_global_setting('check_in_date')
+                if now > check_in_date:
+                    context['check_in'] = True
+            requested_team = participant.requested_team
             if requested_team:
                 context['requested_team'] = requested_team
-            team = request.user.participant.team
+            team = participant.team
             if team:
                 context['team'] = team
                 context['current_members'] = team.members()
-                context['captain_requested'] = request.user.participant.requests_captain
-            if request.user.participant.captain:
+                context['captain_requested'] = participant.requests_captain
+            if participant.captain:
                 context['is_captain'] = True
 
         if 'form' in kwargs:
@@ -235,8 +249,7 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
                 messages.success(request, 'Password successfully updated.')
                 return redirect('site-login')
             else:
-                messages.error(request, """Whoops! Something went wrong on our end.
-                Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                messages.error(request, WHOOPS)
 
         return self.get(request, context, form=form)
 
@@ -268,8 +281,7 @@ class ForgotPasswordView(BaseTemplateView):
                 messages.success(request, 'Password successfully reset. Please check your email for further instructions.')
                 return redirect('site-login')
             else:
-                messages.error(request, """Whoops! Something went wrong on our end.
-                Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                messages.error(request, WHOOPS)
 
         return self.get(request, context, form=form)
 
@@ -319,8 +331,7 @@ class JoinTeamView(LoginRequiredMixin, BaseTemplateView):
             messages.success(request, 'Request to join {team} has been successfully submitted.'.format(team=team.name))
             return redirect('dashboard')
         else:
-            messages.error(request, """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
-            If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+            messages.error(request, TRY_AGAIN)
             return redirect('dashboard')
 
 
@@ -349,8 +360,7 @@ class RequestCaptainView(LoginRequiredMixin, BaseTemplateView):
             if success:
                 messages.success(request, "Captain request successfully submitted.")
             else:
-                messages.error(request, """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
-                If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                messages.error(request, TRY_AGAIN)
                 return self.render_to_response(context)
         else:
             messages.error(request, "You must join a team before requesting to become a captain.")
@@ -382,12 +392,45 @@ class LeaveTeamView(LoginRequiredMixin, BaseTemplateView):
             if success:
                 messages.success(request, "You have successfully left {name}.".format(name=team.name))
             else:
-                messages.error(request, """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
-                If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                messages.error(request, TRY_AGAIN)
                 return self.render_to_response(context)
         else:
             messages.error(request, "You aren't currently a member of a team.")
         return redirect('dashboard')
+
+
+class CheckInView(LoginRequiredMixin, BaseTemplateView):
+    template_name = "check_in.html"
+    page_title = "Check In"
+    breadcrumb = "Check in"
+
+    def get(self, request, context, *args, **kwargs):
+        try:
+            participant = request.user.participant
+        except:
+            raise Http404
+
+        if not participant.checked_in:
+            context['widget_data'] = {
+                'title': 'Check In',
+                'icon': 'fa-check',
+            }
+            return self.render_to_response(context)
+        else:
+            messages.warning(request, 'You have already checked in.')
+            return redirect('dashboard')
+
+    def post(self, request, context, *args, **kwargs):
+        try:
+            participant = request.user.participant
+        except:
+            raise Http404
+        if not participant.checked_in:
+            participant.check_in()
+            messages.success(request, 'You have successfully checked in.')
+            return redirect('dashboard')
+        else:
+            raise Http404
 
 
 ##########
@@ -430,8 +473,7 @@ class TeamCreationView(LoginRequiredMixin, BaseTemplateView):
                 messages.success(request, 'Team {name} successfully created.'.format(name=name))
                 return redirect('manage-team')
             else:
-                messages.error(request, """Whoops! Something went wrong on our end. \
-                Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                messages.error(request, WHOOPS)
 
         return self.get(request, context, form=form)
 
@@ -518,8 +560,7 @@ class ApproveMemberView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView
                     first=participant.user.first_name,last=participant.user.last_name))
                 return redirect('manage-team')
             else:
-                messages.error(request, """Whoops! Something went wrong on our end. \
-                Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                messages.error(request, WHOOPS)
                 return self.render_to_response(context)
         else:
             messages.error(request, 'No such join request.')
@@ -562,8 +603,7 @@ class ApproveCaptainView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateVie
                     first=participant.user.first_name,last=participant.user.last_name))
                 return redirect('manage-team')
             else:
-                messages.error(request, """Whoops! Something went wrong on our end. \
-                Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                messages.error(request, WHOOPS)
                 context['widget_data'] = {
                     'title': 'Confirm approval',
                     'icon': 'fa-question',
@@ -606,12 +646,12 @@ class StepDownView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView):
             if success:
                 messages.success(request, "You have successfully stepped down as a captain of {name}.".format(name=team.name))
             else:
-                messages.error(request, """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
-                If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                messages.error(request, TRY_AGAIN)
                 return self.render_to_response(context)
         else:
             messages.error(request, "You aren't currently a member of a team.")
         return redirect('dashboard')
+
 
 class DisbandTeamView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView):
     template_name = 'disband.html'
@@ -639,8 +679,7 @@ class DisbandTeamView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView):
             if success:
                 messages.success(request, "{name} has been successfully disbanded.".format(name=name))
             else:
-                messages.error(request, """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
-                If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL))
+                messages.error(request, TRY_AGAIN)
                 return self.render_to_response(context)
         else:
             messages.error(request, "You aren't currently a member of a team.")

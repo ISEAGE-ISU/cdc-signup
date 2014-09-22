@@ -3,12 +3,14 @@ from django.contrib.auth import models as auth_models
 from django.db.models.signals import post_save, pre_save, pre_delete
 from django.dispatch import receiver
 from base import actions
+import base
 
 
 class GlobalSettings(models.Model):
     number_of_teams = models.IntegerField(default=40)
     administrator_bind_dn = models.CharField(max_length=100)
     administrator_bind_pw = models.CharField(max_length=100)
+    check_in_date = models.DateTimeField(null=True)
 
 
 class Team(models.Model):
@@ -102,6 +104,11 @@ class Participant(models.Model):
 ########
 # Signals
 ########
+@receiver(post_save, sender=GlobalSettings)
+def update_settings(sender, instance, **kwargs):
+    base.reset_global_settings_object()
+
+
 @receiver(post_save, sender=auth_models.User)
 def create_participant(sender, instance, **kwargs):
     Participant.objects.get_or_create(user=instance)

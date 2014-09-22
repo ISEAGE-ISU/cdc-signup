@@ -5,6 +5,9 @@
     <div class="row">
         <div class="col-md-12" style="max-width: 700px;">
             {% render_widget widget_data %}
+                {% if check_in %}
+                <a class="btn btn-success btn-lg btn-block" href="{% url "check-in" %}">Check In</a>
+                {% endif %}
                 {% if requested_team %}
                 <p>Your request to join {{ requested_team.name }} is pending approval.</p>
                 {% endif %}
