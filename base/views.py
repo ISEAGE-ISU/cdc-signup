@@ -208,8 +208,9 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
             if not participant.checked_in:
                 now = timezone.now()
                 check_in_date = base.get_global_setting('check_in_date')
-                if now > check_in_date:
-                    context['check_in'] = True
+                if check_in_date:
+                    if now > check_in_date:
+                        context['check_in'] = True
             requested_team = participant.requested_team
             if requested_team:
                 context['requested_team'] = requested_team
