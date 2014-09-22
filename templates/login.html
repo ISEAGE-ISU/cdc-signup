@@ -19,7 +19,10 @@
                         <div class="form-group">
                             <label class="control-label col-sm-2" for="id_username">Username</label>
                             <div class="col-sm-4">
-                                {{ form.username }}
+                                <div class="input-group">
+                                    {{ form.username }}
+                                    <span class="input-group-addon" style="padding-left: 8px;">@iseage.org</span>
+                                </div>
                             </div>
                         </div>
 
@@ -52,6 +55,8 @@
 
     <script>
         $(document).ready(function(){
+            $('#id_username').addClass('form-control');
+            $('#id_password').addClass('form-control');
             $('#id_username').focus();
         });
     </script>
