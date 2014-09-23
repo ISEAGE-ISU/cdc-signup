@@ -5,7 +5,11 @@ from django.http import HttpResponse
 
 class ParticipantAdmin(admin.ModelAdmin):
     list_display = ('__unicode__', 'team', 'checked_in', 'captain', 'requested_team', 'requests_captain')
-    actions = ['get_participant_emails']
+    actions = [
+        'get_participant_emails',
+        'check_in',
+        'undo_check_in'
+    ]
 
     def get_participant_emails(self, request, queryset):
         emails = []
@@ -16,6 +20,18 @@ class ParticipantAdmin(admin.ModelAdmin):
         return HttpResponse(content=emails)
 
     get_participant_emails.short_description = "Get email list"
+
+    def check_in(self, request, queryset):
+        for participant in queryset:
+            participant.check_in()
+
+    check_in.short_description = "Check in"
+
+    def undo_check_in(self, request, queryset):
+        for participant in queryset:
+            participant.undo_check_in()
+
+    undo_check_in.short_description = "Undo check in"
 
 
 class ParticipantInline(admin.TabularInline):
