@@ -9,7 +9,13 @@ class ParticipantInline(admin.StackedInline):
 
 
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'first_name', 'last_name', 'participant', 'is_superuser')
+    list_select_related = True
+    list_display = ('username', 'email', 'first_name', 'last_name', 'participant_object', 'is_superuser')
     inlines = [
         ParticipantInline,
     ]
+
+    def participant_object(self, user):
+        return user.participant
+
+    participant_object.admin_order_field = 'participant__user'
