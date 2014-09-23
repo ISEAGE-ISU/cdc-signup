@@ -154,6 +154,16 @@ span.blue {
     font-weight: bold;
 }
 
+/* Datepicker */
+.form-inline .datepicker-input {
+    margin-right: 5px;
+}
+
+.datepicker-input, .datepicker-input-trailer {
+    width: 50% !important;
+    max-width: 200px !important;
+}
+
 /* Forms */
 .required-indicator {
     color: #FF0000;
@@ -170,10 +180,11 @@ span.blue {
 .form-horizontal input[type="email"],
 .form-horizontal input[type="password"],
 .form-horizontal input[type="file"],
+.form-horizontal input[type="number"],
 .form-horizontal textarea,
 .form-horizontal input .uneditable-input {
     max-width: 400px;
-    display: block;
+    display: inline-block;
     width: 100%;
     height: 34px;
     padding: 6px 12px;

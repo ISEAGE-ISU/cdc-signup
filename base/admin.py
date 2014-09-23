@@ -33,4 +33,3 @@ class TeamAdmin(admin.ModelAdmin):
 # Register your models here.
 admin.site.register(base_models.Participant, ParticipantAdmin)
 admin.site.register(base_models.Team, TeamAdmin)
-admin.site.register(base_models.GlobalSettings)

@@ -4,7 +4,9 @@ from signup import settings
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
+from django.contrib.auth.models import Group
 admin.autodiscover()
+admin.site.unregister(Group)
 
 handler403 = 'signup.errors.error403'
 handler404 = 'signup.errors.error404'
@@ -16,10 +18,12 @@ urlpatterns = patterns('',
     # url(r'^signup/', include('signup.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:
-    url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
+    url(r'^django-admin/doc/', include('django.contrib.admindocs.urls')),
 
     # Uncomment the next line to enable the admin:
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^django-admin/', include(admin.site.urls)),
+
+    url(r'^admin/$', views.AdminDashboard.as_view(), name='admin-dash'),
 
     url(r'^$', views.IndexView.as_view(), name='site-index'),
     url(r'^login/$', 'base.views.login', name='site-login'),

@@ -47,6 +47,17 @@ class UserIsCaptainMixin(object):
         return super(UserIsCaptainMixin, self).dispatch(*args, **kwargs)
 
 
+class UserIsAdminMixin(object):
+    """
+    Verify that the user is a superuser.
+    """
+    test_pass = lambda u: u.participant.user.is_superuser
+
+    @method_decorator(user_passes_test(test_pass))
+    def dispatch(self, *args, **kwargs):
+        return super(UserIsAdminMixin, self).dispatch(*args, **kwargs)
+
+
 class BaseView(View):
     """
     Override Django's default dispatch method to include the context in handler calls.
@@ -128,6 +139,37 @@ class BaseTemplateView(BaseView, TemplateResponseMixin):
 
 
 ##########
+# Admin views
+##########
+class AdminDashboard(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
+    template_name = 'admin_dash.html'
+    page_title = "Admin Dashboard"
+    breadcrumb = "Admin"
+
+    def modify_context(self, request, context, *args, **kwargs):
+        context['g_setting'] = base.get_global_settings_object()
+
+    def get(self, request, context, *args, **kwargs):
+        if 'form' in kwargs:
+            form = kwargs.pop('form')
+        else:
+            form = base_forms.GlobalSettingsForm(instance=context['g_setting'])
+        context['form'] = form
+        return self.render_to_response(context)
+
+    def post(self, request, context, *args, **kwargs):
+        initial_pass = base.get_global_setting('administrator_bind_pw')
+        form = base_forms.GlobalSettingsForm(data=request.POST, instance=context['g_setting'])
+        if form.is_valid():
+            gs = form.save(commit=False)
+            if not gs.administrator_bind_pw:
+                gs.administrator_bind_pw = initial_pass
+            gs.save()
+            messages.success(request, 'Global settings successfully updated.')
+        return self.get(request, context, form=form)
+
+
+##########
 # Member views
 ##########
 def login(request):
@@ -149,9 +191,17 @@ class IndexView(BaseTemplateView):
     breadcrumb = 'Home'
 
     def get(self, request, context, *args, **kwargs):
+        admin_bind_dn = base.get_global_setting('administrator_bind_dn')
+        if not admin_bind_dn:
+            if request.user.is_authenticated():
+                messages.success(request, 'Setup your CDC here.')
+            else:
+                messages.success(request, 'Login to setup your CDC.')
+            return redirect('admin-dash')
+
         if request.user.is_authenticated():
             if request.user.is_superuser:
-                return redirect('admin:index')
+                return redirect('admin-dash')
             else:
                 return redirect('dashboard')
 

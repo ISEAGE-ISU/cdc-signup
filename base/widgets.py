@@ -13,3 +13,38 @@ class ReadonlyWidget(forms.widgets.Widget):
 
     def _has_changed(self, initial, data):
         return False
+
+
+class DateInput(forms.widgets.DateInput):
+    """
+    Widget for showing a hint title in the field.
+    """
+    def __init__(self, attrs=None, title=None, format=None):
+        if not format:
+            format = "%m/%d/%Y"
+        forms.widgets.DateInput.__init__(self, attrs, format)
+
+    def render(self, name, value, attrs=None):
+        date_attrs = self.build_attrs(attrs)
+        date_attrs['class'] = 'datepicker-input'
+        input = forms.widgets.DateInput.render(self, name, value, date_attrs)
+        return mark_safe(input)
+
+
+class DateTimeInput(forms.widgets.SplitDateTimeWidget):
+
+    def __init__(self, attrs=None, date_format=None, time_format=None, initial=None):
+        if attrs is None:
+            attrs = {}
+        date_attrs = attrs.copy()
+        time_attrs = attrs.copy()
+        time_attrs['class'] = 'datepicker-input-trailer'
+        if initial:
+            date_attrs['value'] = initial.date()
+            time_attrs['value'] = initial.time()
+        else:
+            date_attrs['placeholder'] = 'MM/DD/YYYY'
+            time_attrs['placeholder'] = 'HH:MM (24hr)'
+        widgets = (DateInput(attrs=date_attrs, format=date_format),
+                   forms.widgets.TimeInput(attrs=time_attrs, format=time_format))
+        super(forms.widgets.SplitDateTimeWidget, self).__init__(widgets, attrs)

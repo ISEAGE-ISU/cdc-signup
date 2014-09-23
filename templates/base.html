@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="/static/includes/bootstrap/css/bootstrap.css" />
     <link rel="stylesheet" href="/static/includes/bootstrap-notify/css/bootstrap-notify.css" />
     <link rel="stylesheet" href="/static/includes/font-awesome/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="/static/includes/bootstrap-datepicker/css/datepicker3.css" />
     <link rel="stylesheet" href="/static/styles/theme.css" />
     <link rel="stylesheet" href="/static/styles/style.css" />
 
@@ -77,6 +78,7 @@
 <script src="/static/includes/jquery-1.11.1.min.js"></script>
 <script src="/static/includes/bootstrap/js/bootstrap.min.js"></script>
 <script src="/static/includes/bootstrap-notify/js/bootstrap-notify.js"></script>
+<script src="/static/includes/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
 
 <script>
     $(document).ready(function(){
@@ -88,6 +90,10 @@
         });
 
         $(window).trigger('resize');
+
+        $('input.datepicker-input').datepicker({}).on('changeDate', function(ev) {
+            $(this).datepicker('hide');
+        });
 
         $('.notifications').each(function(){
             var that = $(this);
