@@ -18,4 +18,4 @@ class CustomUserAdmin(UserAdmin):
     def participant_object(self, user):
         return user.participant
 
-    participant_object.admin_order_field = 'participant__user'
+    participant_object.admin_order_field = 'participant__id'
