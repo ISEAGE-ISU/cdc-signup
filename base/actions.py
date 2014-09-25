@@ -19,6 +19,7 @@ LOWER = re.compile('.*[a-z].*')
 NUMERIC = re.compile('.*[0-9].*')
 PASSWORD_LENGTH = 12
 
+AD_AUTH = ad_auth.ActiveDirectoryAuthenticationBackend()
 
 def get_current_teams():
     return models.Team.objects.annotate(member_count=Count('participant'))
@@ -149,7 +150,7 @@ def remove_user_from_group(user_dn, group_dn, ldap_connection):
 
 
 @ldap_admin_bind
-def set_password(user_dn, password, ldap_connection):
+def set_password(participant_id, password, ldap_connection):
     if not password:
         return False
 
@@ -157,6 +158,8 @@ def set_password(user_dn, password, ldap_connection):
     unicode_pass = ('\"' + password + '\"').encode('iso-8859-1')
     password_value = unicode_pass.encode('utf-16-le')
     ml = [(ldap.MOD_REPLACE, 'unicodePwd', [password_value])]
+
+    user_dn = get_user_dn(participant_id)
 
     # Change the password
     try:
@@ -166,6 +169,11 @@ def set_password(user_dn, password, ldap_connection):
         return False
 
     # If we're here, the password set succeeded
+    username = models.Participant.objects.get(pk=participant_id).user.username
+
+    # Ensure the password is updated locally
+    AD_AUTH.get_or_create_user(username, password)
+
     return True
 
 
@@ -268,8 +276,7 @@ def create_user_account(username, fname, lname, email, ldap_connection):
         return False
 
     # Ensure the account exists locally
-    auth_obj =  ad_auth.ActiveDirectoryAuthenticationBackend()
-    auth_obj.get_or_create_user(username, password)
+    AD_AUTH.get_or_create_user(username, password)
 
     # Send email
     email_body = email_templates.ACCOUNT_CREATED.format(fname=fname, lname=lname, username=username, password=password,
@@ -303,7 +310,7 @@ def update_password(participant_id, old_password, new_password):
     # If we got this far, auth was successful
     l.unbind_s()
 
-    success = set_password(user_dn, new_password)
+    success = set_password(participant_id, new_password)
     if not success:
         return False
 
@@ -333,7 +340,7 @@ def forgot_password(email):
         user_dn = get_user_dn(participant.id)
         password = generate_password()
 
-        success = set_password(user_dn, password)
+        success = set_password(participant.id, password)
         if not success:
             return False
 
