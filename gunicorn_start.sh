@@ -8,8 +8,9 @@ GROUP=signup                                     # the group to run as
 NUM_WORKERS=3                                     # how many worker processes should Gunicorn spawn
 DJANGO_SETTINGS_MODULE=signup.settings             # which settings file should Django use
 DJANGO_WSGI_MODULE=signup.wsgi                     # WSGI module name
- 
-echo "Starting $NAME as `whoami`"
+
+DT=`date +"%F %T "`
+echo "$DT Starting $NAME as `whoami`"
  
 # Activate the virtual environment
 cd $DJANGODIR
