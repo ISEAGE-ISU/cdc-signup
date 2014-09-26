@@ -327,6 +327,7 @@ class ForgotPasswordView(BaseTemplateView):
                 success = actions.forgot_password(email)
             except User.DoesNotExist:
                 form.add_error('email', "No account with that email exists.")
+                return self.get(request, context, form=form)
 
             if success:
                 messages.success(request, 'Password successfully reset. Please check your email for further instructions.')

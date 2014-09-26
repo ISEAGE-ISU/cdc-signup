@@ -70,6 +70,10 @@ class Participant(models.Model):
         self.checked_in = True
         self.save(update_fields=['checked_in'])
 
+    def undo_check_in(self):
+        self.checked_in = False
+        self.save(update_fields=['checked_in'])
+
     def user_is_captain(self):
         return self.captain or self.user.is_superuser
 
