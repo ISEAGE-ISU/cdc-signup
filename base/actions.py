@@ -103,7 +103,7 @@ def ldap_debug_write(message):
     if debug_file is not None:
         fObj = open(debug_file, 'a')
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
-        fObj.write("%s\t%s\n" % (now,message))
+        fObj.write("{now}\t{msg}\n".format(now=now, msg=message))
         fObj.close()
 
 

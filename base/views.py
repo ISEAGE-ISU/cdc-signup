@@ -173,7 +173,7 @@ class AdminDashboard(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
 # Member views
 ##########
 def login(request):
-    this_breadcrumb = '<a href="%s" class="current">%s</a>' % ('/login', "Login")
+    this_breadcrumb = '<a href="{link}" class="current">{text}</a>'.format(link='/login', text="Login")
     crumbs = mark_safe(breadcrumbs.render_breadcrumbs("/login/", {}) + this_breadcrumb)
     context= {
         'page_title': "Login",

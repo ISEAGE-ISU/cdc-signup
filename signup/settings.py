@@ -184,7 +184,7 @@ CACHES = {
 ##############
 AD_DNS_NAME = "dc1.iseage.org"  # FQDN of your DC
 AD_LDAP_PORT=636
-AD_LDAP_URL='ldaps://%s:%s' % (AD_DNS_NAME,AD_LDAP_PORT)
+AD_LDAP_URL='ldaps://{host}:{port}'.format(host=AD_DNS_NAME, port=AD_LDAP_PORT)
 
 AD_CDCUSER_OU = 'CDCUsers'
 AD_CDCUSER_GROUP = 'CDCUsers'

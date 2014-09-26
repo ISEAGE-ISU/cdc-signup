@@ -41,7 +41,7 @@ class ActiveDirectoryAuthenticationBackend:
             l.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
             l.set_option(ldap.OPT_X_TLS,ldap.OPT_X_TLS_DEMAND)
             l.set_option(ldap.OPT_X_TLS_DEMAND, True)
-            binddn = "%s@%s" % (username, settings.AD_NT4_DOMAIN)
+            binddn = "{user}@{domain}".format(user=username, domain=settings.AD_NT4_DOMAIN)
             l.simple_bind_s(binddn, password)
             l.unbind_s()
             return self.get_or_create_user(username,password)
@@ -49,9 +49,9 @@ class ActiveDirectoryAuthenticationBackend:
         except ImportError:
             self.debug_write('import error in authenticate')
         except ldap.INVALID_CREDENTIALS:
-            self.debug_write('%s: Invalid Credentials' % username)
+            self.debug_write(username + ': Invalid Credentials')
         except Exception as e:
-            self.debug_write('Error connecting to LDAP. Message: %s' % e)
+            self.debug_write('Error connecting to LDAP. Message: ' + e)
 
     def get_or_create_user(self, username, password):
         """ create or update the User object """
@@ -64,7 +64,7 @@ class ActiveDirectoryAuthenticationBackend:
         except User.DoesNotExist:
             if user_info is not None:
                 user = User(username=username, password=password)
-                self.debug_write('create new user %s' % username)
+                self.debug_write('create new user ' + username)
 
         ## update the user objects
         # group mapping for the access rights
@@ -98,7 +98,7 @@ class ActiveDirectoryAuthenticationBackend:
         if self.debugFile is not None:
             fObj = open(self.debugFile, 'a')
             now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
-            fObj.write("%s\t%s\n" % (now,message))
+            fObj.write("{now}\t{msg}\n".format(now=now, msg=message))
             fObj.close()
 
     def check_group(self,membership):
@@ -111,17 +111,18 @@ class ActiveDirectoryAuthenticationBackend:
         }
         pattern = re.compile(r'(CN|OU)=(?P<groupName>[\w\s|\d\s]+),')
         for group in membership:
-            self.debug_write('checking group: %s' % group)
+            self.debug_write('checking group: ' + group)
             group_matches = pattern.finditer(group)
             for groupMatch in group_matches:
                 if groupMatch:
                     this_group = groupMatch.group('groupName')
-                    self.debug_write('checking match: %s' % this_group)
+                    self.debug_write('checking match: ' + this_group)
                     if this_group in settings.AD_MEMBERSHIP_ADMIN:
                         group_dict['is_admin'] = True
                     if this_group in settings.AD_MEMBERSHIP_REQ:
                         group_dict['is_valid'] = True
-                    self.debug_write("Comparing %s to %s" % (str(settings.AD_BLUE_TEAM_PREFIX), str(this_group)))
+                    self.debug_write("Comparing {prefix} to {group}".format(
+                        prefix=str(settings.AD_BLUE_TEAM_PREFIX), group=str(this_group)))
                     if str(settings.AD_BLUE_TEAM_PREFIX) in str(this_group):
                         num_match = re.search('(\d+)$', this_group)
                         if num_match:
@@ -134,7 +135,7 @@ class ActiveDirectoryAuthenticationBackend:
         else:
             self.debug_write('does not have the AD group membership needed')
         if group_dict['team_number'] > 0:
-            self.debug_write('is blue user on team %s' % group_dict['team_number'])
+            self.debug_write('is blue user on team ' + group_dict['team_number'])
 
         return group_dict
 
@@ -159,18 +160,18 @@ class ActiveDirectoryAuthenticationBackend:
             l.set_option(ldap.OPT_X_TLS_DEMAND, True)
 
             # bind
-            binddn = "%s@%s" % (username,settings.AD_NT4_DOMAIN)
-            self.debug_write('ldap.bind %s' % binddn)
+            binddn = "{user}@{domain}".format(user=username, domain=settings.AD_NT4_DOMAIN)
+            self.debug_write('ldap.bind ' + binddn)
             l.bind_s(binddn,password)
 
             # search
-            self.debug_write('searching for %s...' % binddn)
+            self.debug_write('searching for {dn}...'.format(dn=binddn))
             result = l.search_ext_s(settings.AD_BASE_DN, ldap.SCOPE_SUBTREE,
-                                    "sAMAccountName=%s" % username, settings.AD_SEARCH_FIELDS)
+                                    "sAMAccountName={user}".format(user=username), settings.AD_SEARCH_FIELDS)
 
-            self.debug_write("Full results: %s" % result)
+            self.debug_write("Full results: " + result)
             result = result[0][1]
-            self.debug_write("results in %s" % result)
+            self.debug_write("results in " + result)
 
             # Validate that they are a member of review board group
             if result.has_key('memberOf'):
@@ -195,7 +196,7 @@ class ActiveDirectoryAuthenticationBackend:
                 mail = ""
 
             userInfo['mail'] = mail
-            self.debug_write("mail=%s" % mail)
+            self.debug_write("mail=" + mail)
 
             # get surname
             if result.has_key('sn'):
@@ -204,7 +205,7 @@ class ActiveDirectoryAuthenticationBackend:
                 last_name = ""
 
             userInfo['last_name'] = last_name
-            self.debug_write("sn=%s" % last_name)
+            self.debug_write("sn=" + last_name)
 
             # get display name
             if result.has_key('givenName'):
@@ -215,7 +216,7 @@ class ActiveDirectoryAuthenticationBackend:
             if first_name == None:
                 first_name = userInfo['username']
             userInfo['first_name'] = first_name
-            self.debug_write("first_name=%s" % first_name)
+            self.debug_write("first_name=" + first_name)
 
             # LDAP unbind
             l.unbind_s()

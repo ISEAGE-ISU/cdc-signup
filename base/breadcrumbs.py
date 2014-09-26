@@ -15,9 +15,9 @@ class Breadcrumb(object):
 
     def render(self):
         if self.active:
-            return '<a href="%s" class="current">%s</a>' % (self.link, self.text)
+            return '<a href="{link}" class="current">{text}</a>'.format(link=self.link, text=self.text)
         else:
-            return '<a href="%s">%s</a>' % (self.link, self.text)
+            return '<a href="{link}">{text}</a>'.format(link=self.link, text=self.text)
 
 
 def render_breadcrumbs(path, context):
