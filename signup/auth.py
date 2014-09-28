@@ -51,7 +51,7 @@ class ActiveDirectoryAuthenticationBackend:
         except ldap.INVALID_CREDENTIALS:
             self.debug_write(username + ': Invalid Credentials')
         except Exception as e:
-            self.debug_write('Error connecting to LDAP. Message: ' + str(e))
+            self.debug_write('Error connecting to LDAP. Message: {msg}'.format(msg=e))
 
     def get_or_create_user(self, username, password):
         """ create or update the User object """
@@ -169,9 +169,9 @@ class ActiveDirectoryAuthenticationBackend:
             result = l.search_ext_s(settings.AD_BASE_DN, ldap.SCOPE_SUBTREE,
                                     "sAMAccountName={user}".format(user=username), settings.AD_SEARCH_FIELDS)
 
-            self.debug_write("Full results: " + str(result))
+            self.debug_write("Full results: {0}".format(result))
             result = result[0][1]
-            self.debug_write("results in " + str(result))
+            self.debug_write("results in {0}".format(result))
 
             # Validate that they are a member of review board group
             if result.has_key('memberOf'):
