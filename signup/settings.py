@@ -18,7 +18,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'signup',
         'USER': 'signup',
-        'PASSWORD': 'signuppass',
+        'PASSWORD': 'ChangeMeToSomethingLongAndRandom',
         'HOST': '',          # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
         'PORT': '',          # Set to empty string for default.
     }
@@ -90,7 +90,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = 'mfhb+)!0n$wx8^5!)d!w-^i10pbwh)$kt3u7n3&5+w0epd&(9o'
+SECRET_KEY = 'ChangeMeToSomeLongRandomString'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
