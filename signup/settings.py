@@ -13,6 +13,9 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+
+######## BEGIN settings to override in production via local_settings.py ########
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -23,6 +26,12 @@ DATABASES = {
         'PORT': '',          # Set to empty string for default.
     }
 }
+
+# Make this unique, and don't share it with anybody.
+SECRET_KEY = 'ChangeMeToSomeLongRandomString'
+
+######## END settings to override in production via local_settings.py ########
+
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
@@ -88,9 +97,6 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
-
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = 'ChangeMeToSomeLongRandomString'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
