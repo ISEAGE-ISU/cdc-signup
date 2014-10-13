@@ -23,6 +23,9 @@ If that still didn't work, please email us at {support} so we can fix it.""".for
 WHOOPS = """Whoops! Something went wrong on our end. \
 Please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL)
 
+CREATION_DISABLED = """Account Creation is currently disabled. \
+Email us at {support} if you need to make an account.""".format(support=settings.SUPPORT_EMAIL)
+
 
 ##########
 # Base Classes
@@ -192,6 +195,7 @@ class IndexView(BaseTemplateView):
 
     def get(self, request, context, *args, **kwargs):
         admin_bind_dn = base.get_global_setting('administrator_bind_dn')
+        context['enable_creation'] = base.get_global_setting('enable_account_creation')
         if not admin_bind_dn:
             if request.user.is_authenticated():
                 messages.success(request, 'Setup your CDC here.')
@@ -214,6 +218,11 @@ class SignupView(BaseTemplateView):
     breadcrumb = 'Signup'
 
     def get(self, request, context, *args, **kwargs):
+        enabled = base.get_global_setting('enable_account_creation')
+        if not enabled:
+            messages.warning(request, CREATION_DISABLED)
+            return redirect('site-index')
+
         if 'form' in kwargs:
             form = kwargs.pop('form')
         else:
@@ -222,6 +231,11 @@ class SignupView(BaseTemplateView):
         return self.render_to_response(context)
 
     def post(self, request, context, *args, **kwargs):
+        enabled = base.get_global_setting('enable_account_creation')
+        if not enabled:
+            messages.warning(request, CREATION_DISABLED)
+            return redirect('site-index')
+
         form = base_forms.SignupForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
