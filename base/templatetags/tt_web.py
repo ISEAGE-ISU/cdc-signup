@@ -52,7 +52,7 @@ def render_field(bound, label=None):
     }
 
     template = '<div id="div_{name}" class="{classes}"><label class="col-sm-2 control-label" for="id_{name}">{label}</label><div class="col-sm-8">{widget}<span class="help-block">{error}</span></div></div>'
-    checkbox_template = '<div id="div_{name}" class="{classes}"><div class="col-sm-8"><label class="checkbox">{widget}{label}</label><span class="help-block">{error}/span></div></div>'
+    checkbox_template = '<div id="div_{name}" class="{classes}"><div class="col-sm-8"><label class="checkbox">{widget}{label}</label><span class="help-block">{error}</span></div></div>'
     radio_template = '<div id="div_{name}" class="{classes}"><div class="col-sm-8"><label class="radio">{widget}</label><span class="help-block">{error}</span></div></div>'
     if (isinstance(bound.field.widget, forms.widgets.CheckboxInput)):
         return mark_safe(checkbox_template.format(**ctx))
