@@ -220,7 +220,7 @@ class SignupView(BaseTemplateView):
     def get(self, request, context, *args, **kwargs):
         enabled = base.get_global_setting('enable_account_creation')
         if not enabled:
-            messages.warning(request, CREATION_DISABLED)
+            messages.error(request, CREATION_DISABLED)
             return redirect('site-index')
 
         if 'form' in kwargs:
@@ -233,7 +233,7 @@ class SignupView(BaseTemplateView):
     def post(self, request, context, *args, **kwargs):
         enabled = base.get_global_setting('enable_account_creation')
         if not enabled:
-            messages.warning(request, CREATION_DISABLED)
+            messages.error(request, CREATION_DISABLED)
             return redirect('site-index')
 
         form = base_forms.SignupForm(request.POST)
