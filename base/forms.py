@@ -90,4 +90,4 @@ class GlobalSettingsForm(forms.ModelForm):
         widget=forms.PasswordInput(attrs={'placeholder': 'Leave blank to keep same password'}))
     check_in_date = forms.DateTimeField(widget=widgets.DateTimeInput(), required=False, label="Check-in start date")
     enable_account_creation = forms.BooleanField(required=False, label="Enable account creation")
-
+    documentation_url = forms.CharField(required=False, label="Shared Documentation URL")

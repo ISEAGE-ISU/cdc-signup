@@ -12,7 +12,7 @@ class GlobalSettings(models.Model):
     administrator_bind_pw = models.CharField(max_length=100)
     check_in_date = models.DateTimeField(null=True)
     enable_account_creation = models.BooleanField(default=True)
-
+    documentation_url = models.CharField(max_length=200, null=True)
 
 class Team(models.Model):
     number = models.PositiveIntegerField(default=0)
