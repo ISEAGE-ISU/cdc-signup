@@ -51,6 +51,14 @@
 
         </div>
     </div>
+    {% if docs_url %}
+    <div class="row">
+        <div class="col-md-12" style="max-width: 700px;">
+            {% render_widget download_docs %}
+            <a class="btn btn-sm btn-primary" href="{{ docs_url }}">View</a>
+        </div>
+    </div>
+    {% endif %}
     <div class="row">
         <div class="col-md-12" style="max-width: 700px;">
             <form class='form-horizontal' action='' method="POST">

@@ -295,6 +295,11 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
             'title': 'Dashboard',
             'icon': 'fa-dashboard',
         }
+        context['docs_url'] =  base.get_global_setting('documentation_url')
+        context['download_docs'] = {
+            'title': 'View Scenario Documentation',
+            'icon': 'fa-file',
+        }
 
         return self.render_to_response(context)
 
