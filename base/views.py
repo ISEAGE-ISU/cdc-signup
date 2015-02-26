@@ -297,7 +297,7 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
         }
         context['docs_url'] =  base.get_global_setting('documentation_url')
         context['download_docs'] = {
-            'title': 'View Scenario Documentation',
+            'title': 'Competition Documents',
             'icon': 'fa-file',
         }
 
