@@ -8,11 +8,15 @@ import models
 from django.contrib.auth.models import User
 from django.db.models import Count
 from django.core.mail import send_mail
-from django.template import RequestContext
+from django.template import Context, RequestContext
+from django.template.loader import get_template
+from django.core.cache import cache
 import re
 import email_templates
 import smtplib
 import logging
+
+GLOBAL_SETTINGS_OBJECT = 'GLOBAL_SETTINGS_OBJECT'
 
 # For checking that generated passwords meet AD complexity requirements
 UPPER = re.compile('.*[A-Z].*')
@@ -27,9 +31,50 @@ def get_current_teams():
     return models.Team.objects.annotate(member_count=Count('participant'))
 
 
+def reset_global_settings_object():
+    gs = models.GlobalSettings.objects.get_or_create(id__exact=1)[0]
+    cache.set(GLOBAL_SETTINGS_OBJECT, gs)
+    return gs
+
+
 def get_global_settings_object():
-    gs_obj = models.GlobalSettings.objects.get_or_create(id__exact=1)[0]
-    return gs_obj
+    gs = cache.get(GLOBAL_SETTINGS_OBJECT)
+    if not gs:
+        gs = reset_global_settings_object()
+    return gs
+
+
+def get_global_setting(setting_name):
+    gs = get_global_settings_object()
+    gs_result = getattr(gs, setting_name)
+    if gs_result:
+        return gs_result
+    elif hasattr(settings, setting_name):
+        return getattr(settings, setting_name)
+    else:
+        return None
+
+
+def set_global_setting(setting_name, value):
+    gs = get_global_settings_object()
+    try:
+        setattr(gs, setting_name, value)
+        gs.save()
+    except Exception as e:
+        return False
+    #Reassign object in memcache
+    reset_global_settings_object()
+    return True
+
+
+def render_template(request, template, context=None):
+    if not context:
+        context = {}
+    if request is not None:
+        ctx = RequestContext(request, context)
+    else:
+        ctx = Context(context)
+    return get_template(template).render(ctx)
 
 
 def get_context(request):
@@ -79,8 +124,8 @@ def admin_bind():
         l = initialize_ldap()
         ldap_debug_write("*****Initializing admin bind*****")
         try:
-            admin_dn = base.get_global_setting('administrator_bind_dn')
-            admin_pw = base.get_global_setting('administrator_bind_pw')
+            admin_dn = get_global_setting('administrator_bind_dn')
+            admin_pw = get_global_setting('administrator_bind_pw')
             l.simple_bind_s(admin_dn, admin_pw)
         except ldap.INVALID_CREDENTIALS:
             ldap_debug_write("Failed to authenticate current password for admin account specified in settings")
@@ -301,7 +346,11 @@ def create_user_account(username, fname, lname, email, ldap_connection):
     AD_AUTH.get_or_create_user(username, password)
 
     # Send email
-    url = "The scenario and other documentation can be found at " + base.get_global_setting('documentation_url') + ". Keep these documents handy, as you will need them througout the competition." if base.get_global_setting('documentation_url') else ""
+    url = ""
+    documentation_url = get_global_setting('documentation_url')
+    if documentation_url:
+        url = "The scenario and other documentation can be found at " + get_global_setting('documentation_url') + \
+              ". Keep these documents handy, as you will need them throughout the competition."
     email_body = email_templates.ACCOUNT_CREATED.format(fname=fname, lname=lname, username=username, password=password,
                                 support=settings.SUPPORT_EMAIL, url=url)
 
@@ -387,7 +436,7 @@ def forgot_password(email):
 # Teams
 ##########
 def assign_team_number(team_id):
-    num_teams = base.get_global_setting('number_of_teams')
+    num_teams = get_global_setting('number_of_teams')
     assigned_numbers = models.Team.objects.values_list('number', flat=True)
     number = None
 

@@ -2,7 +2,7 @@ from django.template import Library
 from django.utils.safestring import mark_safe
 from django import forms
 
-import base
+from base import actions
 from base import widgets as base_widgets
 
 
@@ -179,7 +179,7 @@ def render_form_widget(context, form, title=None, show_legend=False, icon='icon-
         'widget_icon': icon,
         'widget_description': desc,
     })
-    return mark_safe(base.render_template(None, 'includes/widget_box.html', context))
+    return mark_safe(actions.render_template(None, 'includes/widget_box.html', context))
 
 
 @register.filter
@@ -195,7 +195,7 @@ def is_list(value):
 @register.simple_tag(takes_context=True)
 def render_form_controlbox(context, style=""):
     context['button_style'] = style
-    return mark_safe(base.render_template(None, 'includes/form_controlbox.html', context))
+    return mark_safe(actions.render_template(None, 'includes/form_controlbox.html', context))
 
 
 @register.simple_tag

@@ -9,9 +9,9 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import Http404
 
 from django.conf import settings
-import base
 from base import breadcrumbs
 import forms as base_forms
+import base
 import actions
 import models
 from django.utils import timezone
@@ -150,7 +150,7 @@ class AdminDashboard(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
     breadcrumb = "Admin"
 
     def modify_context(self, request, context, *args, **kwargs):
-        context['g_setting'] = base.get_global_settings_object()
+        context['g_setting'] = actions.get_global_settings_object()
 
     def get(self, request, context, *args, **kwargs):
         if 'form' in kwargs:
@@ -161,7 +161,7 @@ class AdminDashboard(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
         return self.render_to_response(context)
 
     def post(self, request, context, *args, **kwargs):
-        initial_pass = base.get_global_setting('administrator_bind_pw')
+        initial_pass = actions.get_global_setting('administrator_bind_pw')
         form = base_forms.GlobalSettingsForm(data=request.POST, instance=context['g_setting'])
         if form.is_valid():
             gs = form.save(commit=False)
@@ -194,8 +194,8 @@ class IndexView(BaseTemplateView):
     breadcrumb = 'Home'
 
     def get(self, request, context, *args, **kwargs):
-        admin_bind_dn = base.get_global_setting('administrator_bind_dn')
-        context['enable_creation'] = base.get_global_setting('enable_account_creation')
+        admin_bind_dn = actions.get_global_setting('administrator_bind_dn')
+        context['enable_creation'] = actions.get_global_setting('enable_account_creation')
         if not admin_bind_dn:
             if request.user.is_authenticated():
                 messages.success(request, 'Setup your CDC here.')
@@ -218,7 +218,7 @@ class SignupView(BaseTemplateView):
     breadcrumb = 'Signup'
 
     def get(self, request, context, *args, **kwargs):
-        enabled = base.get_global_setting('enable_account_creation')
+        enabled = actions.get_global_setting('enable_account_creation')
         if not enabled:
             messages.error(request, CREATION_DISABLED)
             return redirect('site-index')
@@ -231,7 +231,7 @@ class SignupView(BaseTemplateView):
         return self.render_to_response(context)
 
     def post(self, request, context, *args, **kwargs):
-        enabled = base.get_global_setting('enable_account_creation')
+        enabled = actions.get_global_setting('enable_account_creation')
         if not enabled:
             messages.error(request, CREATION_DISABLED)
             return redirect('site-index')
@@ -271,7 +271,7 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
         if participant:
             if not participant.checked_in:
                 now = timezone.now()
-                check_in_date = base.get_global_setting('check_in_date')
+                check_in_date = actions.get_global_setting('check_in_date')
                 if check_in_date:
                     if now > check_in_date:
                         context['check_in'] = True
@@ -295,7 +295,7 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
             'title': 'Dashboard',
             'icon': 'fa-dashboard',
         }
-        context['docs_url'] =  base.get_global_setting('documentation_url')
+        context['docs_url'] = actions.get_global_setting('documentation_url')
         context['download_docs'] = {
             'title': 'Competition Documents',
             'icon': 'fa-file',

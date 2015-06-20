@@ -2,8 +2,7 @@ from django.db import models
 from django.contrib.auth import models as auth_models
 from django.db.models.signals import post_save, pre_save, pre_delete
 from django.dispatch import receiver
-from base import actions
-import base
+import actions
 
 
 class GlobalSettings(models.Model):
@@ -111,7 +110,7 @@ class Participant(models.Model):
 ########
 @receiver(post_save, sender=GlobalSettings)
 def update_settings(sender, instance, **kwargs):
-    base.reset_global_settings_object()
+    actions.reset_global_settings_object()
 
 
 @receiver(post_save, sender=auth_models.User)
