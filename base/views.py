@@ -76,7 +76,7 @@ class BaseView(View):
     # This function is used to get the context for the current app. e.g. base has a different
     # default context than blue or green.
     def app_context(self, request):
-        return base.get_context(request)
+        return actions.get_context(request)
 
     # This function is used to add class properties to the context, such as page_title.
     def _view_context(self, request, context, *args, **kwargs):

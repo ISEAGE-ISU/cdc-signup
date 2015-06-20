@@ -8,6 +8,7 @@ import models
 from django.contrib.auth.models import User
 from django.db.models import Count
 from django.core.mail import send_mail
+from django.template import RequestContext
 import re
 import email_templates
 import smtplib
@@ -21,8 +22,29 @@ PASSWORD_LENGTH = 12
 
 AD_AUTH = ad_auth.ActiveDirectoryAuthenticationBackend()
 
+
 def get_current_teams():
     return models.Team.objects.annotate(member_count=Count('participant'))
+
+
+def get_global_settings_object():
+    gs_obj = models.GlobalSettings.objects.get_or_create(id__exact=1)[0]
+    return gs_obj
+
+
+def get_context(request):
+    context = {}
+    context['current_url_full'] = request.get_full_path()
+    request.session.__setitem__('ip_addr', request.META.get('HTTP_X_FORWARDED_FOR'))
+    request.session.__setitem__('recent_path', request.META.get('PATH_INFO'))
+    if request.user:
+        context['user'] = request.user
+        if isinstance(request.user, User):
+            obj, created = models.Participant.objects.get_or_create(user=request.user)
+            context['participant'] = obj
+
+    r_ctx = RequestContext(request, context)
+    return r_ctx
 
 
 ##########

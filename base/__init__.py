@@ -1,25 +1,9 @@
-import models
+import actions
 from django.conf import settings
 from django import template as dt
-from django.template import RequestContext
 from django.core.cache import cache
-from django.contrib.auth.models import User
 
 GLOBAL_SETTINGS_OBJECT = 'GLOBAL_SETTINGS_OBJECT'
-
-def get_context(request):
-    context = {}
-    context['current_url_full'] = request.get_full_path()
-    request.session.__setitem__('ip_addr', request.META.get('HTTP_X_FORWARDED_FOR'))
-    request.session.__setitem__('recent_path', request.META.get('PATH_INFO'))
-    if request.user:
-        context['user'] = request.user
-        if isinstance(request.user, User):
-            obj, created = models.Participant.objects.get_or_create(user=request.user)
-            context['participant'] = obj
-
-    r_ctx = RequestContext(request, context)
-    return r_ctx
 
 
 def get_global_settings_object():
@@ -48,12 +32,12 @@ def set_global_setting(setting_name, value):
     except Exception as e:
         return False
     #Reassign object in memcache
-    cache.set(GLOBAL_SETTINGS_OBJECT, models.GlobalSettings.objects.get_or_create(id__exact=1)[0])
+    reset_global_settings_object()
     return True
 
 
 def reset_global_settings_object():
-    gs = models.GlobalSettings.objects.get_or_create(id__exact=1)[0]
+    gs = actions.get_global_settings_object()
     cache.set(GLOBAL_SETTINGS_OBJECT, gs)
     return gs
 
