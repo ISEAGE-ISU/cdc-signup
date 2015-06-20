@@ -209,7 +209,7 @@ AD_LDAP_DEBUG_LEVEL = 0
 AD_DEBUG_FILE = '/var/log/signup/ldap.debug'
 
 AUTHENTICATION_BACKENDS = (
-    'signup.auth.ActiveDirectoryAuthenticationBackend',
+    'base.auth.ActiveDirectoryAuthenticationBackend',
     'django.contrib.auth.backends.ModelBackend'
 )
 

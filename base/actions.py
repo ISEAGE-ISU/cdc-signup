@@ -1,7 +1,7 @@
 import ldap
 from ldap import modlist
 from django.conf import settings
-from signup import auth as ad_auth
+import auth as ad_auth
 import base
 import datetime
 import models
