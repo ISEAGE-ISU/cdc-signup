@@ -8,7 +8,7 @@ from django.utils.html import mark_safe
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import Http404
 
-from signup import settings
+from django.conf import settings
 import base
 from base import breadcrumbs
 import forms as base_forms

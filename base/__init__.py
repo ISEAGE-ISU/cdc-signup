@@ -1,5 +1,5 @@
 import models
-from signup import settings
+from django.conf import settings
 from django import template as dt
 from django.template import RequestContext
 from django.core.cache import cache
