@@ -140,7 +140,6 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
-    'base',
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
@@ -150,6 +149,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
+    'base',
 )
 
 LOGIN_URL = URL_ROOT + 'login/'
