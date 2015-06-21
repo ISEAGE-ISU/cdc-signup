@@ -63,14 +63,14 @@ class CreateTeamForm(forms.Form):
         }]
 
 
-class UpdateTeamNameForm(forms.Form):
-    name = forms.CharField(max_length=50, required=True)
-
+class ModifyTeamForm(forms.ModelForm):
     class Meta:
+        model = models.Team
+        fields = ['name', 'looking_for_members']
         fieldsets = [{
-            'id': 'rename-team',
-            'legend': 'Rename Team',
-            'title': "You can rename your team here."
+            'id': 'modify-team',
+            'legend': 'Modify Team',
+            'title': "You can modify your team here. If your team is full, uncheck 'Looking for members'.",
         }]
 
 

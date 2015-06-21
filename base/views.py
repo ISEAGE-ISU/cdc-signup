@@ -242,14 +242,13 @@ class SignupView(BaseTemplateView):
             username = form.cleaned_data['username']
             success = False
             try:
-                success = actions.create_user_account(username,first,last,email)
+                success = actions.create_user_account(username, first, last, email)
             except base.DuplicateName:
                 form.add_error('first_name', """It looks like there's already an account with the same first and last names as you provided. \
                 Try including your middle initial or middle name.""")
             except base.UsernameAlreadyExistsError:
                 form.add_error('username', "That username already exists. Please choose another one.")
                 return self.get(request, context, form=form)
-
             if success:
                 messages.success(request, 'Account successfully created. Please check your email for further instructions.')
                 return redirect('site-login')
@@ -553,10 +552,11 @@ class CaptainHomeView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView):
     breadcrumb = 'Manage team'
 
     def get(self, request, context, *args, **kwargs):
+        team = context['participant'].team
         if 'form' in kwargs:
             form = kwargs.pop('form')
         else:
-            form = base_forms.UpdateTeamNameForm()
+            form = base_forms.ModifyTeamForm(instance=team)
         context['form'] = form
         context['widget_data'] = {
             'title': 'Team Members',
@@ -567,7 +567,6 @@ class CaptainHomeView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView):
             'icon': 'fa-warning',
         }
 
-        team = context['participant'].team
         context['current_members'] = team.members()
         context['member_requests'] = team.requested_members()
         context['captain_requests'] = team.requested_captains()
@@ -575,20 +574,14 @@ class CaptainHomeView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView):
         return self.render_to_response(context)
 
     def post(self, request, context, *args, **kwargs):
-        form = base_forms.UpdateTeamNameForm(request.POST)
+        team = context['participant'].team
+        form = base_forms.ModifyTeamForm(data=request.POST, instance=team)
         if form.is_valid():
-            pt = context['participant']
-            name = form.cleaned_data['name']
-            success = False
-            try:
-                success = actions.rename_team(pt.team.id, name)
-            except base.TeamAlreadyExistsError:
-                form.add_error('name', "A team with that name already exists. Please choose another name.")
+            form.save()
+            messages.success(request, 'Team successfully updated.')
+            return redirect('manage-team')
 
-            if success:
-                messages.success(request, 'Team name successfully updated.')
-                return redirect('manage-team')
-
+        form.add_error('name', "A team with that name already exists. Please choose another name.")
         return self.get(request, context, form=form)
 
 

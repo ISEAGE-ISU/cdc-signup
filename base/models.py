@@ -15,7 +15,8 @@ class GlobalSettings(models.Model):
 
 class Team(models.Model):
     number = models.PositiveIntegerField(default=0)
-    name = models.CharField(max_length=50)
+    name = models.CharField(unique=True, max_length=50)
+    looking_for_members = models.BooleanField(default=True, help_text="Uncheck if your team is full.")
 
     def members(self):
         return Participant.objects.filter(team=self)

@@ -13,6 +13,7 @@
                             <th>Members</th>
                             <th>Captains</th>
                             <th>Captain Emails</th>
+                            <th>Looking for New Members</th>
                             <th>Actions</th>
                         </tr></thead>
                         <tbody>
@@ -22,6 +23,7 @@
                             <td class="count">{{ team.member_count }}</td>
                             <td class="captains">{{ team.captain_names }}</td>
                             <td class="captain-emails">{{ team.captain_emails }}</td>
+                            <td class="looking-for-members">{{ team.looking_for_members|yesno:"Yes,No" }}</td>
                             <td>
                                 <a class="btn btn-primary" href="{% url "join-team" team.id %}">Request to join</a>
                             </td>

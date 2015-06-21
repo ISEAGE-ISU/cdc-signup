@@ -144,13 +144,10 @@ def admin_bind():
 # Decorator to automatically handle setting up/tearing down an admin LDAP session if none is provided
 def ldap_admin_bind(func):
 
-    def false_func(*args, **kwargs):
-        return False
-
     def session(*args, **kwargs):
         ldap_connection = admin_bind()
         if not ldap_connection:
-            return false_func
+            return False
 
         kwargs.update(ldap_connection=ldap_connection)
 
@@ -479,22 +476,6 @@ def create_team(name, captain_id):
     except smtplib.SMTPException:
         logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=email_body))
 
-    return True
-
-
-def rename_team(team_id, new_name):
-    exists = True
-    try:
-        models.Team.objects.get(name=new_name)
-    except models.Team.DoesNotExist:
-        exists = False
-
-    if exists:
-        raise base.TeamAlreadyExistsError()
-
-    team = models.Team.objects.get(pk=team_id)
-    team.name = new_name
-    team.save()
     return True
 
 
