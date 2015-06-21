@@ -580,8 +580,8 @@ class CaptainHomeView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView):
             form.save()
             messages.success(request, 'Team successfully updated.')
             return redirect('manage-team')
-
-        form.add_error('name', "A team with that name already exists. Please choose another name.")
+        #If the form was invalid, get the old participant object back
+        context['participant'] = request.user.participant
         return self.get(request, context, form=form)
 
 
