@@ -13,6 +13,7 @@ class GlobalSettings(models.Model):
     enable_account_creation = models.BooleanField(default=True)
     documentation_url = models.CharField(max_length=200, null=True)
 
+
 class Team(models.Model):
     number = models.PositiveIntegerField(default=0)
     name = models.CharField(unique=True, max_length=50)
@@ -37,12 +38,12 @@ class Team(models.Model):
         return member_emails
 
     def captain_names(self):
-        names = ''
+        names = []
         for captain in self.captains():
-            if len(names):
-                names = names + ', '
-            names = names + captain.user.get_full_name()
-        return names
+            name = captain.user.get_full_name()
+            names.append(name)
+        formatted = ', '.join(names)
+        return formatted
 
     def captain_emails(self):
         emails = ''
