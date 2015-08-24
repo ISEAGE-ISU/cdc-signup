@@ -10,8 +10,6 @@ Make sure you change your password right away.
 
 You will use these credentials to log in to all CDC systems, including vCenter, Setup chat, the RDP hop, and IScorE.
 
-{url}
-
 If you have questions, email CDC support at {support}.
 """
 

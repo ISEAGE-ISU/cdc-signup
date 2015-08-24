@@ -343,13 +343,8 @@ def create_user_account(username, fname, lname, email, ldap_connection):
     AD_AUTH.get_or_create_user(username, password)
 
     # Send email
-    url = ""
-    documentation_url = get_global_setting('documentation_url')
-    if documentation_url:
-        url = "The scenario and other documentation can be found at " + get_global_setting('documentation_url') + \
-              ". Keep these documents handy, as you will need them throughout the competition."
     email_body = email_templates.ACCOUNT_CREATED.format(fname=fname, lname=lname, username=username, password=password,
-                                support=settings.SUPPORT_EMAIL, url=url)
+                                support=settings.SUPPORT_EMAIL)
 
     try:
         send_mail('Your ISEAGE CDC account', email_body, settings.EMAIL_FROM_ADDR, [email])
