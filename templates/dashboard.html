@@ -51,12 +51,15 @@
 
         </div>
     </div>
-    {% if docs_url %}
     <div class="row">
         <div class="col-md-12" style="max-width: 700px;">
             {% render_widget download_docs %}
+            {% if docs_url %}
             <p>Documents containing the scenario, rules, accounts, and other important information.</p>
             <a class="btn btn-sm btn-primary" href="{{ docs_url }}" target="_blank">View</a>
+            {% else %}
+            <p>Nothing here yet! You should receive an email from the staff when the documents become available.</p>
+            {% endif %}
         </div>
     </div>
     {% endif %}
