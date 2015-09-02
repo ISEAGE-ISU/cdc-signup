@@ -38,7 +38,7 @@ Your team has been successfully created.
 Your team name is: {team}
 Your team number is: {number}
 
-You can manage your team by visiting https://signup.iseage.org/dasboard/manage_team/
+You can manage your team by visiting https://signup.iseage.org/dashboard/manage_team/
 
 Your team members should create an account and submit a request to join your team.
 
