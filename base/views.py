@@ -156,6 +156,12 @@ class AdminDashboard(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
         else:
             form = base_forms.GlobalSettingsForm(instance=context['g_setting'])
         context['form'] = form
+        if request.GET.get('email_list'):
+            context['emails'] = User.objects.filter(is_superuser=False).values_list('email', flat=True)
+        context['email_list'] = {
+            'title': 'Participant Email Addresses',
+            'icon': 'fa-paper-plane-o',
+        }
         return self.render_to_response(context)
 
     def post(self, request, context, *args, **kwargs):
