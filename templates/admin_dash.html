@@ -19,7 +19,7 @@
         <div class="col-md-12" style="max-width: 800px;">
             {% render_widget email_list %}
             {% if emails %}
-            <textarea readonly>{% for email in emails %}{{ email }}
+            <textarea readonly>{% for email in emails %}{{ email }},
 {% endfor %}</textarea>
             {% else %}
             <a class="btn btn-primary" href="?email_list=true">View List</a>
