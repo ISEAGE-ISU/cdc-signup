@@ -91,3 +91,16 @@ class GlobalSettingsForm(forms.ModelForm):
     check_in_date = forms.DateTimeField(widget=widgets.DateTimeInput(), required=False, label="Check-in start date")
     enable_account_creation = forms.BooleanField(required=False, label="Enable account creation")
     documentation_url = forms.CharField(required=False, label="Shared Documentation URL")
+
+
+class AdminEmailForm(forms.Form):
+    class Meta:
+        fieldsets = [{
+            'id': 'email',
+            'legend': 'Email',
+            'title': 'You can send an email to all participants from cdc support here'
+        }]
+
+    subject = forms.CharField(required=True, label="Subject")
+    content = forms.CharField(required=True, widget=forms.Textarea, label="Body")
+    no_team = forms.BooleanField(required=False, label="Include Participants with No Team")

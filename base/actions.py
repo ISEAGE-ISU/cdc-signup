@@ -7,7 +7,7 @@ import datetime
 import models
 from django.contrib.auth.models import User
 from django.db.models import Count
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.template import Context, RequestContext
 from django.template.loader import get_template
 from django.core.cache import cache
@@ -25,6 +25,19 @@ NUMERIC = re.compile('.*[0-9].*')
 PASSWORD_LENGTH = 12
 
 AD_AUTH = ad_auth.ActiveDirectoryAuthenticationBackend()
+
+
+def email_participants(subject, content, no_team=False):
+    emails = User.objects.filter(is_superuser=False).values_list('email', flat=True)
+    if not no_team:
+        emails = emails.exclude(participant__team=None)
+    print(no_team, emails)
+    email = EmailMessage(subject=subject, body=content, bcc=emails, to=(settings.EMAIL_FROM_ADDR,), from_email=settings.EMAIL_FROM_ADDR)
+
+    try:
+        email.send()
+    except smtplib.SMTPException:
+        logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=content))
 
 
 def get_current_teams():

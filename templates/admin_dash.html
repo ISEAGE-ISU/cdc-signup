@@ -24,6 +24,7 @@
             {% else %}
             <a class="btn btn-primary" href="?email_list=true">View List</a>
             {% endif %}
+            <a class="btn btn-primary" href="{% url 'admin-email' %}">Send Email to Participants</a>
         </div>
     </div>
 {% endblock %}

@@ -7,6 +7,7 @@ from django.utils.decorators import method_decorator
 from django.utils.html import mark_safe
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import Http404
+from django.core.urlresolvers import reverse
 
 from django.conf import settings
 from base import breadcrumbs
@@ -173,6 +174,36 @@ class AdminDashboard(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
                 gs.administrator_bind_pw = initial_pass
             gs.save()
             messages.success(request, 'Global settings successfully updated.')
+        return self.get(request, context, form=form)
+
+
+class AdminSendEmailView(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
+    template_name = 'admin_email.html'
+    page_title = "Send Email"
+    breadcrumb = "Email"
+
+    def get(self, request, context, *args, **kwargs):
+        if 'form' in kwargs:
+            form = kwargs.pop('form')
+        else:
+            form = base_forms.AdminEmailForm()
+        context['form'] = form
+
+        context['email_form'] = {
+            'title': 'Send Email to Participants',
+            'icon': 'fa-paper-plane-o',
+        }
+        return self.render_to_response(context)
+
+    def post(self, request, context, *args, **kwargs):
+        form = base_forms.AdminEmailForm(data=request.POST)
+        if form.is_valid():
+            subject = form.cleaned_data['subject']
+            content = form.cleaned_data['content']
+            no_team = form.cleaned_data['no_team']
+            actions.email_participants(subject, content, no_team)
+            messages.success(request, 'Sent Email to Participants')
+            return redirect(reverse('admin-dash'))
         return self.get(request, context, form=form)
 
 
