@@ -17,12 +17,14 @@ class ParticipantAdmin(admin.ModelAdmin):
     def export_csv(self, request, queryset):
         si = StringIO()
         cw = csv.writer(si)
-        cw.writerow(["Full Name", "Username", "Email", "Team Name", "Captain"])
+        cw.writerow(["Full Name", "Username", "Email", "Team Name", "Captain", "Checked In"])
 
         for participant in queryset:
             user = participant.user
             if not user.is_superuser and participant.team:
-                cw.writerow([user.get_full_name(), user.username, user.email, participant.team, participant.captain])
+                cw.writerow([user.get_full_name(), user.username,
+                    user.email, participant.team, participant.captain,
+                    participant.checked_in])
 
         return HttpResponse(content=si.getvalue(), content_type="text/plain")
     export_csv.short_name = "Export CSV of Participants"
