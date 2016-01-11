@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.contrib import admin
 import base.models as base_models
 from django.http import HttpResponse
@@ -6,13 +7,17 @@ from cStringIO import StringIO
 
 
 class ParticipantAdmin(admin.ModelAdmin):
-    list_display = ('__unicode__', 'team', 'checked_in', 'captain', 'requested_team', 'requests_captain')
+    list_display = ('__unicode__', 'participant_email', 'team', 'checked_in', 'captain', 'requested_team', 'requests_captain')
     actions = [
         'get_participant_emails',
         'check_in',
         'undo_check_in',
         'export_csv',
     ]
+
+    def participant_email(self, obj):
+        return obj.user.email
+    participant_email.short_description = "Email"
 
     def export_csv(self, request, queryset):
         si = StringIO()
