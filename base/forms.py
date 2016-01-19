@@ -94,6 +94,12 @@ class GlobalSettingsForm(forms.ModelForm):
 
 
 class AdminEmailForm(forms.Form):
+    SEND_CHOICES = (
+        ('all', 'All participants'),
+        ('with_team', 'Only participants with a team'),
+        ('no_team', 'Participant without a team'),
+    )
+
     class Meta:
         fieldsets = [{
             'id': 'email',
@@ -103,4 +109,5 @@ class AdminEmailForm(forms.Form):
 
     subject = forms.CharField(required=True, label="Subject")
     content = forms.CharField(required=True, widget=forms.Textarea, label="Body")
-    no_team = forms.BooleanField(required=False, label="Include Participants with No Team")
+    send_to = forms.ChoiceField(choices=SEND_CHOICES, widget=forms.RadioSelect(), required=True)
+

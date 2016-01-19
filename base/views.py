@@ -200,8 +200,8 @@ class AdminSendEmailView(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView)
         if form.is_valid():
             subject = form.cleaned_data['subject']
             content = form.cleaned_data['content']
-            no_team = form.cleaned_data['no_team']
-            actions.email_participants(subject, content, no_team)
+            audience = form.cleaned_data['send_to']
+            actions.email_participants(subject, content, audience)
             messages.success(request, 'Sent Email to Participants')
             return redirect(reverse('admin-dash'))
         return self.get(request, context, form=form)

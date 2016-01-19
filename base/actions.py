@@ -27,11 +27,14 @@ PASSWORD_LENGTH = 12
 AD_AUTH = ad_auth.ActiveDirectoryAuthenticationBackend()
 
 
-def email_participants(subject, content, no_team=False):
+def email_participants(subject, content, audience):
     emails = User.objects.filter(is_superuser=False).values_list('email', flat=True)
-    if not no_team:
+    if audience == 'with_team':
         emails = emails.exclude(participant__team=None)
-    print(no_team, emails)
+    elif audience == 'no_team':
+        emails = emails.filter(participant__team=None)
+    
+    print(audience, emails)
     email = EmailMessage(subject=subject, body=content, bcc=emails, to=(settings.EMAIL_FROM_ADDR,), from_email=settings.EMAIL_FROM_ADDR)
 
     try:
