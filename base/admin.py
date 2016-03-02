@@ -63,7 +63,7 @@ class ParticipantInline(admin.TabularInline):
 
 
 class TeamAdmin(admin.ModelAdmin):
-    list_display = ('number', 'name')
+    list_display = ('number', 'name', 'looking_for_members')
     inlines = [
         ParticipantInline,
     ]
