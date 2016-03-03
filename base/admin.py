@@ -8,6 +8,7 @@ from cStringIO import StringIO
 
 class ParticipantAdmin(admin.ModelAdmin):
     list_display = ('__unicode__', 'participant_email', 'team', 'checked_in', 'captain', 'requested_team', 'requests_captain')
+    list_filter = ('team',)
     actions = [
         'get_participant_emails',
         'check_in',
