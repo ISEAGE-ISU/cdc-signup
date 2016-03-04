@@ -425,6 +425,9 @@ class JoinTeamView(LoginRequiredMixin, BaseTemplateView):
         return self.render_to_response(context)
 
     def post(self, request, context, *args, **kwargs):
+        if request.user.is_superuser:
+            messages.warning(request, "Joining Teams as a super user is disabled for your safety")
+            return redirect('dashboard')
         team_id = kwargs.get('team_id')
         try:
             team = models.Team.objects.get(pk=team_id)
