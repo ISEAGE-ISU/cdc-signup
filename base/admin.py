@@ -27,10 +27,10 @@ class ParticipantAdmin(admin.ModelAdmin):
 
         for participant in queryset:
             user = participant.user
-            if not user.is_superuser and participant.team:
-                cw.writerow([user.get_full_name(), user.username,
-                    user.email, participant.team, participant.captain,
-                    participant.checked_in])
+            #if not user.is_superuser and participant.team:
+            cw.writerow([user.get_full_name(), user.username,
+                user.email, participant.team, participant.captain,
+                participant.checked_in])
 
         return HttpResponse(content=si.getvalue(), content_type="text/plain")
     export_csv.short_name = "Export CSV of Participants"
