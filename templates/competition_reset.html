@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load tt_web %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+            {% render_widget reset %}
+            <p>
+            Reseting the competition will remove {{ team_count }} team{{ team_count|pluralize }} and
+            {{ participant_count }} participant{{ participant_count|pluralize }}. It will <strong><em>NOT</em></strong>
+            remove them from Active Directory. This cannot be undone.
+            </p>
+            <form class="form-horizontal" action='' method="POST">
+                {% csrf_token %}
+                <button class="btn btn-danger">Confirm Reset</button>
+            </form>
+            {% render_widget_bottom %}
+        </div>
+    </div>
+{% endblock %}

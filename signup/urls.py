@@ -28,6 +28,7 @@ urlpatterns = patterns('',
 
     url(r'^admin/$', views.AdminDashboard.as_view(), name='admin-dash'),
     url(r'^admin/email/$', views.AdminSendEmailView.as_view(), name='admin-email'),
+    url(r'^admin/reset/$', views.AdminCompetitionResetView.as_view(), name='admin-reset'),
 
     url(r'^$', views.IndexView.as_view(), name='site-index'),
     url(r'^login/$', 'base.views.login', name='site-login'),

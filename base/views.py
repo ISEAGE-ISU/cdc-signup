@@ -163,6 +163,10 @@ class AdminDashboard(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
             'title': 'Participant Email Addresses',
             'icon': 'fa-paper-plane-o',
         }
+        context['danger_zone'] = {
+            'title': 'Danger Zone',
+            'icon': 'fa-exclamation-triangle',
+        }
         return self.render_to_response(context)
 
     def post(self, request, context, *args, **kwargs):
@@ -175,6 +179,27 @@ class AdminDashboard(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
             gs.save()
             messages.success(request, 'Global settings successfully updated.')
         return self.get(request, context, form=form)
+
+
+class AdminCompetitionResetView(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
+    template_name = 'competition_reset.html'
+    page_title = "Competition Reset"
+    breadcrumb = "Reset"
+
+    def get(self, request, context, *args, **kwargs):
+        context['team_count'] = models.Team.objects.count()
+        context['participant_count'] = models.Participant.objects.exclude(user__is_superuser=True).count()
+        context['reset'] = {
+            'title': 'Competition Reset',
+            'icon': 'fa-exclamation-triangle',
+        }
+        return self.render_to_response(context)
+
+    def post(self, request, context, *args, **kwargs):
+        models.Team.objects.all().delete()
+        User.objects.exclude(is_superuser=True).delete()
+        messages.success(request, 'Competition successfully reset.')
+        return redirect('admin-dash')
 
 
 class AdminSendEmailView(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
