@@ -6,7 +6,7 @@ import base
 import datetime
 import models
 from django.contrib.auth.models import User
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.core.mail import send_mail, EmailMessage
 from django.template import Context, RequestContext
 from django.template.loader import get_template
@@ -28,11 +28,26 @@ AD_AUTH = ad_auth.ActiveDirectoryAuthenticationBackend()
 
 
 def email_participants(subject, content, audience):
-    emails = User.objects.filter(is_superuser=False).values_list('email', flat=True)
-    if audience == 'with_team':
+    emails = User.objects.filter(is_superuser=False)
+    if audience == 'all':
+        # All Blue Team Members, no Red/Green
+        emails = emails.exclude(Q(participant__is_red=True) |
+                Q(participant__is_green=True))
+    elif audience == 'with_team':
+        # All Blue Team Members on a team, no Red/Green
         emails = emails.exclude(participant__team=None)
     elif audience == 'no_team':
-        emails = emails.filter(participant__team=None)
+        # All Blue Team Members NOT on a team, no Red/Green
+        emails = emails.filter(Q(participant__team=None) &
+                Q(participant__is_red=False) &
+                Q(participant__is_green=False))
+    elif audience == 'red_team':
+        # All Red Team Members, no Blue/Green
+        emails = emails.filter(participant__is_red=True)
+    elif audience == 'green_team':
+        # All Green Team Members, no Blue/Red
+        emails = emails.filter(participant__is_green=True)
+    emails = emails.values_list('email', flat=True)
     
     print(audience, emails)
     email = EmailMessage(subject=subject, body=content, bcc=emails, to=(settings.EMAIL_FROM_ADDR,), from_email=settings.EMAIL_FROM_ADDR)

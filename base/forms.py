@@ -100,9 +100,12 @@ class GlobalSettingsForm(forms.ModelForm):
 
 class AdminEmailForm(forms.Form):
     SEND_CHOICES = (
-        ('all', 'All participants'),
+        ('all', 'All (Blue) participants'),
         ('with_team', 'Only participants with a team'),
         ('no_team', 'Participant without a team'),
+        ('red_team', 'Red Team Members'),
+        ('green_team', 'Green Team Members'),
+        ('everyone', 'Everyone'),
     )
 
     class Meta:
