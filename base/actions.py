@@ -374,7 +374,13 @@ def create_account(username, fname, lname, email, acct_type, ldap_connection):
     AD_AUTH.get_or_create_user(username, password)
 
     # Send email
-    email_body = email_templates.ACCOUNT_CREATED.format(fname=fname, lname=lname, username=username, password=password,
+    if acct_type == 'blue':
+        template = email_templates.ACCOUNT_CREATED
+    elif acct_type == 'red':
+        template = email_templates.ACCOUNT_CREATED_RED
+    elif acct_type == 'green':
+        template = email_templates.ACCOUNT_CREATED_GREEN
+    email_body = template.format(fname=fname, lname=lname, username=username, password=password,
                                 support=settings.SUPPORT_EMAIL)
 
     try:

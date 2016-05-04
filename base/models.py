@@ -74,6 +74,10 @@ class Participant(models.Model):
     is_red = models.BooleanField(default=False)
     is_green = models.BooleanField(default=False)
 
+    @property
+    def is_redgreen(self):
+        return self.is_red or self.is_green
+
     def check_in(self):
         self.checked_in = True
         self.save(update_fields=['checked_in'])
@@ -86,23 +90,23 @@ class Participant(models.Model):
         return self.captain or self.user.is_superuser
 
     def request_team(self, team):
-        if not self.team:
+        if not self.team and not self.is_redgreen:
             self.requested_team = team
             self.save(update_fields=['requested_team'])
 
     def request_promotion(self):
-        if not self.requests_captain:
+        if not self.requests_captain and not self.is_redgreen:
             self.requests_captain = True
             self.save(update_fields=['requests_captain'])
 
     def promote(self):
-        if not self.captain:
+        if not self.captain and not self.is_redgreen:
             self.captain = True
             self.requests_captain = False
             self.save(update_fields=['captain', 'requests_captain'])
 
     def demote(self):
-        if self.captain:
+        if self.captain and not self.is_redgreen:
             self.captain = False
             self.save(update_fields=['captain'])
 

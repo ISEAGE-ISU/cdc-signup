@@ -366,6 +366,14 @@ class RedGreenSignupView(BaseTemplateView):
                 form.add_error('username', "That username already exists. Please choose another one.")
                 return self.get(request, context, form=form)
             if success:
+                # Update the participant object since it is created throught
+                # a signal rather than directly
+                user = User.objects.get(username=username)
+                if acct_type == 'red':
+                    user.participant.is_red = True
+                elif acct_type == 'green':
+                    user.participant.is_green = True
+                user.participant.save()
                 messages.success(request, 'Account successfully created. Please check your email for further instructions.')
                 return redirect('site-login')
             else:
@@ -398,6 +406,10 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
                 context['captain_requested'] = participant.requests_captain
             if participant.captain:
                 context['is_captain'] = True
+            if participant.is_redgreen:
+                context['is_redgreen'] = True
+                context['is_green'] = participant.is_green
+                context['is_red'] = participant.is_red
 
         if 'form' in kwargs:
             form = kwargs.pop('form')

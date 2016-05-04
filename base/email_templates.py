@@ -13,6 +13,36 @@ You will use these credentials to log in to all CDC systems, including vCenter, 
 If you have questions, email CDC support at {support}.
 """
 
+ACCOUNT_CREATED_RED="""Hi there {fname} {lname},
+
+Your ISEAGE CDC account has been successfully created!
+Please use the following credentials to log in at https://signup.iseage.org/login/
+
+Username: {username}
+Password: {password}
+
+Make sure you change your password right away.
+
+You will use these credentials to log in to all CDC systems and IScorE.
+
+If you have questions, email CDC support at {support}.
+"""
+
+ACCOUNT_CREATED_GREEN="""Hi there {fname} {lname},
+
+Your ISEAGE CDC account has been successfully created!
+Please use the following credentials to log in at https://signup.iseage.org/login/
+
+Username: {username}
+Password: {password}
+
+Make sure you change your password right away.
+
+You will use these credentials to log in to all CDC systems, including the RDP hop, and IScorE.
+
+If you have questions, email CDC support at {support}.
+"""
+
 PASSWORD_UPDATED="""Hi there {fname} {lname},
 
 Your password has been successfully updated.
