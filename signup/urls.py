@@ -35,6 +35,7 @@ urlpatterns = patterns('',
     url(r'^logout/$', 'base.views.logout', name='site-logout'),
 
     url(r'^signup/$', views.SignupView.as_view(), name='signup'),
+    url(r'^signup/redgreen/$', views.RedGreenSignupView.as_view(), name='signup-redgreen'),
     url(r'^forgot/$', views.ForgotPasswordView.as_view(), name='forgot-password'),
 
     url(r'^dashboard/$', views.DashboardView.as_view(), name='dashboard'),

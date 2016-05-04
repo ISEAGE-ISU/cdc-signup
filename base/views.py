@@ -258,6 +258,8 @@ class IndexView(BaseTemplateView):
     def get(self, request, context, *args, **kwargs):
         admin_bind_dn = actions.get_global_setting('administrator_bind_dn')
         context['enable_creation'] = actions.get_global_setting('enable_account_creation')
+        context['enable_green'] = actions.get_global_setting('enable_green')
+        context['enable_red'] = actions.get_global_setting('enable_red')
         if not admin_bind_dn:
             if request.user.is_authenticated():
                 messages.success(request, 'Setup your CDC here.')
@@ -309,6 +311,56 @@ class SignupView(BaseTemplateView):
                 success = actions.create_user_account(username, first, last, email)
             except base.DuplicateName:
                 form.add_error('first_name', """It looks like there's already an account with the same first and last names as you provided. \
+                Try including your middle initial or middle name.""")
+            except base.UsernameAlreadyExistsError:
+                form.add_error('username', "That username already exists. Please choose another one.")
+                return self.get(request, context, form=form)
+            if success:
+                messages.success(request, 'Account successfully created. Please check your email for further instructions.')
+                return redirect('site-login')
+            else:
+                messages.error(request, TRY_AGAIN)
+
+        return self.get(request, context, form=form)
+
+
+class RedGreenSignupView(BaseTemplateView):
+    template_name = 'signup.html'
+    page_title = "Red/Green Signup"
+    breadcrumb = "Red/Green"
+
+    def get(self, request, context, *args, **kwargs):
+        enabled = actions.get_global_setting('enable_red') or actions.get_global_setting('enable_green')
+        if not enabled:
+            message.error(request, CREATION_DISABLED)
+            return redirect('site-index')
+
+        if 'form' in kwargs:
+            form = kwargs.pop('form')
+        else:
+            form = base_forms.RedGreenSignupForm()
+        context['form'] = form
+        return self.render_to_response(context)
+
+    def post(self, request, context, *args, **kwargs):
+        enabled = actions.get_global_setting('enable_red') or actions.get_global_setting('enable_green')
+        if not enabled:
+            messages.error(request, CREATION_DISABLED)
+            return redirect('site-index')
+
+        form = base_forms.RedGreenSignupForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            first = form.cleaned_data['first_name']
+            last = form.cleaned_data['last_name']
+            username = form.cleaned_data['username']
+            acct_type = form.cleaned_data['acct_type']
+            success = False
+            try:
+                success = actions.create_account(username, first,
+                        last, email, acct_type)
+            except base.DuplicateName:
+                form.add_error('first_name', """It looks like there's already an account with the same first and last names as your provided. \
                 Try including your middle initial or middle name.""")
             except base.UsernameAlreadyExistsError:
                 form.add_error('username', "That username already exists. Please choose another one.")

@@ -269,10 +269,23 @@ def generate_password():
             return password
 
 
+def create_user_account(username, fname, lname, email):
+    return create_account(username, fname, lname, email, 'blue')
+
+
 @ldap_admin_bind
-def create_user_account(username, fname, lname, email, ldap_connection):
+def create_account(username, fname, lname, email, acct_type, ldap_connection):
     base_dn = settings.AD_BASE_DN
-    cdcuser_ou = settings.AD_CDCUSER_OU
+
+    if acct_type == 'blue':
+        ou = settings.AD_CDCUSER_OU
+        group = settings.AD_CDCUSER_GROUP
+    elif acct_type == 'red':
+        ou = settings.AD_RED_OU
+        group = settings.AD_RED_GROUP
+    elif acct_type == 'green':
+        ou = settings.AD_GREEN_OU
+        group = settings.AD_GREEN_GROUP
 
     # This is needed for searches to work
     ldap.set_option(ldap.OPT_REFERRALS, 0)
@@ -293,7 +306,7 @@ def create_user_account(username, fname, lname, email, ldap_connection):
         raise base.UsernameAlreadyExistsError()
 
     user_dn = 'CN={first} {last},OU={ou},{search}'.format(first=fname, last=lname,
-                                                      ou=cdcuser_ou,
+                                                      ou=ou,
                                                       search=base_dn)
     user_attrs = {}
     user_attrs['objectClass'] = ['top', 'person', 'organizationalPerson', 'user']
@@ -311,9 +324,10 @@ def create_user_account(username, fname, lname, email, ldap_connection):
 
     # New group membership
     add_member = [(ldap.MOD_ADD, 'member', user_dn)]
-    cdcuser_group_dn = 'CN={group},OU={ou},{search}'.format(group=settings.AD_CDCUSER_GROUP,
-                                                      ou=cdcuser_ou,
+    cdcuser_group_dn = 'CN={group},OU={ou},{search}'.format(group=group,
+                                                      ou=ou,
                                                       search=base_dn)
+    ldap_debug_write("Attempting to add user to group: " + cdcuser_group_dn)
 
     # 512 will set user account to enabled
     mod_acct = [(ldap.MOD_REPLACE, 'userAccountControl', '512')]
@@ -333,7 +347,8 @@ def create_user_account(username, fname, lname, email, ldap_connection):
     try:
         ldap_connection.modify_s(cdcuser_group_dn, add_member)
     except ldap.LDAPError as e:
-        ldap_debug_write("Error adding user to CDCUsers group: " + str(e))
+        ldap_debug_write("Error adding user to {group} group: ".format(
+            group=group) + str(e))
         return False
 
     # Prep the password
@@ -662,3 +677,14 @@ def disband_team(participant_id):
         logging.warning("Failed to send email to members of {team}:\n{body}".format(team=name, body=email_body))
 
     return True
+
+
+def get_type_choices():
+    choices = []
+
+    if get_global_setting('enable_green'):
+        choices.append(('green', 'Green Team'))
+    if get_global_setting('enable_red'):
+        choices.append(('red', 'Red Team'))
+
+    return choices

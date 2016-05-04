@@ -5,6 +5,9 @@
     {% if enable_creation %}
         <a class="btn btn-success btn-lg btn-block" href="{% url "signup" %}">Create an account</a>
     {% endif %}
+    {% if enable_red or enable_green %}
+        <a class="btn btn-info btn-lg btn-block" href="{% url "signup-redgreen" %}">Red Team/Green Team Signup</a>
+    {% endif %}
         <a class="btn btn-primary btn-lg btn-block" href="{% url "site-login" %}">Sign in</a>
     </div>
 {% endblock %}

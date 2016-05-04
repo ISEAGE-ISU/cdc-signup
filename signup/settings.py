@@ -197,6 +197,12 @@ AD_CDCUSER_GROUP = 'CDCUsers'
 AD_BLUE_TEAM_PREFIX = "CDC Team "
 AD_BLUE_TEAM_FORMAT = AD_BLUE_TEAM_PREFIX + "{number}"
 
+AD_RED_OU = 'RedTeam'
+AD_RED_GROUP = 'Red'
+
+AD_GREEN_OU = 'GreenTeam'
+AD_GREEN_GROUP = 'Green'
+
 AD_BASE_DN = 'DC=iseage,DC=org'
 AD_DOMAIN = 'iseage.org'
 AD_NT4_DOMAIN = 'ISEAGE'

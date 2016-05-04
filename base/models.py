@@ -10,8 +10,11 @@ class GlobalSettings(models.Model):
     administrator_bind_dn = models.CharField(max_length=100)
     administrator_bind_pw = models.CharField(max_length=100)
     check_in_date = models.DateTimeField(null=True)
-    enable_account_creation = models.BooleanField(default=True)
     documentation_url = models.CharField(max_length=200, blank=True, null=True)
+
+    enable_account_creation = models.BooleanField(default=True)
+    enable_red = models.BooleanField(default=True)
+    enable_green = models.BooleanField(default=True)
 
 
 class Team(models.Model):
@@ -67,6 +70,9 @@ class Participant(models.Model):
     requested_team = models.ForeignKey('Team', related_name='requested_team', blank=True, null=True)
     requests_captain = models.BooleanField(default=False)
     checked_in = models.BooleanField(default=False)
+
+    is_red = models.BooleanField(default=False)
+    is_green = models.BooleanField(default=False)
 
     def check_in(self):
         self.checked_in = True
