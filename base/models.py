@@ -71,8 +71,10 @@ class Participant(models.Model):
     requests_captain = models.BooleanField(default=False)
     checked_in = models.BooleanField(default=False)
 
+    # Only used for Red/Green
     is_red = models.BooleanField(default=False)
     is_green = models.BooleanField(default=False)
+    approved = models.BooleanField(default=False)
 
     @property
     def is_redgreen(self):
@@ -109,6 +111,28 @@ class Participant(models.Model):
         if self.captain and not self.is_redgreen:
             self.captain = False
             self.save(update_fields=['captain'])
+
+    def approve(self):
+        """
+        Approve a Red/Green Member
+
+        Only applies to Red/Green
+        """
+        if self.is_redgreen:
+            self.approved = True
+            self.save(update_fields=['approved'])
+            actions.approve_user(self)
+
+    def unapprove(self):
+        """
+        Unapprove a Red/Green Member
+
+        Only applies to Red/Green
+        """
+        if self.is_redgreen:
+            self.approved = False
+            self.save(update_fields=['approved'])
+            actions.unapprove_user(self)
 
     def __unicode__(self):
         return "{username} ({name})".format(username=self.user.get_username(), name=self.user.get_full_name())

@@ -297,10 +297,10 @@ def create_account(username, fname, lname, email, acct_type, ldap_connection):
         group = settings.AD_CDCUSER_GROUP
     elif acct_type == 'red':
         ou = settings.AD_RED_OU
-        group = settings.AD_RED_GROUP
+        group = settings.AD_RED_PENDING
     elif acct_type == 'green':
         ou = settings.AD_GREEN_OU
-        group = settings.AD_GREEN_GROUP
+        group = settings.AD_GREEN_PENDING
 
     # This is needed for searches to work
     ldap.set_option(ldap.OPT_REFERRALS, 0)
@@ -337,12 +337,6 @@ def create_account(username, fname, lname, email, acct_type, ldap_connection):
 
     password = generate_password()
 
-    # New group membership
-    add_member = [(ldap.MOD_ADD, 'member', user_dn)]
-    cdcuser_group_dn = 'CN={group},OU={ou},{search}'.format(group=group,
-                                                      ou=ou,
-                                                      search=base_dn)
-    ldap_debug_write("Attempting to add user to group: " + cdcuser_group_dn)
 
     # 512 will set user account to enabled
     mod_acct = [(ldap.MOD_REPLACE, 'userAccountControl', '512')]
@@ -358,7 +352,14 @@ def create_account(username, fname, lname, email, acct_type, ldap_connection):
         ldap_debug_write("Error adding new user: " + str(e))
         return False
 
-    # Add user to CDCUsers group
+    # New group membership
+    add_member = [(ldap.MOD_ADD, 'member', user_dn)]
+    cdcuser_group_dn = 'CN={group},OU={ou},{search}'.format(group=group,
+                                                            ou=ou,
+                                                            search=base_dn)
+    ldap_debug_write("Attempting to add user to group: " + cdcuser_group_dn)
+
+    # Add user to appropriate group
     try:
         ldap_connection.modify_s(cdcuser_group_dn, add_member)
     except ldap.LDAPError as e:
@@ -698,6 +699,38 @@ def disband_team(participant_id):
         logging.warning("Failed to send email to members of {team}:\n{body}".format(team=name, body=email_body))
 
     return True
+
+
+def _get_group_dn(group, ou):
+    return "CN={group},OU={ou},{dn}".format(group=group, ou=ou, dn=settings.AD_BASE_DN)
+
+
+def approve_user(participant):
+    user_dn = get_user_dn(participant.id)
+    group_dn = None
+    old_group_dn = None
+    if participant.is_red:
+        group_dn = _get_group_dn(settings.AD_RED_GROUP, settings.AD_RED_OU)
+        old_group_dn = _get_group_dn(settings.AD_RED_PENDING, settings.AD_RED_OU)
+    elif participant.is_green:
+        group_dn = _get_group_dn(settings.AD_GREEN_GROUP, settings.AD_GREEN_OU)
+        old_group_dn = _get_group_dn(settings.AD_GREEN_PENDING, settings.AD_GREEN_OU)
+    remove_user_from_group(user_dn, old_group_dn)
+    add_user_to_group(user_dn, group_dn)
+
+
+def unapprove_user(participant):
+    user_dn = get_user_dn(participant.id)
+    group_dn = None
+    new_group_dn = None
+    if participant.is_red:
+        group_dn = _get_group_dn(settings.AD_RED_GROUP, settings.AD_RED_OU)
+        new_group_dn = _get_group_dn(settings.AD_RED_PENDING, settings.AD_RED_OU)
+    elif participant.is_green:
+        group_dn = _get_group_dn(settings.AD_GREEN_GROUP, settings.AD_GREEN_OU)
+        new_group_dn = _get_group_dn(settings.AD_GREEN_PENDING, settings.AD_GREEN_OU)
+    remove_user_from_group(user_dn, group_dn)
+    add_user_to_group(user_dn, new_group_dn)
 
 
 def get_type_choices():

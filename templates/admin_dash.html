@@ -15,6 +15,15 @@
             </form>
         </div>
         <div class="col-md-6">
+            {% if enable_green or enable_red %}
+            <div class="row">
+                <div class="col-md-12">
+                    {% render_widget participant_approvals %}
+                    <a class="btn btn-primary" href="{% url 'admin-approvals' %}">Red/Green Approvals</a>
+                    {% render_widget_bottom %}
+                </div>
+            </div>
+            {% endif %}
             <div class="row">
                 <div class="col-md-12">
                     {% render_widget email_list %}

@@ -1,3 +1,4 @@
+from django.db.models.query_utils import Q
 from django.shortcuts import redirect
 from django.views.generic.base import View, TemplateResponseMixin
 from django.contrib.auth import views as auth_views
@@ -157,8 +158,14 @@ class AdminDashboard(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
         else:
             form = base_forms.GlobalSettingsForm(instance=context['g_setting'])
         context['form'] = form
+        context['enable_red'] = context['g_setting'].enable_red
+        context['enable_green'] = context['g_setting'].enable_green
         if request.GET.get('email_list'):
             context['emails'] = User.objects.filter(is_superuser=False).values_list('email', flat=True)
+        context['participant_approvals'] = {
+            'title': 'Red/Green Approvals',
+            'icon': 'fa-check',
+        }
         context['email_list'] = {
             'title': 'Participant Email Addresses',
             'icon': 'fa-paper-plane-o',
@@ -179,6 +186,43 @@ class AdminDashboard(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
             gs.save()
             messages.success(request, 'Global settings successfully updated.')
         return self.get(request, context, form=form)
+
+
+class RedGreenApprovals(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
+    template_name = 'admin/approvals.html'
+    page_title = "Red/Green Approvals"
+    breadcrumb = "Approvals"
+
+    def get(self, request, context, *args, **kwargs):
+        redgreen = models.Participant.objects.filter(Q(is_red=True) | Q(is_green=True))
+
+        context['pending'] = redgreen.filter(approved=False)
+        context['approved'] = redgreen.filter(approved=True)
+
+        context['pending_widget'] = {
+            'title': 'Participants Pending Approval',
+            'icon': 'fa-adjust',
+        }
+        context['approved_widget'] = {
+            'title': "Approved Participants",
+            'icon': 'fa-check',
+        }
+
+        return self.render_to_response(context)
+
+
+class RedGreenApprove(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
+    def get(self, request, context, *args, **kwargs):
+        participant = models.Participant.objects.get(pk=kwargs['participant_id'])
+        participant.approve()
+        return redirect(reverse('admin-approvals'))
+
+
+class RedGreenUnapprove(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
+    def get(self, request, context, *args, **kwargs):
+        participant = models.Participant.objects.get(pk=kwargs['participant_id'])
+        participant.unapprove()
+        return redirect(reverse('admin-approvals'))
 
 
 class AdminCompetitionResetView(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
