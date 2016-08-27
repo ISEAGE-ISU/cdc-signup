@@ -103,8 +103,10 @@ class AdminEmailForm(forms.Form):
         ('all', 'All (Blue) participants'),
         ('with_team', 'Only participants with a team'),
         ('no_team', 'Participant without a team'),
-        ('red_team', 'Red Team Members'),
-        ('green_team', 'Green Team Members'),
+        ('red_team_all', 'Red Team Members (All)'),
+        ('red_team_approved', 'Red Team Members (Approved)'),
+        ('green_team_all', 'Green Team Members (All)'),
+        ('green_team_approved', 'Green Team Members (Approved)'),
         ('everyone', 'Everyone'),
     )
 

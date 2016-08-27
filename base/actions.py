@@ -41,11 +41,17 @@ def email_participants(subject, content, audience):
         emails = emails.filter(Q(participant__team=None) &
                 Q(participant__is_red=False) &
                 Q(participant__is_green=False))
-    elif audience == 'red_team':
-        # All Red Team Members, no Blue/Green
+    elif audience == 'red_team_approved':
+        # Approved Red Team Members, no Blue/Green
+        emails = emails.filter(participant__is_red=True, participant__approved=True)
+    elif audience == 'red_team_all':
+        # All Red Team Members (Approved & Unapproved), no Blue/Green
         emails = emails.filter(participant__is_red=True)
-    elif audience == 'green_team':
-        # All Green Team Members, no Blue/Red
+    elif audience == 'green_team_approved':
+        # Approved Green Team Members, no Blue/Red
+        emails = emails.filter(participant__is_green=True, participant__approved=True)
+    elif audience == 'green_team_all':
+        # All Green Team Members (Approved & Unapproved), no Blue/Green
         emails = emails.filter(participant__is_green=True)
     emails = emails.values_list('email', flat=True)
     
