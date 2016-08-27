@@ -206,9 +206,14 @@ def get_user_dn(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
     fname = participant.user.first_name
     lname = participant.user.last_name
+    if participant.is_red:
+        ou = settings.AD_RED_OU
+    elif participant.is_green:
+        ou = settings.AD_GREEN_OU
+    else:
+        ou = settings.AD_CDCUSER_OU
     user_dn = 'CN={first} {last},OU={ou},{base_dn}'.format(first=fname, last=lname,
-                                                      ou=settings.AD_CDCUSER_OU,
-                                                      base_dn=settings.AD_BASE_DN)
+                                                      ou=ou, base_dn=settings.AD_BASE_DN)
     return user_dn
 
 
