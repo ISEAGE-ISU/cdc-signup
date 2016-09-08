@@ -400,9 +400,9 @@ class ToggleLFTView(BaseView):
         participant.save()
 
         if participant.looking_for_team:
-            messages.success(request, 'You are no longer "Looking for Team"')
-        else:
             messages.success(request, 'You are "Looking For Team", ISEAGE will place you on a team if you cannot find one')
+        else:
+            messages.success(request, 'You are no longer "Looking for Team"')
 
         return redirect(reverse('dashboard'))
 
