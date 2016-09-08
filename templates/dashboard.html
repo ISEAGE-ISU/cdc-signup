@@ -6,46 +6,51 @@
         <div class="col-md-12" style="max-width: 700px;">
             {% render_widget widget_data %}
                 {% if check_in %}
-                <a class="btn btn-success btn-lg btn-block" href="{% url "check-in" %}">Check In</a>
+                    <a class="btn btn-success btn-lg btn-block" href="{% url "check-in" %}">Check In</a>
                 {% endif %}
                 {% if requested_team %}
-                <p>Your request to join {{ requested_team.name }} is pending approval.</p>
+                    <p>Your request to join {{ requested_team.name }} is pending approval.</p>
                 {% endif %}
                 {% if team %}
-                <p>You are currently a {% if is_captain %}captain{% else %}member{% endif %} of <strong>{{ team.name }}</strong></p>
-                <p>Your team number is: <strong>{{ team.number }}</strong></p>
-                    {% if is_captain %}
-                    <a class="btn btn-primary btn-lg btn-block" href="{% url "manage-team" %}">Manage your team</a>
-                    <a class="btn btn-danger btn-lg btn-block" href="{% url "step-down" %}">Step down as captain</a>
-                    {% elif captain_requested %}
-                    <p>Your captain request is pending approval.</p>
-                    {% else %}
-                    <a class="btn btn-primary btn-lg btn-block" href="{% url "request-promotion" %}">Request to become a captain</a>
-                    <a class="btn btn-danger btn-lg btn-block" href="{% url "leave-team" %}">Leave your team</a>
-                    {% endif %}
-                <br>
-                <h4>Team Members</h4>
-                <table class="table table-striped" id="current-members">
-                    <thead><tr>
-                        <th>First</th>
-                        <th>Last</th>
-                        <th>Email</th>
-                        <th>Captain</th>
-                    </tr></thead>
-                    <tbody>
-                    {% for member in current_members %}
-                    <tr id="member-{{ member.id }}">
-                        <td class="first">{{ member.user.first_name }}</td>
-                        <td class="last">{{ member.user.last_name }}</td>
-                        <td class="email">{{ member.user.email }}</td>
-                        {% if member.captain %}<td data-id="true" class="is-captain">Yes</td>{% else %}<td data-id="false" class="is-captain">No</td>{% endif %}
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                    <p>You are currently a {% if is_captain %}captain{% else %}member{% endif %} of <strong>{{ team.name }}</strong></p>
+                    <p>Your team number is: <strong>{{ team.number }}</strong></p>
+                        {% if is_captain %}
+                            <a class="btn btn-primary btn-lg btn-block" href="{% url "manage-team" %}">Manage your team</a>
+                            <a class="btn btn-danger btn-lg btn-block" href="{% url "step-down" %}">Step down as captain</a>
+                        {% elif captain_requested %}
+                            <p>Your captain request is pending approval.</p>
+                        {% else %}
+                            <a class="btn btn-primary btn-lg btn-block" href="{% url "request-promotion" %}">Request to become a captain</a>
+                            <a class="btn btn-danger btn-lg btn-block" href="{% url "leave-team" %}">Leave your team</a>
+                        {% endif %}
+                    <br>
+                    <h4>Team Members</h4>
+                    <table class="table table-striped" id="current-members">
+                        <thead><tr>
+                            <th>First</th>
+                            <th>Last</th>
+                            <th>Email</th>
+                            <th>Captain</th>
+                        </tr></thead>
+                        <tbody>
+                        {% for member in current_members %}
+                            <tr id="member-{{ member.id }}">
+                                <td class="first">{{ member.user.first_name }}</td>
+                                <td class="last">{{ member.user.last_name }}</td>
+                                <td class="email">{{ member.user.email }}</td>
+                                {% if member.captain %}<td data-id="true" class="is-captain">Yes</td>{% else %}<td data-id="false" class="is-captain">No</td>{% endif %}
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
                 {% else %}
-                <a class="btn btn-primary btn-lg btn-block" href="{% url "team-list" %}">{% if requested_team %}Request to join a different team{% else %}Join an existing team{% endif %}</a>
-                <a class="btn btn-default btn-lg btn-block" href="{% url "create-team" %}">Create a new team</a>
+                    {% if looking_for_team %}
+                        <a class="btn btn-danger btn-lg btn-block" href="{% url "toggle-lft" %}">You are "Looking For Team", click to disable.</a>
+                    {% else %}
+                        <a class="btn btn-default btn-lg btn-block" href="{% url "toggle-lft" %}">Looking For team</a>
+                    {% endif %}
+                    <a class="btn btn-primary btn-lg btn-block" href="{% url "team-list" %}">{% if requested_team %}Request to join a different team{% else %}Join an existing team{% endif %}</a>
+                    <a class="btn btn-default btn-lg btn-block" href="{% url "create-team" %}">Create a new team</a>
                 {% endif %}
             {% render_widget_bottom %}
 
@@ -56,11 +61,12 @@
         <div class="col-md-12" style="max-width: 700px;">
             {% render_widget download_docs %}
             {% if docs_url %}
-            <p>Documents containing the scenario, rules, accounts, and other important information.</p>
-            <a class="btn btn-sm btn-primary" href="{{ docs_url }}" target="_blank">View</a>
+                <p>Documents containing the scenario, rules, accounts, and other important information.</p>
+                <a class="btn btn-sm btn-primary" href="{{ docs_url }}" target="_blank">View</a>
             {% else %}
-            <p>Nothing here yet! You should receive an email from the staff when the documents become available.</p>
+                <p>Nothing here yet! You should receive an email from the staff when the documents become available.</p>
             {% endif %}
+            {% render_widget_bottom %}
         </div>
     </div>
     {% endif %}

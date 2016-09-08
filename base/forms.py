@@ -8,6 +8,7 @@ class SignupForm(forms.Form):
     first_name = forms.CharField(label="First name", required=True)
     last_name = forms.CharField(label="Last name", required=True)
     username = forms.CharField(label="Desired username", max_length=40, required=True)
+    looking_for_team = forms.BooleanField(label="Looking For Team", required=False)
 
     class Meta:
         fieldsets = [{
