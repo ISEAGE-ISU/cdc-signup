@@ -15,7 +15,21 @@ class ParticipantAdmin(admin.ModelAdmin):
         'check_in',
         'undo_check_in',
         'export_csv',
+        'mark_lft',
+        'unmark_lft',
     ]
+
+    def unmark_lft(self, request, queryset):
+        for participant in queryset:
+            participant.looking_for_team = False
+            participant.save()
+    unmark_lft.short_description = "Unmark LFT"
+
+    def mark_lft(self, request, queryset):
+        for participant in queryset:
+            participant.looking_for_team = True
+            participant.save()
+    mark_lft.short_description = "Mark LFT"
 
     def participant_email(self, obj):
         return obj.user.email
