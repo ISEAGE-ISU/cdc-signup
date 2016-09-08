@@ -67,7 +67,7 @@ class Participant(models.Model):
     requested_team = models.ForeignKey('Team', related_name='requested_team', blank=True, null=True)
     requests_captain = models.BooleanField(default=False)
     checked_in = models.BooleanField(default=False)
-    looking_for_team = models.BooleanField(default=False, help_text='ISEAGE will put you on a team')
+    looking_for_team = models.BooleanField(default=True, help_text='ISEAGE will put you on a team')
 
     def check_in(self):
         self.checked_in = True
