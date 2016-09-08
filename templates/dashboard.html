@@ -45,7 +45,7 @@
                     </table>
                 {% else %}
                     {% if looking_for_team %}
-                        <a class="btn btn-danger btn-lg btn-block" href="{% url "toggle-lft" %}">You are "Looking For Team", click to disable.</a>
+                        <a class="btn btn-default btn-lg btn-block" href="{% url "toggle-lft" %}">You are "Looking For Team", click to disable.</a>
                     {% else %}
                         <a class="btn btn-default btn-lg btn-block" href="{% url "toggle-lft" %}">Looking For team</a>
                     {% endif %}
