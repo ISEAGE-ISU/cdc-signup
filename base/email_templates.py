@@ -8,6 +8,8 @@ Password: {password}
 
 Make sure you change your password right away.
 
+If you do not have a team and want support staff to place you on one, log in with the above credentials and click "Looking For Team".
+
 You will use these credentials to log in to all CDC systems, including vCenter, Setup chat, the RDP hop, and IScorE.
 
 If you have questions, email CDC support at {support}.

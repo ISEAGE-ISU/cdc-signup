@@ -7,8 +7,9 @@ from cStringIO import StringIO
 
 
 class ParticipantAdmin(admin.ModelAdmin):
-    list_display = ('__unicode__', 'participant_email', 'team', 'checked_in', 'captain', 'requested_team', 'requests_captain')
-    list_filter = ('team',)
+    list_display = ('__unicode__', 'participant_email', 'team', 'checked_in', 'captain', 'requested_team',
+                    'requests_captain', 'looking_for_team')
+    list_filter = ('team', 'looking_for_team', 'checked_in', 'captain', 'requested_team')
     actions = [
         'get_participant_emails',
         'check_in',
@@ -65,6 +66,7 @@ class ParticipantInline(admin.TabularInline):
 
 class TeamAdmin(admin.ModelAdmin):
     list_display = ('number', 'name', 'looking_for_members')
+    list_filter = ('looking_for_members',)
     inlines = [
         ParticipantInline,
     ]

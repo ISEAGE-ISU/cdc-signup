@@ -46,6 +46,7 @@ urlpatterns = patterns('',
     url(r'^dashboard/request_captain/$', views.RequestCaptainView.as_view(), name='request-promotion'),
     url(r'^dashboard/step_down/$', views.StepDownView.as_view(), name='step-down'),
     url(r'^dashboard/create_team/$', views.TeamCreationView.as_view(), name='create-team'),
+    url(r'^dashboard/toggle_lft/$', views.ToggleLFTView.as_view(), name='toggle-lft'),
 
     url(r'^dashboard/manage_team/$', views.CaptainHomeView.as_view(), name='manage-team'),
     url(r'^dashboard/manage_team/approve_member/(?P<participant_id>[0-9-_:]+)/$', views.ApproveMemberView.as_view(), name='approve-member'),

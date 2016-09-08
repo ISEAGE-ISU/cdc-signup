@@ -496,6 +496,7 @@ def add_user_to_team(team_id, participant_id):
 
     participant.team = team
     participant.requested_team = None
+    participant.looking_for_team = False
     participant.save()
 
     # Send email

@@ -344,6 +344,8 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
                 context['team'] = team
                 context['current_members'] = team.members()
                 context['captain_requested'] = participant.requests_captain
+            else:
+                context['looking_for_team'] = participant.looking_for_team
             if participant.captain:
                 context['is_captain'] = True
 
@@ -381,8 +383,28 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
                 return redirect('site-login')
             else:
                 messages.error(request, WHOOPS)
-
         return self.get(request, context, form=form)
+
+
+class ToggleLFTView(BaseView):
+    def get(self, request, context, *args, **kwargs):
+        participant = request.user.participant
+
+        if participant.team:
+            messages.error(request, "You are already on a team")
+            participant.looking_for_team = False
+            participant.save()
+            return redirect(reverse('dashboard'))
+
+        participant.looking_for_team = not participant.looking_for_team
+        participant.save()
+
+        if participant.looking_for_team:
+            messages.success(request, 'You are no longer "Looking for Team"')
+        else:
+            messages.success(request, 'You are "Looking For Team", ISEAGE will place you on a team if you cannot find one')
+
+        return redirect(reverse('dashboard'))
 
 
 class ForgotPasswordView(BaseTemplateView):
