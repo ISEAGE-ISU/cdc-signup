@@ -97,15 +97,15 @@ class GlobalSettingsForm(forms.ModelForm):
 class AdminEmailForm(forms.Form):
     SEND_CHOICES = (
         ('all', 'All participants'),
-        ('with_team', 'Only participants with a team'),
-        ('no_team', 'Participant without a team'),
+        ('with_team', 'Participants with a team'),
+        ('no_team', 'Participants without a team'),
     )
 
     class Meta:
         fieldsets = [{
             'id': 'email',
             'legend': 'Email',
-            'title': 'You can send an email to all participants from cdc support here'
+            'title': 'Below, you can send an email to all participants from the cdc support email address.'
         }]
 
     subject = forms.CharField(required=True, label="Subject")
