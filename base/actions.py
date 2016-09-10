@@ -33,7 +33,7 @@ def email_participants(subject, content, audience):
         emails = emails.exclude(participant__team=None)
     elif audience == 'no_team':
         emails = emails.filter(participant__team=None)
-    
+
     print(audience, emails)
     email = EmailMessage(subject=subject, body=content, bcc=emails, to=(settings.EMAIL_FROM_ADDR,), from_email=settings.EMAIL_FROM_ADDR)
 
@@ -517,6 +517,48 @@ def add_user_to_team(team_id, participant_id):
 
     try:
         send_mail('ISEAGE CDC Support: You have been added to a team', email_body, settings.EMAIL_FROM_ADDR, [email])
+    except smtplib.SMTPException:
+        logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=email_body))
+
+    return True
+
+
+def join_team(team_id, participant_id):
+    participant = models.Participant.objects.get(pk=participant_id)
+    team = models.Team.objects.get(pk=team_id)
+
+    participant.team = team
+    participant.requested_team = None
+    participant.looking_for_team = False
+    participant.save()
+
+    # Send email
+    captain_list = team.captains()
+    captains = ""
+    captain_emails = []
+    for captain in captain_list:
+        captains = captains + "{fname} {lname}  \t{email}\n".format(fname=captain.user.first_name,
+                                                                    lname=captain.user.last_name,
+                                                                    email=captain.user.email)
+        captain_emails.append(captain.user.email)
+
+    email = participant.user.email
+    email_body = email_templates.JOIN_REQUEST_APPROVED.format(fname=participant.user.first_name,
+                                                              lname=participant.user.last_name,
+                                                              number=team.number,
+                                                              team=team.name,
+                                                              captains=captains,
+                                                              support=settings.SUPPORT_EMAIL)
+
+    email_body2 = email_templates.MEMBER_JOINED.format(fname=participant.user.first_name,
+                                                               lname=participant.user.last_name,
+                                                               email=participant.user.email,
+                                                               team=team.name,
+                                                               support=settings.SUPPORT_EMAIL)
+
+    try:
+        send_mail('ISEAGE CDC Support: You have been added to a team', email_body, settings.EMAIL_FROM_ADDR, [email])
+        send_mail('ISEAGE CDC Support: Someone has joined your team', email_body2, settings.EMAIL_FROM_ADDR, [captain_emails])
     except smtplib.SMTPException:
         logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=email_body))
 
