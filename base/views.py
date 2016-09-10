@@ -483,6 +483,9 @@ class JoinTeamView(LoginRequiredMixin, BaseTemplateView):
 
         pt = context['participant']
         success = False
+        if team.is_full():
+            messages.error(request, "Request to join team {} failed; this team is already full".format(team.name))
+            return redirect('dashboard')
         if team.looking_for_members:
             if actions.join_team(pt.id, team.id):
                 messages.success(request, 'You have successfully joined Team {team}.'.format(team=team.name))
@@ -709,6 +712,9 @@ class ApproveMemberView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView
             raise Http404
 
         if participant.requested_team == team:
+            if team.is_full():
+                messages.error(request, 'Your team is already full.')
+                return redirect('manage-team')
             if actions.add_user_to_team(team.id, participant_id):
                 messages.success(request, '{first} {last} has been successfully added to your team.'.format(
                     first=participant.user.first_name,last=participant.user.last_name))

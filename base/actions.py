@@ -499,6 +499,10 @@ def add_user_to_team(team_id, participant_id):
     participant.looking_for_team = False
     participant.save()
 
+    if len(team.members()) >= get_global_setting('max_team_size'):
+        team.looking_for_members = False
+        team.save()
+
     # Send email
     captain_list = team.captains()
     captains = ""
@@ -532,15 +536,16 @@ def join_team(participant_id, team_id):
     participant.looking_for_team = False
     participant.save()
 
+    if len(team.members()) >= get_global_setting('max_team_size'):
+        team.looking_for_members = False
+        team.save()
+
     # Send email
-    captain_list = team.captains()
     captains = ""
-    captain_emails = []
-    for captain in captain_list:
+    for captain in team.captains():
         captains = captains + "{fname} {lname}  \t{email}\n".format(fname=captain.user.first_name,
                                                                     lname=captain.user.last_name,
                                                                     email=captain.user.email)
-        captain_emails.append(captain.user.email)
 
     email = participant.user.email
     email_body = email_templates.JOIN_REQUEST_APPROVED.format(fname=participant.user.first_name,
@@ -558,7 +563,7 @@ def join_team(participant_id, team_id):
 
     try:
         send_mail('ISEAGE CDC Support: You have been added to a team', email_body, settings.EMAIL_FROM_ADDR, [email])
-        send_mail('ISEAGE CDC Support: Someone has joined your team', email_body2, settings.EMAIL_FROM_ADDR, captain_emails)
+        send_mail('ISEAGE CDC Support: Someone has joined your team', email_body2, settings.EMAIL_FROM_ADDR, list(team.captain_emails()))
     except smtplib.SMTPException:
         logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=email_body))
 
