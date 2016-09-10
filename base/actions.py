@@ -523,7 +523,7 @@ def add_user_to_team(team_id, participant_id):
     return True
 
 
-def join_team(team_id, participant_id):
+def join_team(participant_id, team_id):
     participant = models.Participant.objects.get(pk=participant_id)
     team = models.Team.objects.get(pk=team_id)
 
@@ -558,7 +558,7 @@ def join_team(team_id, participant_id):
 
     try:
         send_mail('ISEAGE CDC Support: You have been added to a team', email_body, settings.EMAIL_FROM_ADDR, [email])
-        send_mail('ISEAGE CDC Support: Someone has joined your team', email_body2, settings.EMAIL_FROM_ADDR, [captain_emails])
+        send_mail('ISEAGE CDC Support: Someone has joined your team', email_body2, settings.EMAIL_FROM_ADDR, captain_emails)
     except smtplib.SMTPException:
         logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=email_body))
 

@@ -484,7 +484,7 @@ class JoinTeamView(LoginRequiredMixin, BaseTemplateView):
         pt = context['participant']
         success = False
         if team.looking_for_members:
-            if actions.join_team(team.id, participant_id):
+            if actions.join_team(pt.id, team.id):
                 messages.success(request, 'You have successfully joined Team {team}.'.format(team=team.name))
             return redirect('dashboard')
         elif actions.submit_join_request(pt.id, team.id):
