@@ -79,11 +79,14 @@ class ParticipantInline(admin.TabularInline):
 
 
 class TeamAdmin(admin.ModelAdmin):
-    list_display = ('number', 'name', 'looking_for_members')
+    list_display = ('number', 'name', 'looking_for_members', 'team_size')
     list_filter = ('looking_for_members',)
     inlines = [
         ParticipantInline,
     ]
+
+    def team_size(self, obj):
+        return len(obj.members())
 
 
 # Register your models here.
