@@ -70,8 +70,13 @@ class ModifyTeamForm(forms.ModelForm):
         fieldsets = [{
             'id': 'modify-team',
             'legend': 'Modify Team',
-            'title': "You can modify your team here. If your team is full, uncheck 'Looking for members'.",
+            'title': "You can modify your team here. If your team is full, uncheck \"Looking for members\".",
         }]
+
+    def clean(self):
+        cleaned_data = super(ModifyTeamForm, self).clean()
+        if cleaned_data.get('looking_for_members') and self.instance.is_full():
+            raise forms.ValidationError("Your team is already full, please uncheck \"Looking for members\".")
 
 
 class GlobalSettingsForm(forms.ModelForm):

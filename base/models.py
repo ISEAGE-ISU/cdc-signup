@@ -12,12 +12,13 @@ class GlobalSettings(models.Model):
     check_in_date = models.DateTimeField(null=True)
     enable_account_creation = models.BooleanField(default=True)
     documentation_url = models.CharField(max_length=200, blank=True, null=True)
+    max_team_size = models.PositiveIntegerField(default=8)
 
 
 class Team(models.Model):
     number = models.PositiveIntegerField(default=0)
     name = models.CharField(unique=True, max_length=50)
-    looking_for_members = models.BooleanField(default=True, help_text="Uncheck if your team is full.")
+    looking_for_members = models.BooleanField(default=True, help_text="Allow anyone to join your team; uncheck if your team is full.")
 
     def members(self):
         return Participant.objects.filter(team=self)
@@ -53,6 +54,9 @@ class Team(models.Model):
             emails = emails + captain.user.email
         return emails
 
+    def is_full(self):
+        return len(self.members()) >= actions.get_global_setting('max_team_size')
+
     def __unicode__(self):
         return "Team {number}: {name}".format(number=self.number, name=self.name)
 
@@ -67,7 +71,7 @@ class Participant(models.Model):
     requested_team = models.ForeignKey('Team', related_name='requested_team', blank=True, null=True)
     requests_captain = models.BooleanField(default=False)
     checked_in = models.BooleanField(default=False)
-    looking_for_team = models.BooleanField(default=True, help_text='ISEAGE will put you on a team')
+    looking_for_team = models.BooleanField(default=False, help_text='ISEAGE will put you on a team')
 
     def check_in(self):
         self.checked_in = True

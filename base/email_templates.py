@@ -77,6 +77,15 @@ Visit https://signup.iseage.org/dashboard/manage_team/ to confirm or deny this r
 If you have questions, email CDC support at {support}
 """
 
+MEMBER_JOINED="""Hi there captains,
+
+{fname} {lname} ({email}) has joined your team, {team}.
+
+Visit https://signup.iseage.org/dashboard/manage_team/ to manage your team.
+
+If you have questions, email CDC support at {support}
+"""
+
 CAPTAIN_REQUEST_SUBMITTED="""Hi there captains,
 
 {fname} {lname} ({email}) has requested to become a captain of your team, {team}.

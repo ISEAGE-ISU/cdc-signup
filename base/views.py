@@ -226,7 +226,7 @@ class AdminSendEmailView(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView)
             subject = form.cleaned_data['subject']
             content = form.cleaned_data['content']
             audience = form.cleaned_data['send_to']
-            
+
             content += "\n\n" + request.user.get_full_name()
             actions.email_participants(subject, content, audience)
             messages.success(request, 'Sent Email to Participants')
@@ -483,8 +483,14 @@ class JoinTeamView(LoginRequiredMixin, BaseTemplateView):
 
         pt = context['participant']
         success = False
-        success = actions.submit_join_request(pt.id, team.id)
-        if success:
+        if team.is_full():
+            messages.error(request, "Request to join team {} failed; this team is already full".format(team.name))
+            return redirect('dashboard')
+        if team.looking_for_members:
+            if actions.join_team(pt.id, team.id):
+                messages.success(request, 'You have successfully joined Team {team}.'.format(team=team.name))
+            return redirect('dashboard')
+        elif actions.submit_join_request(pt.id, team.id):
             messages.success(request, 'Request to join {team} has been successfully submitted.'.format(team=team.name))
             return redirect('dashboard')
         else:
@@ -706,6 +712,9 @@ class ApproveMemberView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView
             raise Http404
 
         if participant.requested_team == team:
+            if team.is_full():
+                messages.error(request, 'Your team is already full.')
+                return redirect('manage-team')
             if actions.add_user_to_team(team.id, participant_id):
                 messages.success(request, '{first} {last} has been successfully added to your team.'.format(
                     first=participant.user.first_name,last=participant.user.last_name))
