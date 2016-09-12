@@ -43,12 +43,6 @@
                         {% endfor %}
                         </tbody>
                     </table>
-                {% else %}
-                    {% if looking_for_team %}
-                        <a class="btn btn-default btn-lg btn-block" href="{% url "toggle-lft" %}">You are "Looking For Team", click to disable</a>
-                    {% else %}
-                        <a class="btn btn-default btn-lg btn-block" href="{% url "toggle-lft" %}">You are not "Looking For Team", click to enable</a>
-                    {% endif %}
                 <br>
                 <h4>Team Members</h4>
                 <table class="table table-striped" id="current-members">
@@ -74,6 +68,11 @@
                 {% else %}
                 <a class="btn btn-primary btn-lg btn-block" href="{% url "team-list" %}">{% if requested_team %}Request to join a different team{% else %}Join an existing team{% endif %}</a>
                 <a class="btn btn-default btn-lg btn-block" href="{% url "create-team" %}">Create a new team</a>
+                    {% if looking_for_team %}
+                        <a class="btn btn-default btn-lg btn-block" href="{% url "toggle-lft" %}">You are "Looking For Team", click to disable</a>
+                    {% else %}
+                        <a class="btn btn-default btn-lg btn-block" href="{% url "toggle-lft" %}">You are not "Looking For Team", click to enable</a>
+                    {% endif %}
                 {% endif %}
             {% render_widget_bottom %}
 
