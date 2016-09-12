@@ -1,5 +1,7 @@
 from django import forms
+
 from base import models, widgets, actions
+from base.utils import AUDIENCE_CHOICES
 
 
 class SignupForm(forms.Form):
@@ -105,17 +107,6 @@ class GlobalSettingsForm(forms.ModelForm):
 
 
 class AdminEmailForm(forms.Form):
-    SEND_CHOICES = (
-        ('all', 'All (Blue) participants'),
-        ('with_team', 'Participants with a team'),
-        ('no_team', 'Participants without a team'),
-        ('red_team_all', 'Red Team Members (All)'),
-        ('red_team_approved', 'Red Team Members (Approved)'),
-        ('green_team_all', 'Green Team Members (All)'),
-        ('green_team_approved', 'Green Team Members (Approved)'),
-        ('everyone', 'Everyone'),
-    )
-
     class Meta:
         fieldsets = [{
             'id': 'email',
@@ -125,5 +116,5 @@ class AdminEmailForm(forms.Form):
 
     subject = forms.CharField(required=True, label="Subject")
     content = forms.CharField(required=True, widget=forms.Textarea, label="Body")
-    send_to = forms.ChoiceField(choices=SEND_CHOICES, widget=forms.RadioSelect(), required=True)
+    send_to = forms.ChoiceField(choices=AUDIENCE_CHOICES, widget=forms.RadioSelect(), required=True)
 

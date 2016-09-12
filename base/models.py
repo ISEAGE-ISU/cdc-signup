@@ -1,8 +1,10 @@
-from django.db import models
 from django.contrib.auth import models as auth_models
+from django.db import models
 from django.db.models.signals import post_save, pre_save, pre_delete
 from django.dispatch import receiver
+
 import actions
+from base.utils import AUDIENCE_CHOICES
 
 
 class GlobalSettings(models.Model):
@@ -147,6 +149,15 @@ class Participant(models.Model):
 
     class Meta:
         ordering = ['team']
+
+
+class ArchivedEmail(models.Model):
+    subject = models.CharField(max_length=200)
+    content = models.TextField()
+    audience = models.CharField(max_length=30, choices=AUDIENCE_CHOICES)
+    send_time = models.DateTimeField(auto_now_add=True)
+
+    sender = models.ForeignKey(auth_models.User)
 
 
 ########
