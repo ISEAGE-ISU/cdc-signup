@@ -3,7 +3,7 @@
 
 {% block content %}
     <div class="row">
-        <div class="col-md-12" style="max-width: 700px;">
+        <div class="col-md-5">
             {% render_widget widget_data %}
                 {% if check_in %}
                     <a class="btn btn-success btn-lg btn-block" href="{% url "check-in" %}">Check In</a>
@@ -77,10 +77,27 @@
             {% render_widget_bottom %}
 
         </div>
+
+        {% if important_info %}
+        <div class="col-md-5">
+            {% render_widget important_info %}
+            <dl>
+                {% if competition_name %}
+                    <dt>Competition:</dt>
+                    <dd>{{ competition_name }}</dd>
+                {% endif %}
+                {% if competition_date %}
+                    <dt>Competition Date:</dt>
+                    <dd>{{ competition_date }}</dd>
+                {% endif %}
+            </dl>
+            {% render_widget_bottom %}
+        </div>
+        {% endif %}
     </div>
     {% if team %}
     <div class="row">
-        <div class="col-md-12" style="max-width: 700px;">
+        <div class="col-md-5">
             {% render_widget download_docs %}
             {% if docs_url %}
                 <p>Documents containing the scenario, rules, accounts, and other important information.</p>
@@ -93,7 +110,7 @@
     </div>
     {% endif %}
     <div class="row">
-        <div class="col-md-12" style="max-width: 700px;">
+        <div class="col-md-5">
             <form class='form-horizontal' action='' method="POST">
                 {% render_form_widget form title="Change password" icon="fa-edit" %}
                 {% csrf_token %}

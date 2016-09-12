@@ -472,6 +472,17 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
             'icon': 'fa-file',
         }
 
+        competition_name = actions.get_global_setting('competition_name')
+        competition_date = actions.get_global_setting('competition_date')
+
+        if competition_date or competition_name:
+            context['important_info'] = {
+                'title': 'Important Information',
+                'icon': 'fa-book',
+            }
+            context['competition_name'] = competition_name
+            context['competition_date'] = competition_date
+
         return self.render_to_response(context)
 
     def post(self, request, context, *args, **kwargs):

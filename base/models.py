@@ -13,6 +13,9 @@ class GlobalSettings(models.Model):
     documentation_url = models.CharField(max_length=200, blank=True, null=True)
     max_team_size = models.PositiveIntegerField(default=8)
 
+    competition_name = models.CharField(max_length=100, blank=True, null=True)
+    competition_date = models.DateTimeField(null=True)
+
     enable_account_creation = models.BooleanField(default=True)
     enable_red = models.BooleanField(default=True)
     enable_green = models.BooleanField(default=True)
