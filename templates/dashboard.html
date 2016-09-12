@@ -44,7 +44,7 @@
                     </tbody>
                 </table>
                 {% elif is_redgreen %}
-                <p>You are currently signed up to {% if is_red %}Red{% elif is_green %}Green{% endif %} Team.</p>
+                <p>You are currently signed up for {% if is_red %}Red{% elif is_green %}Green{% endif %} Team.</p>
                 {% else %}
                 <a class="btn btn-primary btn-lg btn-block" href="{% url "team-list" %}">{% if requested_team %}Request to join a different team{% else %}Join an existing team{% endif %}</a>
                 <a class="btn btn-default btn-lg btn-block" href="{% url "create-team" %}">Create a new team</a>
