@@ -1,3 +1,4 @@
+from django.db.models.query_utils import Q
 from django.shortcuts import redirect
 from django.views.generic.base import View, TemplateResponseMixin
 from django.contrib.auth import views as auth_views
@@ -157,8 +158,14 @@ class AdminDashboard(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
         else:
             form = base_forms.GlobalSettingsForm(instance=context['g_setting'])
         context['form'] = form
+        context['enable_red'] = context['g_setting'].enable_red
+        context['enable_green'] = context['g_setting'].enable_green
         if request.GET.get('email_list'):
             context['emails'] = User.objects.filter(is_superuser=False).values_list('email', flat=True)
+        context['participant_approvals'] = {
+            'title': 'Red/Green Approvals',
+            'icon': 'fa-check',
+        }
         context['email_list'] = {
             'title': 'Participant Email Addresses',
             'icon': 'fa-paper-plane-o',
@@ -179,6 +186,43 @@ class AdminDashboard(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
             gs.save()
             messages.success(request, 'Global settings successfully updated.')
         return self.get(request, context, form=form)
+
+
+class RedGreenApprovals(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
+    template_name = 'admin/approvals.html'
+    page_title = "Red/Green Approvals"
+    breadcrumb = "Approvals"
+
+    def get(self, request, context, *args, **kwargs):
+        redgreen = models.Participant.objects.filter(Q(is_red=True) | Q(is_green=True))
+
+        context['pending'] = redgreen.filter(approved=False)
+        context['approved'] = redgreen.filter(approved=True)
+
+        context['pending_widget'] = {
+            'title': 'Participants Pending Approval',
+            'icon': 'fa-adjust',
+        }
+        context['approved_widget'] = {
+            'title': "Approved Participants",
+            'icon': 'fa-check',
+        }
+
+        return self.render_to_response(context)
+
+
+class RedGreenApprove(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
+    def get(self, request, context, *args, **kwargs):
+        participant = models.Participant.objects.get(pk=kwargs['participant_id'])
+        participant.approve()
+        return redirect(reverse('admin-approvals'))
+
+
+class RedGreenUnapprove(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
+    def get(self, request, context, *args, **kwargs):
+        participant = models.Participant.objects.get(pk=kwargs['participant_id'])
+        participant.unapprove()
+        return redirect(reverse('admin-approvals'))
 
 
 class AdminCompetitionResetView(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
@@ -258,6 +302,8 @@ class IndexView(BaseTemplateView):
     def get(self, request, context, *args, **kwargs):
         admin_bind_dn = actions.get_global_setting('administrator_bind_dn')
         context['enable_creation'] = actions.get_global_setting('enable_account_creation')
+        context['enable_green'] = actions.get_global_setting('enable_green')
+        context['enable_red'] = actions.get_global_setting('enable_red')
         if not admin_bind_dn:
             if request.user.is_authenticated():
                 messages.success(request, 'Setup your CDC here.')
@@ -322,6 +368,64 @@ class SignupView(BaseTemplateView):
         return self.get(request, context, form=form)
 
 
+class RedGreenSignupView(BaseTemplateView):
+    template_name = 'signup.html'
+    page_title = "Red/Green Signup"
+    breadcrumb = "Red/Green"
+
+    def get(self, request, context, *args, **kwargs):
+        enabled = actions.get_global_setting('enable_red') or actions.get_global_setting('enable_green')
+        if not enabled:
+            message.error(request, CREATION_DISABLED)
+            return redirect('site-index')
+
+        if 'form' in kwargs:
+            form = kwargs.pop('form')
+        else:
+            form = base_forms.RedGreenSignupForm()
+        context['form'] = form
+        return self.render_to_response(context)
+
+    def post(self, request, context, *args, **kwargs):
+        enabled = actions.get_global_setting('enable_red') or actions.get_global_setting('enable_green')
+        if not enabled:
+            messages.error(request, CREATION_DISABLED)
+            return redirect('site-index')
+
+        form = base_forms.RedGreenSignupForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            first = form.cleaned_data['first_name']
+            last = form.cleaned_data['last_name']
+            username = form.cleaned_data['username']
+            acct_type = form.cleaned_data['acct_type']
+            success = False
+            try:
+                success = actions.create_account(username, first,
+                        last, email, acct_type)
+            except base.DuplicateName:
+                form.add_error('first_name', """It looks like there's already an account with the same first and last names as your provided. \
+                Try including your middle initial or middle name.""")
+            except base.UsernameAlreadyExistsError:
+                form.add_error('username', "That username already exists. Please choose another one.")
+                return self.get(request, context, form=form)
+            if success:
+                # Update the participant object since it is created throught
+                # a signal rather than directly
+                user = User.objects.get(username=username)
+                if acct_type == 'red':
+                    user.participant.is_red = True
+                elif acct_type == 'green':
+                    user.participant.is_green = True
+                user.participant.save()
+                messages.success(request, 'Account successfully created. Please check your email for further instructions.')
+                return redirect('site-login')
+            else:
+                messages.error(request, TRY_AGAIN)
+
+        return self.get(request, context, form=form)
+
+
 class DashboardView(LoginRequiredMixin, BaseTemplateView):
     template_name = 'dashboard.html'
     page_title = "Dashboard"
@@ -348,6 +452,10 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
                 context['looking_for_team'] = participant.looking_for_team
             if participant.captain:
                 context['is_captain'] = True
+            if participant.is_redgreen:
+                context['is_redgreen'] = True
+                context['is_green'] = participant.is_green
+                context['is_red'] = participant.is_red
 
         if 'form' in kwargs:
             form = kwargs.pop('form')

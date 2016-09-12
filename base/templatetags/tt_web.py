@@ -249,3 +249,11 @@ def render_widget(widget_data):
 def render_widget_bottom():
     return mark_safe('</div></div>')
 
+
+@register.simple_tag
+def render_account_type(participant):
+    if participant.is_red:
+        return mark_safe('<span class="text-danger">Red</span>')
+    elif participant.is_green:
+        return mark_safe('<span class="text-success">Green</span>')
+    return mark_safe('<span class="text-primary">Blue</span>')

@@ -1,5 +1,5 @@
 from django import forms
-from base import models, widgets
+from base import models, widgets, actions
 
 
 class SignupForm(forms.Form):
@@ -20,6 +20,11 @@ class SignupForm(forms.Form):
         cleaned_data = super(SignupForm, self).clean()
         if cleaned_data.get('email') != cleaned_data.get('email_again'):
             raise forms.ValidationError("The email addresses you inputted do not match.")
+
+
+class RedGreenSignupForm(SignupForm):
+    acct_type = forms.ChoiceField(choices=actions.get_type_choices,
+            widget=forms.RadioSelect())
 
 
 class ChangePasswordForm(forms.Form):
@@ -100,9 +105,14 @@ class GlobalSettingsForm(forms.ModelForm):
 
 class AdminEmailForm(forms.Form):
     SEND_CHOICES = (
-        ('all', 'All participants'),
+        ('all', 'All (Blue) participants'),
         ('with_team', 'Participants with a team'),
         ('no_team', 'Participants without a team'),
+        ('red_team_all', 'Red Team Members (All)'),
+        ('red_team_approved', 'Red Team Members (Approved)'),
+        ('green_team_all', 'Green Team Members (All)'),
+        ('green_team_approved', 'Green Team Members (Approved)'),
+        ('everyone', 'Everyone'),
     )
 
     class Meta:

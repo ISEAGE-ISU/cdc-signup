@@ -13,4 +13,3 @@ DATABASES = {
 }
 
 SECRET_KEY = 'another-long-random-string'
-

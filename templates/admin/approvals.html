@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load tt_web %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-6">
+            {% render_widget pending_widget %}
+            <table class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for participant in pending %}
+                    <tr>
+                    <td>{{ participant }}</td>
+                    <td>{% render_account_type participant %}</td>
+                    <td><a class="btn btn-xs btn-success" href="{% url 'admin-approve' participant.id %}">Approve</a></td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                    <td colspan="3">No Pending Participants</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% render_widget_bottom %}
+        </div>
+        <div class="col-md-6">
+            {% render_widget approved_widget %}
+            <table class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for participant in approved %}
+                    <tr>
+                    <td>{{ participant }}</td>
+                    <td>{% render_account_type participant %}</td>
+                    <td><a class="btn btn-xs btn-warning" href="{% url 'admin-unapprove' participant.id %}">Unapprove</a></td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                    <td colspan="3">No Approved Participants</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% render_widget_bottom %}
+        </div>
+    </div>
+{% endblock %}

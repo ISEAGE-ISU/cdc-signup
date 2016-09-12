@@ -49,8 +49,31 @@
                     {% else %}
                         <a class="btn btn-default btn-lg btn-block" href="{% url "toggle-lft" %}">You are not "Looking For Team", click to enable</a>
                     {% endif %}
-                    <a class="btn btn-primary btn-lg btn-block" href="{% url "team-list" %}">{% if requested_team %}Request to join a different team{% else %}Join an existing team{% endif %}</a>
-                    <a class="btn btn-default btn-lg btn-block" href="{% url "create-team" %}">Create a new team</a>
+                <br>
+                <h4>Team Members</h4>
+                <table class="table table-striped" id="current-members">
+                    <thead><tr>
+                        <th>First</th>
+                        <th>Last</th>
+                        <th>Email</th>
+                        <th>Captain</th>
+                    </tr></thead>
+                    <tbody>
+                    {% for member in current_members %}
+                    <tr id="member-{{ member.id }}">
+                        <td class="first">{{ member.user.first_name }}</td>
+                        <td class="last">{{ member.user.last_name }}</td>
+                        <td class="email">{{ member.user.email }}</td>
+                        {% if member.captain %}<td data-id="true" class="is-captain">Yes</td>{% else %}<td data-id="false" class="is-captain">No</td>{% endif %}
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% elif is_redgreen %}
+                <p>You are currently signed up for {% if is_red %}Red{% elif is_green %}Green{% endif %} Team.</p>
+                {% else %}
+                <a class="btn btn-primary btn-lg btn-block" href="{% url "team-list" %}">{% if requested_team %}Request to join a different team{% else %}Join an existing team{% endif %}</a>
+                <a class="btn btn-default btn-lg btn-block" href="{% url "create-team" %}">Create a new team</a>
                 {% endif %}
             {% render_widget_bottom %}
 

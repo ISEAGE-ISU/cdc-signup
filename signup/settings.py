@@ -197,12 +197,21 @@ AD_CDCUSER_GROUP = 'CDCUsers'
 AD_BLUE_TEAM_PREFIX = "CDC Team "
 AD_BLUE_TEAM_FORMAT = AD_BLUE_TEAM_PREFIX + "{number}"
 
+AD_RED_OU = 'RedTeam'
+AD_RED_GROUP = 'Red'
+AD_RED_PENDING = 'RedPending'
+
+AD_GREEN_OU = 'GreenTeam'
+AD_GREEN_GROUP = 'Green'
+AD_GREEN_PENDING = 'GreenPending'
+
 AD_BASE_DN = 'DC=iseage,DC=org'
 AD_DOMAIN = 'iseage.org'
 AD_NT4_DOMAIN = 'ISEAGE'
 AD_SEARCH_FIELDS = ['mail','givenName','sn','sAMAccountName','memberOf']
 AD_MEMBERSHIP_ADMIN = ['Domain Admins']  # this ad group gets superuser status in django
-AD_MEMBERSHIP_REQ = AD_MEMBERSHIP_ADMIN + [AD_CDCUSER_GROUP]  # only members of these groups can access
+AD_MEMBERSHIP_REQ = AD_MEMBERSHIP_ADMIN + [AD_CDCUSER_GROUP, AD_RED_GROUP, AD_RED_PENDING,
+        AD_GREEN_GROUP, AD_GREEN_PENDING]  # only members of these groups can access
 AD_CERT_FILE = False  # this is the certificate of the Certificate Authority issuing your DCs certificate
 AD_DEBUG = False
 AD_LDAP_DEBUG_LEVEL = 0

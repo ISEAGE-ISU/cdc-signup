@@ -29,12 +29,16 @@ urlpatterns = patterns('',
     url(r'^admin/$', views.AdminDashboard.as_view(), name='admin-dash'),
     url(r'^admin/email/$', views.AdminSendEmailView.as_view(), name='admin-email'),
     url(r'^admin/reset/$', views.AdminCompetitionResetView.as_view(), name='admin-reset'),
+    url(r'^admin/approvals/$', views.RedGreenApprovals.as_view(), name='admin-approvals'),
+    url(r'^admin/approvals/(?P<participant_id>\d+)/approve', views.RedGreenApprove.as_view(), name='admin-approve'),
+    url(r'^admin/approvals/(?P<participant_id>\d+)/unapprove', views.RedGreenUnapprove.as_view(), name='admin-unapprove'),
 
     url(r'^$', views.IndexView.as_view(), name='site-index'),
     url(r'^login/$', 'base.views.login', name='site-login'),
     url(r'^logout/$', 'base.views.logout', name='site-logout'),
 
     url(r'^signup/$', views.SignupView.as_view(), name='signup'),
+    url(r'^signup/redgreen/$', views.RedGreenSignupView.as_view(), name='signup-redgreen'),
     url(r'^forgot/$', views.ForgotPasswordView.as_view(), name='forgot-password'),
 
     url(r'^dashboard/$', views.DashboardView.as_view(), name='dashboard'),

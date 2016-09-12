@@ -10,9 +10,12 @@ class GlobalSettings(models.Model):
     administrator_bind_dn = models.CharField(max_length=100)
     administrator_bind_pw = models.CharField(max_length=100)
     check_in_date = models.DateTimeField(null=True)
-    enable_account_creation = models.BooleanField(default=True)
     documentation_url = models.CharField(max_length=200, blank=True, null=True)
     max_team_size = models.PositiveIntegerField(default=8)
+
+    enable_account_creation = models.BooleanField(default=True)
+    enable_red = models.BooleanField(default=True)
+    enable_green = models.BooleanField(default=True)
 
 
 class Team(models.Model):
@@ -73,6 +76,15 @@ class Participant(models.Model):
     checked_in = models.BooleanField(default=False)
     looking_for_team = models.BooleanField(default=False, help_text='ISEAGE will put you on a team')
 
+    # Only used for Red/Green
+    is_red = models.BooleanField(default=False)
+    is_green = models.BooleanField(default=False)
+    approved = models.BooleanField(default=False)
+
+    @property
+    def is_redgreen(self):
+        return self.is_red or self.is_green
+
     def check_in(self):
         self.checked_in = True
         self.save(update_fields=['checked_in'])
@@ -85,25 +97,47 @@ class Participant(models.Model):
         return self.captain or self.user.is_superuser
 
     def request_team(self, team):
-        if not self.team:
+        if not self.team and not self.is_redgreen:
             self.requested_team = team
             self.save(update_fields=['requested_team'])
 
     def request_promotion(self):
-        if not self.requests_captain:
+        if not self.requests_captain and not self.is_redgreen:
             self.requests_captain = True
             self.save(update_fields=['requests_captain'])
 
     def promote(self):
-        if not self.captain:
+        if not self.captain and not self.is_redgreen:
             self.captain = True
             self.requests_captain = False
             self.save(update_fields=['captain', 'requests_captain'])
 
     def demote(self):
-        if self.captain:
+        if self.captain and not self.is_redgreen:
             self.captain = False
             self.save(update_fields=['captain'])
+
+    def approve(self):
+        """
+        Approve a Red/Green Member
+
+        Only applies to Red/Green
+        """
+        if self.is_redgreen:
+            self.approved = True
+            self.save(update_fields=['approved'])
+            actions.approve_user(self)
+
+    def unapprove(self):
+        """
+        Unapprove a Red/Green Member
+
+        Only applies to Red/Green
+        """
+        if self.is_redgreen:
+            self.approved = False
+            self.save(update_fields=['approved'])
+            actions.unapprove_user(self)
 
     def __unicode__(self):
         return "{username} ({name})".format(username=self.user.get_username(), name=self.user.get_full_name())

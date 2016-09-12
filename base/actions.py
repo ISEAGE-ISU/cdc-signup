@@ -6,7 +6,7 @@ import base
 import datetime
 import models
 from django.contrib.auth.models import User
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.core.mail import send_mail, EmailMessage
 from django.template import Context, RequestContext
 from django.template.loader import get_template
@@ -28,11 +28,32 @@ AD_AUTH = ad_auth.ActiveDirectoryAuthenticationBackend()
 
 
 def email_participants(subject, content, audience):
-    emails = User.objects.filter(is_superuser=False).values_list('email', flat=True)
-    if audience == 'with_team':
+    emails = User.objects.filter(is_superuser=False)
+    if audience == 'all':
+        # All Blue Team Members, no Red/Green
+        emails = emails.exclude(Q(participant__is_red=True) |
+                Q(participant__is_green=True))
+    elif audience == 'with_team':
+        # All Blue Team Members on a team, no Red/Green
         emails = emails.exclude(participant__team=None)
     elif audience == 'no_team':
-        emails = emails.filter(participant__team=None)
+        # All Blue Team Members NOT on a team, no Red/Green
+        emails = emails.filter(Q(participant__team=None) &
+                Q(participant__is_red=False) &
+                Q(participant__is_green=False))
+    elif audience == 'red_team_approved':
+        # Approved Red Team Members, no Blue/Green
+        emails = emails.filter(participant__is_red=True, participant__approved=True)
+    elif audience == 'red_team_all':
+        # All Red Team Members (Approved & Unapproved), no Blue/Green
+        emails = emails.filter(participant__is_red=True)
+    elif audience == 'green_team_approved':
+        # Approved Green Team Members, no Blue/Red
+        emails = emails.filter(participant__is_green=True, participant__approved=True)
+    elif audience == 'green_team_all':
+        # All Green Team Members (Approved & Unapproved), no Blue/Green
+        emails = emails.filter(participant__is_green=True)
+    emails = emails.values_list('email', flat=True)
 
     print(audience, emails)
     email = EmailMessage(subject=subject, body=content, bcc=emails, to=(settings.EMAIL_FROM_ADDR,), from_email=settings.EMAIL_FROM_ADDR)
@@ -191,9 +212,14 @@ def get_user_dn(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
     fname = participant.user.first_name
     lname = participant.user.last_name
+    if participant.is_red:
+        ou = settings.AD_RED_OU
+    elif participant.is_green:
+        ou = settings.AD_GREEN_OU
+    else:
+        ou = settings.AD_CDCUSER_OU
     user_dn = 'CN={first} {last},OU={ou},{base_dn}'.format(first=fname, last=lname,
-                                                      ou=settings.AD_CDCUSER_OU,
-                                                      base_dn=settings.AD_BASE_DN)
+                                                      ou=ou, base_dn=settings.AD_BASE_DN)
     return user_dn
 
 
@@ -269,10 +295,23 @@ def generate_password():
             return password
 
 
+def create_user_account(username, fname, lname, email):
+    return create_account(username, fname, lname, email, 'blue')
+
+
 @ldap_admin_bind
-def create_user_account(username, fname, lname, email, ldap_connection):
+def create_account(username, fname, lname, email, acct_type, ldap_connection):
     base_dn = settings.AD_BASE_DN
-    cdcuser_ou = settings.AD_CDCUSER_OU
+
+    if acct_type == 'blue':
+        ou = settings.AD_CDCUSER_OU
+        group = settings.AD_CDCUSER_GROUP
+    elif acct_type == 'red':
+        ou = settings.AD_RED_OU
+        group = settings.AD_RED_PENDING
+    elif acct_type == 'green':
+        ou = settings.AD_GREEN_OU
+        group = settings.AD_GREEN_PENDING
 
     # This is needed for searches to work
     ldap.set_option(ldap.OPT_REFERRALS, 0)
@@ -293,7 +332,7 @@ def create_user_account(username, fname, lname, email, ldap_connection):
         raise base.UsernameAlreadyExistsError()
 
     user_dn = 'CN={first} {last},OU={ou},{search}'.format(first=fname, last=lname,
-                                                      ou=cdcuser_ou,
+                                                      ou=ou,
                                                       search=base_dn)
     user_attrs = {}
     user_attrs['objectClass'] = ['top', 'person', 'organizationalPerson', 'user']
@@ -309,11 +348,6 @@ def create_user_account(username, fname, lname, email, ldap_connection):
 
     password = generate_password()
 
-    # New group membership
-    add_member = [(ldap.MOD_ADD, 'member', user_dn)]
-    cdcuser_group_dn = 'CN={group},OU={ou},{search}'.format(group=settings.AD_CDCUSER_GROUP,
-                                                      ou=cdcuser_ou,
-                                                      search=base_dn)
 
     # 512 will set user account to enabled
     mod_acct = [(ldap.MOD_REPLACE, 'userAccountControl', '512')]
@@ -329,11 +363,19 @@ def create_user_account(username, fname, lname, email, ldap_connection):
         ldap_debug_write("Error adding new user: " + str(e))
         return False
 
-    # Add user to CDCUsers group
+    # New group membership
+    add_member = [(ldap.MOD_ADD, 'member', user_dn)]
+    cdcuser_group_dn = 'CN={group},OU={ou},{search}'.format(group=group,
+                                                            ou=ou,
+                                                            search=base_dn)
+    ldap_debug_write("Attempting to add user to group: " + cdcuser_group_dn)
+
+    # Add user to appropriate group
     try:
         ldap_connection.modify_s(cdcuser_group_dn, add_member)
     except ldap.LDAPError as e:
-        ldap_debug_write("Error adding user to CDCUsers group: " + str(e))
+        ldap_debug_write("Error adding user to {group} group: ".format(
+            group=group) + str(e))
         return False
 
     # Prep the password
@@ -359,7 +401,13 @@ def create_user_account(username, fname, lname, email, ldap_connection):
     AD_AUTH.get_or_create_user(username, password)
 
     # Send email
-    email_body = email_templates.ACCOUNT_CREATED.format(fname=fname, lname=lname, username=username, password=password,
+    if acct_type == 'blue':
+        template = email_templates.ACCOUNT_CREATED
+    elif acct_type == 'red':
+        template = email_templates.ACCOUNT_CREATED_RED
+    elif acct_type == 'green':
+        template = email_templates.ACCOUNT_CREATED_GREEN
+    email_body = template.format(fname=fname, lname=lname, username=username, password=password,
                                 support=settings.SUPPORT_EMAIL)
 
     try:
@@ -710,3 +758,46 @@ def disband_team(participant_id):
         logging.warning("Failed to send email to members of {team}:\n{body}".format(team=name, body=email_body))
 
     return True
+
+
+def _get_group_dn(group, ou):
+    return "CN={group},OU={ou},{dn}".format(group=group, ou=ou, dn=settings.AD_BASE_DN)
+
+
+def approve_user(participant):
+    user_dn = get_user_dn(participant.id)
+    group_dn = None
+    old_group_dn = None
+    if participant.is_red:
+        group_dn = _get_group_dn(settings.AD_RED_GROUP, settings.AD_RED_OU)
+        old_group_dn = _get_group_dn(settings.AD_RED_PENDING, settings.AD_RED_OU)
+    elif participant.is_green:
+        group_dn = _get_group_dn(settings.AD_GREEN_GROUP, settings.AD_GREEN_OU)
+        old_group_dn = _get_group_dn(settings.AD_GREEN_PENDING, settings.AD_GREEN_OU)
+    remove_user_from_group(user_dn, old_group_dn)
+    add_user_to_group(user_dn, group_dn)
+
+
+def unapprove_user(participant):
+    user_dn = get_user_dn(participant.id)
+    group_dn = None
+    new_group_dn = None
+    if participant.is_red:
+        group_dn = _get_group_dn(settings.AD_RED_GROUP, settings.AD_RED_OU)
+        new_group_dn = _get_group_dn(settings.AD_RED_PENDING, settings.AD_RED_OU)
+    elif participant.is_green:
+        group_dn = _get_group_dn(settings.AD_GREEN_GROUP, settings.AD_GREEN_OU)
+        new_group_dn = _get_group_dn(settings.AD_GREEN_PENDING, settings.AD_GREEN_OU)
+    remove_user_from_group(user_dn, group_dn)
+    add_user_to_group(user_dn, new_group_dn)
+
+
+def get_type_choices():
+    choices = []
+
+    if get_global_setting('enable_green'):
+        choices.append(('green', 'Green Team'))
+    if get_global_setting('enable_red'):
+        choices.append(('red', 'Red Team'))
+
+    return choices
