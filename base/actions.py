@@ -57,7 +57,6 @@ def email_participants(subject, content, audience, sender):
 
     models.ArchivedEmail(subject=subject, content=content, audience=audience, sender=sender).save()
 
-    print(audience, emails)
     email = EmailMessage(subject=subject, body=content, bcc=emails, to=(settings.EMAIL_FROM_ADDR,), from_email=settings.EMAIL_FROM_ADDR)
 
     try:
