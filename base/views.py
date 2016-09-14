@@ -1,5 +1,5 @@
 from django.db.models.query_utils import Q
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.views.generic.base import View, TemplateResponseMixin
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.models import User
@@ -11,7 +11,7 @@ from django.http import Http404
 from django.core.urlresolvers import reverse
 
 from django.conf import settings
-from base import breadcrumbs
+from base import breadcrumbs, utils
 import forms as base_forms
 import base
 import actions
@@ -162,6 +162,8 @@ class AdminDashboard(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
         context['enable_green'] = context['g_setting'].enable_green
         if request.GET.get('email_list'):
             context['emails'] = User.objects.filter(is_superuser=False).values_list('email', flat=True)
+
+        context['archive'] = models.ArchivedEmail.objects.all()
         context['participant_approvals'] = {
             'title': 'Red/Green Approvals',
             'icon': 'fa-check',
@@ -169,6 +171,10 @@ class AdminDashboard(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
         context['email_list'] = {
             'title': 'Participant Email Addresses',
             'icon': 'fa-paper-plane-o',
+        }
+        context['email_archive'] = {
+            'title': 'Email Archive',
+            'icon': 'fa-book'
         }
         context['danger_zone'] = {
             'title': 'Danger Zone',
@@ -272,7 +278,7 @@ class AdminSendEmailView(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView)
             audience = form.cleaned_data['send_to']
 
             content += "\n\n" + request.user.get_full_name()
-            actions.email_participants(subject, content, audience)
+            actions.email_participants(subject, content, audience, request.user)
             messages.success(request, 'Sent Email to Participants')
             return redirect(reverse('admin-dash'))
         return self.get(request, context, form=form)
@@ -472,6 +478,16 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
             'icon': 'fa-file',
         }
 
+        context['competition_name'] = actions.get_global_setting('competition_name')
+        context['competition_date'] = actions.get_global_setting('competition_date')
+
+        context['archived_emails'] = models.ArchivedEmail.objects.filter(audience__in=utils.get_user_audience(request.user))
+
+        context['important_info'] = {
+            'title': 'Important Information',
+            'icon': 'fa-book',
+        }
+
         return self.render_to_response(context)
 
     def post(self, request, context, *args, **kwargs):
@@ -492,6 +508,28 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
             else:
                 messages.error(request, WHOOPS)
         return self.get(request, context, form=form)
+
+
+class ArchiveEmailView(BaseTemplateView):
+    template_name = 'email_view.html'
+    page_title = 'Archived Email'
+    breadcrumb = 'Archived Email'
+
+    def modify_context(self, request, context, *args, **kwargs):
+        context['archived'] = get_object_or_404(models.ArchivedEmail, pk=kwargs['email_id'])
+
+    def get_page_title(self, request, context):
+        return "Archive: " + context['archived'].subject
+
+    def get(self, request, context, *args, **kwargs):
+        if not utils.user_in_audience(request.user, context['archived'].audience):
+            messages.warning(request, "You are not in the audience for this email")
+            return redirect(reverse('site-index'))
+
+        # If this is not here, the context entry will
+        # not exist after rendering. WTF.
+        context['archived'] = context['archived']
+        return self.render_to_response(context)
 
 
 class ToggleLFTView(BaseView):

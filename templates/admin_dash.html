@@ -39,6 +39,13 @@
             </div>
             <div class="row">
                 <div class="col-md-12">
+                    {% render_widget email_archive %}
+                    {% render_email_archive archive %}
+                    {% render_widget_bottom %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
                     {% render_widget danger_zone %}
                     <a class="btn btn-danger" href="{% url 'admin-reset' %}">Competition Reset</a>
                     {% render_widget_bottom %}

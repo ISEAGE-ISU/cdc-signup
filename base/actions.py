@@ -27,7 +27,7 @@ PASSWORD_LENGTH = 12
 AD_AUTH = ad_auth.ActiveDirectoryAuthenticationBackend()
 
 
-def email_participants(subject, content, audience):
+def email_participants(subject, content, audience, sender):
     emails = User.objects.filter(is_superuser=False)
     if audience == 'all':
         # All Blue Team Members, no Red/Green
@@ -55,7 +55,8 @@ def email_participants(subject, content, audience):
         emails = emails.filter(participant__is_green=True)
     emails = emails.values_list('email', flat=True)
 
-    print(audience, emails)
+    models.ArchivedEmail(subject=subject, content=content, audience=audience, sender=sender).save()
+
     email = EmailMessage(subject=subject, body=content, bcc=emails, to=(settings.EMAIL_FROM_ADDR,), from_email=settings.EMAIL_FROM_ADDR)
 
     try:

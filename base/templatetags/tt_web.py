@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from django.template import Library
 from django.utils.safestring import mark_safe
 from django import forms
@@ -257,3 +258,17 @@ def render_account_type(participant):
     elif participant.is_green:
         return mark_safe('<span class="text-success">Green</span>')
     return mark_safe('<span class="text-primary">Blue</span>')
+
+
+@register.simple_tag
+def render_email_archive(archive):
+    output = '<div class="list-group">'
+
+    template = '<a class="list-group-item" href="{url}">{subject}</a>'
+    for email in archive:
+        url = reverse('archive-email', args=[email.id])
+        subject = email.subject
+        output += template.format(subject=subject, url=url)
+
+    output += '</div>'
+    return mark_safe(output)

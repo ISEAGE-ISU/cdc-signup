@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load tt_web %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h2 class="panel-title">Subject: {{ archived.subject }}</h2>
+                </div>
+                <div class="panel-body">
+                    {{ archived.content|linebreaks }}
+                </div>
+            </div>
+        </div>
+
+        {% if user.is_staff or user.is_superuser %}
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h2 class="panel-title">Email Details</h2>
+                    </div>
+                    <table class="table">
+                        <tr>
+                            <th>Sender</th>
+                            <td>{{ archived.sender.get_full_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Audience</th>
+                            <td>{{ archived.get_audience_display }}</td>
+                        </tr>
+                        <tr>
+                            <th>Sent At</th>
+                            <td>{{ archived.send_time }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+

@@ -88,6 +88,13 @@ class TeamAdmin(admin.ModelAdmin):
         return len(obj.members())
 
 
+class ArchiveAdmin(admin.ModelAdmin):
+    list_display = ('subject', 'audience')
+    list_filter = ('audience',)
+    search_fields = ('subject', 'content')
+
+
 # Register your models here.
 admin.site.register(base_models.Participant, ParticipantAdmin)
 admin.site.register(base_models.Team, TeamAdmin)
+admin.site.register(base_models.ArchivedEmail, ArchiveAdmin)

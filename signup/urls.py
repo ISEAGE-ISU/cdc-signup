@@ -57,6 +57,8 @@ urlpatterns = patterns('',
     url(r'^dashboard/manage_team/approve_captain/(?P<participant_id>[0-9-_:]+)/$', views.ApproveCaptainView.as_view(), name='approve-captain'),
     url(r'^dashboard/manage_team/disband/$', views.DisbandTeamView.as_view(), name='disband-team'),
 
+    url(r'^archive/(?P<email_id>\d+)/$', views.ArchiveEmailView.as_view(), name='archive-email'),
+
 )
 
 if settings.DEBUG:
