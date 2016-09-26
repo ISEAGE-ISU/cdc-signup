@@ -510,7 +510,7 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
         return self.get(request, context, form=form)
 
 
-class ArchiveEmailView(BaseTemplateView):
+class ArchiveEmailView(LoginRequiredMixin, BaseTemplateView):
     template_name = 'email_view.html'
     page_title = 'Archived Email'
     breadcrumb = 'Archived Email'
