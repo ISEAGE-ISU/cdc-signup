@@ -143,3 +143,11 @@ If you wish to join or create another team, please visit https://signup.iseage.o
 
 If you have questions, email CDC support at {support}
 """
+
+# TODO: Figure out what the email body should actually be here.
+CERTIFICATE="""Hi there {fname} {lname}!
+
+Thank you for participating in the CDC. Your certificate is attached to this email.
+
+If you have questions, email CDC support at {support}
+"""
