@@ -9,7 +9,7 @@
     </div>
     <div class="row">
         <div class="col-md-6">
-            <form class="form-horizontal" action='' method="POST" id="simple-form">
+            <form class="form-horizontal" action='' method="POST" id="simple-form" enctype="multipart/form-data">
                 {% csrf_token %}
                 {% render_form_widget form icon="fa-sliders" %}
             </form>

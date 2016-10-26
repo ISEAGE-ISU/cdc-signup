@@ -22,6 +22,8 @@ class GlobalSettings(models.Model):
     enable_red = models.BooleanField(default=True)
     enable_green = models.BooleanField(default=True)
 
+    certificate_template = models.FileField(null=True, blank=True)
+
 
 class Team(models.Model):
     number = models.PositiveIntegerField(default=0)
