@@ -32,7 +32,7 @@ class Command(BaseCommand):
         self.stdout.write("Using certificate: {}".format(cert_file), self.style.MIGRATE_HEADING)
 
         cdc_name = base_actions.get_global_setting('competition_name')
-        cdc_date = base_actions.get_global_setting('competition_date')
+        cdc_date = base_actions.get_global_setting('competition_date').strftime('%B %-d, %Y')
         emails = []
 
         tmp = tempfile.mkdtemp(prefix="signup-certs")
