@@ -184,7 +184,7 @@ class AdminDashboard(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView):
 
     def post(self, request, context, *args, **kwargs):
         initial_pass = actions.get_global_setting('administrator_bind_pw')
-        form = base_forms.GlobalSettingsForm(request.POST, request.FILES, instance=context['g_setting'])
+        form = base_forms.GlobalSettingsForm(data=request.POST, instance=context['g_setting'])
         if form.is_valid():
             gs = form.save(commit=False)
             if not gs.administrator_bind_pw:

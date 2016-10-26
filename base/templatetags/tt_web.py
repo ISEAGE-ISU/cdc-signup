@@ -261,24 +261,14 @@ def render_account_type(participant):
 
 
 @register.simple_tag
-def render_email_archive(archive, show_audience=False):
+def render_email_archive(archive):
     output = '<div class="list-group">'
 
-    template = '<a class="list-group-item" href="{url}"><h4 class=list-group-item-heading>{subject}</h4>{content}</a>'
+    template = '<a class="list-group-item" href="{url}">{subject}</a>'
     for email in archive:
         url = reverse('archive-email', args=[email.id])
         subject = email.subject
-
-        content = '<p class="list-group-item-text clearfix">Sent {sent} {audience}</p>'
-
-        if show_audience:
-            audience = '<span class="pull-right badge">{}</span>'.format(email.get_audience_display())
-        else:
-            audience = ""
-
-        content = content.format(sent=email.send_time.strftime('%x %I:%M %p'), audience=audience)
-
-        output += template.format(subject=subject, url=url, content=content)
+        output += template.format(subject=subject, url=url)
 
     output += '</div>'
     return mark_safe(output)

@@ -6,4 +6,3 @@ python-memcached==1.54
 gunicorn==19.3.0
 setproctitle==1.1.8
 docutils==0.12
-fdfgen
