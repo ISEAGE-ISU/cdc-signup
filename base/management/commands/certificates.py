@@ -41,7 +41,7 @@ class Command(BaseCommand):
             fields = [
                 ('participant_name', participant.user.get_full_name()),
                 ('cdc_name', cdc_name),
-                ('cdc_date', cdc_date),
+                ('issue_date', cdc_date),
             ]
 
             outfile = slugify(participant.user.username) + '.pdf'
