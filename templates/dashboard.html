@@ -94,11 +94,7 @@
 
             {% if archived_emails %}
                 <h4>Important Emails</h4>
-                <div class="list-group">
-                    {% for email in archived_emails %}
-                    <a class="list-group-item" href="{% url 'archive-email' email.id %}">{{ email.subject }}</a>
-                    {% endfor %}
-                </div>
+                {% render_email_archive archived_emails %}
             {% endif %}
             {% render_widget_bottom %}
         </div>
