@@ -93,6 +93,7 @@ class GlobalSettingsForm(forms.ModelForm):
             'number_of_teams', 'max_team_size', 'administrator_bind_dn', 'administrator_bind_pw', 'competition_name',
             'competition_date', 'check_in_date', 'documentation_url',
             'enable_account_creation', 'enable_red', 'enable_green',
+            'certificate_template',
         ]
         fieldsets = [{
             'id': 'settings',
