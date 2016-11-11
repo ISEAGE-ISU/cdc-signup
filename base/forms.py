@@ -89,7 +89,11 @@ class ModifyTeamForm(forms.ModelForm):
 class GlobalSettingsForm(forms.ModelForm):
     class Meta:
         model = models.GlobalSettings
-        fields = '__all__'
+        fields = [
+            'number_of_teams', 'max_team_size', 'administrator_bind_dn', 'administrator_bind_pw', 'competition_name',
+            'competition_date', 'check_in_date', 'documentation_url',
+            'enable_account_creation', 'enable_red', 'enable_green',
+        ]
         fieldsets = [{
             'id': 'settings',
             'legend': 'Global Settings',
