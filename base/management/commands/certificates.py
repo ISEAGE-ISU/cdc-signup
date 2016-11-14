@@ -20,9 +20,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-d', '--dry-run', default=False, action='store_true')
         parser.add_argument('-n', '--no-clean', default=False, action='store_true', help="Don't clean generated certificates")
+        parser.add_argument('--names', default=False, action='store_true', help='Print names of participants as the emails are generated')
 
     def handle(self, *args, **options):
-        checked_in = base_models.Participant.objects.filter(checked_in=True)
+        checked_in = base_models.Participant.objects.filter(checked_in=True, is_red=False, is_green=False,
+                                                            team__isnull=False)
 
         cert_file = base_actions.get_global_setting('certificate_template')
         if not cert_file:
@@ -62,6 +64,8 @@ class Command(BaseCommand):
                                    reply_to=[settings.SUPPORT_EMAIL])
             message.attach_file(os.path.join(tmp, outfile))
             emails.append(message)
+            if options['names']:
+                self.stdout.write(" -> Generated Email for {}".format(participant))
 
         if not options['no_clean']:
             shutil.rmtree(tmp)
