@@ -245,6 +245,14 @@ LOGGING = {
     }
 }
 
+# Certificate Email Settings
+CERT_EMAIL_HOST = None
+CERT_EMAIL_USER = None
+CERT_EMAIL_PASS = None
+CERT_EMAIL_PORT = 25
+CERT_EMAIL_TLS = True
+CERT_EMAIL = "scrat@iseage.org"
+
 try:
     from local_settings import *
 except ImportError:

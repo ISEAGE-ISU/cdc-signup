@@ -55,9 +55,11 @@ class Command(BaseCommand):
             subprocess.check_call(["pdftk", cert_file, 'fill_form', 'data.fdf', 'output', outfile, 'flatten'], cwd=tmp)
 
             subject = "[CDC] {} Certificate".format(cdc_name)
-            body = CERTIFICATE.format(fname=participant.user.first_name, lname=participant.user.last_name, support=settings.SUPPORT_EMAIL)
+            body = CERTIFICATE.format(fname=participant.user.first_name, lname=participant.user.last_name,
+                                      support=settings.SUPPORT_EMAIL)
 
-            message = EmailMessage(subject, body, settings.SUPPORT_EMAIL, [participant.user.email])
+            message = EmailMessage(subject, body, settings.CERT_EMAIL, [participant.user.email],
+                                   reply_to=[settings.SUPPORT_EMAIL])
             message.attach_file(os.path.join(tmp, outfile))
             emails.append(message)
 
@@ -66,7 +68,7 @@ class Command(BaseCommand):
 
         if not options['dry_run']:
             self.stdout.write("Sending Emails", self.style.MIGRATE_SUCCESS)
-            conn = mail.get_connection()
-            conn.open()
-            conn.send_messages(emails)
-            conn.close()
+            with mail.get_connection(host=settings.CERT_EMAIL_HOST, port=settings.CERT_EMAIL_PORT,
+                                     username=settings.CERT_EMAIL_USER, password=settings.CERT_EMAIL_PASS,
+                                     use_tls=settings.CERT_EMAIL_TLS) as conn:
+                conn.send_messages(emails)
