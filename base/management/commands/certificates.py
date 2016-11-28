@@ -21,10 +21,16 @@ class Command(BaseCommand):
         parser.add_argument('-d', '--dry-run', default=False, action='store_true')
         parser.add_argument('-n', '--no-clean', default=False, action='store_true', help="Don't clean generated certificates")
         parser.add_argument('--names', default=False, action='store_true', help='Print names of participants as the emails are generated')
+        parser.add_argument('--resend', default=None, help='Resend the certificate for a specific participant (by username)')
 
     def handle(self, *args, **options):
-        checked_in = base_models.Participant.objects.filter(checked_in=True, is_red=False, is_green=False,
-                                                            team__isnull=False)
+        if options['resend']:
+            self.stdout.write("Resending for {}".format(options['resend']))
+            checked_in = [base_models.Participant.objects.get(user__username=options['resend'])]
+        else:
+            self.stdout.write("Sending certifications to checked-in blue team participants")
+            checked_in = base_models.Participant.objects.filter(checked_in=True, is_red=False, is_green=False,
+                                                                team__isnull=False)
 
         cert_file = base_actions.get_global_setting('certificate_template')
         if not cert_file:
