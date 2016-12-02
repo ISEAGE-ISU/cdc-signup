@@ -1,14 +1,18 @@
-from django.contrib.auth.models import User
-from django.contrib import admin
-import base.models as base_models
-from django.http import HttpResponse
 import csv
 from cStringIO import StringIO
 
+from django.contrib import admin
+from django.http import HttpResponse
+
+import base.models as base_models
+
 
 class ParticipantAdmin(admin.ModelAdmin):
-    list_display = ('__unicode__', 'participant_email', 'team', 'checked_in', 'captain', 'requested_team', 'requests_captain', 'looking_for_team', 'is_red', 'is_green', 'approved')
-    list_filter = ('team', 'looking_for_team', 'checked_in', 'captain', 'requested_team', 'is_red', 'is_green', 'approved')
+    list_display = (
+    '__unicode__', 'participant_email', 'team', 'checked_in', 'captain', 'requested_team', 'requests_captain',
+    'looking_for_team', 'is_red', 'is_green', 'approved')
+    list_filter = (
+    'team', 'looking_for_team', 'checked_in', 'captain', 'requested_team', 'is_red', 'is_green', 'approved')
     actions = [
         'get_participant_emails',
         'check_in',
@@ -22,31 +26,35 @@ class ParticipantAdmin(admin.ModelAdmin):
         for participant in queryset:
             participant.looking_for_team = False
             participant.save()
+
     unmark_lft.short_description = "Unmark LFT"
 
     def mark_lft(self, request, queryset):
         for participant in queryset:
             participant.looking_for_team = True
             participant.save()
+
     mark_lft.short_description = "Mark LFT"
 
     def participant_email(self, obj):
         return obj.user.email
+
     participant_email.short_description = "Email"
 
     def export_csv(self, request, queryset):
         si = StringIO()
         cw = csv.writer(si)
-        cw.writerow(["Full Name", "Username", "Email", "Team Name", "Captain", "Checked In"])
+        cw.writerow(["Full Name", "Username", "Email", "Team Name", "Captain", "Checked In", "Red", "Green",
+                     "R/G Approved"])
 
         for participant in queryset:
             user = participant.user
-            #if not user.is_superuser and participant.team:
-            cw.writerow([user.get_full_name(), user.username,
-                user.email, participant.team, participant.captain,
-                participant.checked_in])
+            # if not user.is_superuser and participant.team:
+            cw.writerow([user.get_full_name(), user.username, user.email, participant.team, participant.captain,
+                         participant.checked_in, participant.is_red, participant.is_green, participant.approved])
 
         return HttpResponse(content=si.getvalue(), content_type="text/plain")
+
     export_csv.short_name = "Export CSV of Participants"
 
     def get_participant_emails(self, request, queryset):
