@@ -18,6 +18,7 @@ import actions
 import models
 from django.utils import timezone
 
+from base.models import ArchivedEmail
 
 TRY_AGAIN = """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
 If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL)
@@ -248,6 +249,7 @@ class AdminCompetitionResetView(LoginRequiredMixin, UserIsAdminMixin, BaseTempla
     def post(self, request, context, *args, **kwargs):
         models.Team.objects.all().delete()
         User.objects.exclude(is_superuser=True).delete()
+        ArchivedEmail.objects.all().delete()
         messages.success(request, 'Competition successfully reset.')
         return redirect('admin-dash')
 
