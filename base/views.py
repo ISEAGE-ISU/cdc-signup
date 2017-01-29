@@ -354,10 +354,10 @@ class SignupView(BaseTemplateView):
 
         form = base_forms.SignupForm(request.POST)
         if form.is_valid():
-            email = form.cleaned_data['email']
-            first = form.cleaned_data['first_name']
-            last = form.cleaned_data['last_name']
-            username = form.cleaned_data['username']
+            email = form.cleaned_data['email'].strip()
+            first = form.cleaned_data['first_name'].strip()
+            last = form.cleaned_data['last_name'].strip()
+            username = form.cleaned_data['username'].replace(' ', '')
             success = False
             try:
                 success = actions.create_user_account(username, first, last, email)

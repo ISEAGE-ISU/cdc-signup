@@ -14,7 +14,7 @@ apt-get install nginx mysql-server memcached supervisor python-pip python-dev li
 ```
 or
 ```bash
-dnf install nginx mariadb-server mariadb-devel memcached supervisor python-pip python-devel mariadb-libs redhat-rpm-config libxml2-devel openssl-devel openlda-devel cyrus-sasl-devel
+dnf install nginx mariadb-server mariadb-devel memcached supervisor python-pip python-devel mariadb-libs redhat-rpm-config libxml2-devel openssl-devel openldap-devel cyrus-sasl-devel
 ```
 
 Note: for development purposes you may omit nginx, memcached, and supervisor and just use python manage.py runserver instead

@@ -22,6 +22,10 @@ class SignupForm(forms.Form):
         cleaned_data = super(SignupForm, self).clean()
         if cleaned_data.get('email') != cleaned_data.get('email_again'):
             raise forms.ValidationError("The email addresses you inputted do not match.")
+        if not cleaned_data.get('username').islower():
+            raise forms.ValidationError("Please choose an all lowercase username.")
+        if " " in cleaned_data.get('username').strip():
+            raise forms.ValidationError("Please choose a username without spaces. Note: trailing and leading spaces are automatically ignored.")
 
 
 class RedGreenSignupForm(SignupForm):
@@ -122,4 +126,3 @@ class AdminEmailForm(forms.Form):
     subject = forms.CharField(required=True, label="Subject")
     content = forms.CharField(required=True, widget=forms.Textarea, label="Body")
     send_to = forms.ChoiceField(choices=AUDIENCE_CHOICES, widget=forms.RadioSelect(), required=True)
-
