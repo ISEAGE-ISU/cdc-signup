@@ -12,6 +12,10 @@ Designed for Ubuntu 14.04 and Python 2.7
 ```bash
 apt-get install nginx mysql-server memcached supervisor python-pip python-dev libmysqlclient-dev libldap2-dev libxml2-dev libsasl2-dev libssl-dev
 ```
+or
+```bash
+dnf install nginx mariadb-server mariadb-devel memcached supervisor python-pip python-devel mariadb-libs redhat-rpm-config libxml2-devel openssl-devel openlda-devel cyrus-sasl-devel
+```
 
 Note: for development purposes you may omit nginx, memcached, and supervisor and just use python manage.py runserver instead
 
@@ -56,4 +60,3 @@ Unlink default site and reload:
 unlink /etc/nginx/sites-enabled/default
 service nginx reload
 ```
-
