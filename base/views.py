@@ -476,12 +476,13 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
         }
         context['docs_url'] = actions.get_global_setting('documentation_url')
         context['download_docs'] = {
-            'title': 'Competition Documents',
+            'title': 'Scenario Documents',
             'icon': 'fa-file',
         }
 
         context['competition_name'] = actions.get_global_setting('competition_name')
         context['competition_date'] = actions.get_global_setting('competition_date')
+        context['rules_version'] = actions.get_global_setting('rules_version')
 
         context['archived_emails'] = models.ArchivedEmail.objects.filter(audience__in=utils.get_user_audience(request.user))
 

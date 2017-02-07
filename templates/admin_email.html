@@ -1,13 +1,15 @@
 {% extends "base.html" %}
 {% load tt_web %}
+{% load crispy_forms_tags %}
 
 {% block content %}
     <div class="row">
         <div class="col-md-12" style="max-width: 800px;">
-            <form class="form-horizontal" action='' method="POST" id="simple-form">
-                {% csrf_token %}
-                {% render_form_widget form icon="fa-paper-plane-o" %}
-            </form>
+            {% crispy form %}
+{#            <form class="form-horizontal" action='' method="POST" id="simple-form">#}
+{#                {% csrf_token %}#}
+{#                {% render_form_widget form icon="fa-paper-plane-o" %}#}
+{#            </form>#}
         </div>
     </div>
 {% endblock %}

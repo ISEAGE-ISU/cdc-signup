@@ -1,7 +1,7 @@
 AUDIENCE_CHOICES = (
-    ('all', 'All (Blue) participants'),
     ('with_team', 'Participants with a team'),
     ('no_team', 'Participants without a team'),
+    ('all', 'Blue Team Participants (All)'),
     ('red_team_all', 'Red Team Members (All)'),
     ('red_team_approved', 'Red Team Members (Approved)'),
     ('green_team_all', 'Green Team Members (All)'),
