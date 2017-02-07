@@ -253,6 +253,11 @@ CERT_EMAIL_PORT = 25
 CERT_EMAIL_TLS = True
 CERT_EMAIL = "scrat@iseage.org"
 
+# IScorE API Integration
+ISCORE_URL = "https://iscore.iseage.org"
+ISCORE_API_VERSION = "v1"
+ISCORE_TOKEN = None
+
 try:
     from local_settings import *
 except ImportError:

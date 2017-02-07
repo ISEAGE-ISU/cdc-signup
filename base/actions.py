@@ -1,4 +1,5 @@
 import ldap
+import requests
 from ldap import modlist
 from django.conf import settings
 import auth as ad_auth
@@ -66,7 +67,7 @@ def email_participants(subject, content, audience, sender):
 
 
 def get_current_teams():
-    return models.Team.objects.annotate(member_count=Count('participant'))
+    return models.Team.objects.exclude(disbanded=True).annotate(member_count=Count('participant'))
 
 
 def reset_global_settings_object():
@@ -748,9 +749,25 @@ def disband_team(participant_id):
     name = team.name
     member_emails = team.member_email_list()
 
-    team.delete()
+    team.disband = True
+    team.save()
 
     email_body = email_templates.TEAM_DISBANDED.format(team=name, support=settings.SUPPORT_EMAIL)
+
+    if settings.ISCORE_TOKEN:
+        # Get Team Number to ID mappings
+        headers = get_iscore_headers()
+        base_url = get_iscore_url()
+        resp = requests.get(base_url + "/teams.json", headers=headers)
+        if resp.status_code != 200:
+            logging.error("Failed to disable team {team} in IScorE!".format(team=name))
+
+        mapping = {x['number']: x['id'] for x in resp.json()}
+        team_id = mapping[team.number]
+
+        resp = requests.post(base_url + "/teams/" + team_id + "/disable.json", headers=headers)
+        if resp.status_code != 200:
+            logging.error("Failed to disable team {team} in IScorE!".format(team=name))
 
     try:
         send_mail('ISEAGE CDC Support: Your team has been disbanded', email_body,
@@ -802,3 +819,13 @@ def get_type_choices():
         choices.append(('red', 'Red Team'))
 
     return choices
+
+
+# IScorE Integration
+def get_iscore_url():
+    return settings.ISCORE_URL + "/api/" + settings.ISCORE_API_VERSION
+
+def get_iscore_headers():
+    return {
+        'Authorization': 'Token ' + settings.ISCORE_TOKEN,
+    }
