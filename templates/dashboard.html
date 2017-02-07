@@ -24,26 +24,6 @@
                             <a class="btn btn-danger btn-lg btn-block" href="{% url "leave-team" %}">Leave your team</a>
                         {% endif %}
                     <br>
-                    <h4>Team Members</h4>
-                    <table class="table table-striped" id="current-members">
-                        <thead><tr>
-                            <th>First</th>
-                            <th>Last</th>
-                            <th>Email</th>
-                            <th>Captain</th>
-                        </tr></thead>
-                        <tbody>
-                        {% for member in current_members %}
-                            <tr id="member-{{ member.id }}">
-                                <td class="first">{{ member.user.first_name }}</td>
-                                <td class="last">{{ member.user.last_name }}</td>
-                                <td class="email">{{ member.user.email }}</td>
-                                {% if member.captain %}<td data-id="true" class="is-captain">Yes</td>{% else %}<td data-id="false" class="is-captain">No</td>{% endif %}
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                <br>
                 <h4>Team Members</h4>
                 <table class="table table-striped" id="current-members">
                     <thead><tr>

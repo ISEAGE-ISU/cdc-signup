@@ -749,7 +749,11 @@ def disband_team(participant_id):
     name = team.name
     member_emails = team.member_email_list()
 
-    team.disband = True
+    for member in team.members():
+        member.team = None
+        member.save()
+
+    team.disbanded = True
     team.save()
 
     email_body = email_templates.TEAM_DISBANDED.format(team=name, support=settings.SUPPORT_EMAIL)
@@ -765,7 +769,8 @@ def disband_team(participant_id):
         mapping = {x['number']: x['id'] for x in resp.json()}
         team_id = mapping[team.number]
 
-        resp = requests.post(base_url + "/teams/" + team_id + "/disable.json", headers=headers)
+        resp = requests.post("{url}/teams/{id}/disable.json".format(url=base_url, id=team_id), headers=headers)
+        resp.raise_for_status()
         if resp.status_code != 200:
             logging.error("Failed to disable team {team} in IScorE!".format(team=name))
 
