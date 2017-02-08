@@ -1,3 +1,4 @@
+import time
 from django.conf import settings
 from django.core import mail
 from django.core.mail.message import EmailMessage
@@ -14,12 +15,17 @@ from base import actions as base_actions
 from base.email_templates import CERTIFICATE
 
 
+BATCH_SIZE = 10
+BATCH_TIMER = 20
+
+
 class Command(BaseCommand):
     help = 'Send participation certificates to checked-in participants'
 
     def add_arguments(self, parser):
         parser.add_argument('-d', '--dry-run', default=False, action='store_true')
         parser.add_argument('-n', '--no-clean', default=False, action='store_true', help="Don't clean generated certificates")
+        parser.add_argument('-b', '--batch', default=BATCH_SIZE)
         parser.add_argument('--names', default=False, action='store_true', help='Print names of participants as the emails are generated')
         parser.add_argument('--resend', default=None, help='Resend the certificate for a specific participant (by username)')
 
@@ -77,8 +83,10 @@ class Command(BaseCommand):
             shutil.rmtree(tmp)
 
         if not options['dry_run']:
+            batch_size = options['batch']
+            new_emails = [emails[i:i + batch_size] for i in xrange(0, len(emails), batch_size)]
             self.stdout.write("Sending Emails", self.style.MIGRATE_SUCCESS)
-            with mail.get_connection(host=settings.CERT_EMAIL_HOST, port=settings.CERT_EMAIL_PORT,
-                                     username=settings.CERT_EMAIL_USER, password=settings.CERT_EMAIL_PASS,
-                                     use_tls=settings.CERT_EMAIL_TLS) as conn:
-                conn.send_messages(emails)
+            with mail.get_connection() as conn:
+                for group in new_emails:
+                    conn.send_messages(group)
+                    time.sleep(BATCH_TIMER)
