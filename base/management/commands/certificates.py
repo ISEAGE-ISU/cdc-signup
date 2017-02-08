@@ -51,6 +51,7 @@ class Command(BaseCommand):
 
         tmp = tempfile.mkdtemp(prefix="signup-certs")
 
+        num = 0
         for participant in checked_in:
             fields = [
                 ('participant_name', participant.user.get_full_name()),
@@ -79,14 +80,14 @@ class Command(BaseCommand):
             if options['names']:
                 self.stdout.write(" -> Generated Email for {}".format(participant))
 
+            if not options['dry_run']:
+                self.stdout.write(" -> Sending mail for {}".format(participant), self.style.MIGRATE_SUCCESS)
+                message.send()
+                num += 1
+
+                if num > options['batch']:
+                    time.sleep(BATCH_TIMER)
+                    num = 0
+
         if not options['no_clean']:
             shutil.rmtree(tmp)
-
-        if not options['dry_run']:
-            batch_size = options['batch']
-            new_emails = [emails[i:i + batch_size] for i in xrange(0, len(emails), batch_size)]
-            self.stdout.write("Sending Emails", self.style.MIGRATE_SUCCESS)
-            with mail.get_connection() as conn:
-                for group in new_emails:
-                    conn.send_messages(group)
-                    time.sleep(BATCH_TIMER)
