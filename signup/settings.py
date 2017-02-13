@@ -258,6 +258,11 @@ CERT_EMAIL = "scrat@iseage.org"
 RULES_URL = "https://docs.iseage.org/cdc/{version}"
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
+# IScorE API Integration
+ISCORE_URL = "https://iscore.iseage.org"
+ISCORE_API_VERSION = "v1"
+ISCORE_TOKEN = None
+
 try:
     from local_settings import *
 except ImportError:

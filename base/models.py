@@ -31,6 +31,7 @@ class Team(models.Model):
     number = models.PositiveIntegerField(default=0)
     name = models.CharField(unique=True, max_length=50)
     looking_for_members = models.BooleanField(default=True, help_text="Allow anyone to join your team; uncheck if your team is full.")
+    disbanded = models.BooleanField(default=False)
 
     def members(self):
         return Participant.objects.filter(team=self)
