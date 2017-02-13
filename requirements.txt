@@ -7,3 +7,4 @@ gunicorn==19.3.0
 setproctitle==1.1.8
 docutils==0.12
 fdfgen
+django-crispy-forms>=1.6.1,<2.0

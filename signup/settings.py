@@ -150,6 +150,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.staticfiles',
     'base',
+    'crispy_forms',
 )
 
 LOGIN_URL = URL_ROOT + 'login/'
@@ -252,6 +253,10 @@ CERT_EMAIL_PASS = None
 CERT_EMAIL_PORT = 25
 CERT_EMAIL_TLS = True
 CERT_EMAIL = "scrat@iseage.org"
+
+# Other Settings
+RULES_URL = "https://docs.iseage.org/cdc/{version}"
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 try:
     from local_settings import *

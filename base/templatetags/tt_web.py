@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.template import Library
 from django.utils.safestring import mark_safe
@@ -282,3 +283,12 @@ def render_email_archive(archive, show_audience=False):
 
     output += '</div>'
     return mark_safe(output)
+
+
+@register.simple_tag
+def render_rules_version():
+    output = '<a href="{url}">Rules {version}</a>'
+    version = actions.get_global_setting('rules_version')
+    url = settings.RULES_URL.format(version=version)
+
+    return mark_safe(output.format(url=url, version=version))

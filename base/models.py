@@ -17,12 +17,14 @@ class GlobalSettings(models.Model):
 
     competition_name = models.CharField(max_length=100, blank=True, null=True)
     competition_date = models.DateTimeField(null=True)
+    competition_prefix = models.CharField(max_length=15, blank=True, null=True)
 
     enable_account_creation = models.BooleanField(default=True)
     enable_red = models.BooleanField(default=True)
     enable_green = models.BooleanField(default=True)
 
     certificate_template = models.FileField(null=True, blank=True)
+    rules_version = models.CharField(max_length=40, null=True, blank=True)
 
 
 class Team(models.Model):

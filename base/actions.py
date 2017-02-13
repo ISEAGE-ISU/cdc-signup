@@ -28,6 +28,10 @@ AD_AUTH = ad_auth.ActiveDirectoryAuthenticationBackend()
 
 
 def email_participants(subject, content, audience, sender):
+    prefix = get_global_setting('competition_prefix')
+    if prefix:
+        subject = "[{}] {}".format(prefix, subject)
+
     emails = User.objects.filter(is_superuser=False)
     if audience == 'all':
         # All Blue Team Members, no Red/Green
