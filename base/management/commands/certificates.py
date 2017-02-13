@@ -73,7 +73,7 @@ class Command(BaseCommand):
             body = CERTIFICATE.format(fname=participant.user.first_name, lname=participant.user.last_name,
                                       support=settings.SUPPORT_EMAIL)
 
-            message = EmailMessage(subject, body, settings.CERT_EMAIL, [participant.user.email],
+            message = EmailMessage(subject, body, settings.SUPPORT_EMAIL, [participant.user.email],
                                    reply_to=[settings.SUPPORT_EMAIL])
             message.attach_file(os.path.join(tmp, outfile))
             emails.append(message)
