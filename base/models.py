@@ -71,7 +71,7 @@ class Team(models.Model):
         return len(self.members()) >= actions.get_global_setting('max_team_size')
 
     def __unicode__(self):
-        return "Team {number}: {name}".format(number=self.number, name=self.name)
+        return u"Team {number}: {name}".format(number=self.number, name=self.name)
 
     class Meta:
         ordering = ['number']
