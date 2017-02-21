@@ -63,7 +63,7 @@ class Team(models.Model):
         emails = ''
         for captain in self.captains():
             if len(emails):
-                emails = emails + ', '
+                emails += ', '
             emails = emails + captain.user.email
         return emails
 
@@ -150,7 +150,7 @@ class Participant(models.Model):
             actions.unapprove_user(self)
 
     def __unicode__(self):
-        return "{username} ({name})".format(username=self.user.get_username(), name=self.user.get_full_name())
+        return u"{username} ({name})".format(username=self.user.get_username(), name=self.user.get_full_name())
 
     class Meta:
         ordering = ['team']
