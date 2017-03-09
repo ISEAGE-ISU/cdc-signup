@@ -382,15 +382,21 @@ class RedGreenSignupView(BaseTemplateView):
     breadcrumb = "Red/Green"
 
     def get(self, request, context, *args, **kwargs):
-        enabled = actions.get_global_setting('enable_red') or actions.get_global_setting('enable_green')
+        enabled_red = actions.get_global_setting('enable_red')
+        enabled_green = actions.get_global_setting('enable_green')
+        enabled = enabled_red or enabled_green
+
         if not enabled:
-            message.error(request, CREATION_DISABLED)
+            messages.error(request, CREATION_DISABLED)
             return redirect('site-index')
+
+        start_value = request.GET.get('type')
+        initial_data = {'acct_type': start_value}
 
         if 'form' in kwargs:
             form = kwargs.pop('form')
         else:
-            form = base_forms.RedGreenSignupForm()
+            form = base_forms.RedGreenSignupForm(initial=initial_data)
         context['form'] = form
         return self.render_to_response(context)
 
