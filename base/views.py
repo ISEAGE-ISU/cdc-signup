@@ -391,6 +391,11 @@ class RedGreenSignupView(BaseTemplateView):
             return redirect('site-index')
 
         start_value = request.GET.get('type')
+        if start_value == 'red' and not enabled_red:
+            start_value = None
+        elif start_value == 'green' and not enabled_green:
+            start_value = None
+
         initial_data = {'acct_type': start_value}
 
         if 'form' in kwargs:
