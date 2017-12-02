@@ -560,7 +560,7 @@ def add_user_to_team(team_id, participant_id):
     captain_list = team.captains()
     captains = ""
     for captain in captain_list:
-        captains += u"{fname} {lname}  \t{email}\n".format(fname=captain.user.first_name,
+        captains += "{fname} {lname}  \t{email}\n".format(fname=captain.user.first_name,
                                                            lname=captain.user.last_name,
                                                            email=captain.user.email)
 
@@ -596,7 +596,7 @@ def join_team(participant_id, team_id):
     # Send email
     captains = ""
     for captain in team.captains():
-        captains += u"{fname} {lname}  \t{email}\n".format(fname=captain.user.first_name,
+        captains += "{fname} {lname}  \t{email}\n".format(fname=captain.user.first_name,
                                                            lname=captain.user.last_name,
                                                            email=captain.user.email)
 
@@ -646,7 +646,7 @@ def leave_team(participant_id):
     try:
         send_mail('ISEAGE CDC Support: A member has left your team', email_body, settings.EMAIL_FROM_ADDR, captain_emails)
     except smtplib.SMTPException:
-        logging.warning(u"Failed to send email to captains of {team}:\n{body}".format(team=team.name, body=email_body))
+        logging.warning("Failed to send email to captains of {team}:\n{body}".format(team=team.name, body=email_body))
 
     return True
 
@@ -689,7 +689,7 @@ def demote_captain(participant_id):
     try:
         send_mail('ISEAGE CDC Support: A member has stepped down as captain', email_body, settings.EMAIL_FROM_ADDR, captain_emails)
     except smtplib.SMTPException:
-        logging.warning(u"Failed to send email to captains of {team}:\n{body}".format(team=team.name, body=email_body))
+        logging.warning("Failed to send email to captains of {team}:\n{body}".format(team=team.name, body=email_body))
 
     return True
 
@@ -714,7 +714,7 @@ def submit_join_request(participant_id, team_id):
         send_mail('ISEAGE CDC Support: Someone has requested to join your team', email_body, settings.EMAIL_FROM_ADDR,
                   captain_emails)
     except smtplib.SMTPException:
-        logging.warning(u"Failed to send email to captains of {team}:\n{body}".format(team=team.name, body=email_body))
+        logging.warning("Failed to send email to captains of {team}:\n{body}".format(team=team.name, body=email_body))
 
     return True
 
@@ -738,7 +738,7 @@ def sumbit_captain_request(participant_id):
         send_mail('ISEAGE CDC Support: Someone has requested to become a captain of your team', email_body,
                   settings.EMAIL_FROM_ADDR, captain_emails)
     except smtplib.SMTPException:
-        logging.warning(u"Failed to send email to captains of {team}:\n{body}".format(team=participant.team.name, body=email_body))
+        logging.warning("Failed to send email to captains of {team}:\n{body}".format(team=participant.team.name, body=email_body))
 
     return True
 
@@ -767,7 +767,7 @@ def disband_team(participant_id):
         base_url = get_iscore_url()
         resp = requests.get(base_url + "/teams.json", headers=headers)
         if resp.status_code != 200:
-            logging.error(u"Failed to disable team {team} in IScorE!".format(team=name))
+            logging.error("Failed to disable team {team} in IScorE!".format(team=name))
 
         mapping = {x['number']: x['id'] for x in resp.json()}
         team_id = mapping[team.number]
@@ -775,13 +775,13 @@ def disband_team(participant_id):
         resp = requests.post("{url}/teams/{id}/disable.json".format(url=base_url, id=team_id), headers=headers)
         resp.raise_for_status()
         if resp.status_code != 200:
-            logging.error(u"Failed to disable team {team} in IScorE!".format(team=name))
+            logging.error("Failed to disable team {team} in IScorE!".format(team=name))
 
     try:
         send_mail('ISEAGE CDC Support: Your team has been disbanded', email_body,
                   settings.EMAIL_FROM_ADDR, member_emails)
     except smtplib.SMTPException:
-        logging.warning(u"Failed to send email to members of {team}:\n{body}".format(team=name, body=email_body))
+        logging.warning("Failed to send email to members of {team}:\n{body}".format(team=name, body=email_body))
 
     return True
 

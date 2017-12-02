@@ -264,6 +264,6 @@ ISCORE_API_VERSION = "v1"
 ISCORE_TOKEN = None
 
 try:
-    from local_settings import *
+    from .local_settings import *
 except ImportError:
     pass
