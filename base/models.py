@@ -71,7 +71,7 @@ class Team(models.Model):
         return len(self.members()) >= actions.get_global_setting('max_team_size')
 
     def __unicode__(self):
-        return u"Team {number}: {name}".format(number=self.number, name=self.name)
+        return "Team {number}: {name}".format(number=self.number, name=self.name)
 
     class Meta:
         ordering = ['number']
@@ -150,7 +150,7 @@ class Participant(models.Model):
             actions.unapprove_user(self)
 
     def __unicode__(self):
-        return u"{username} ({name})".format(username=self.user.get_username(), name=self.user.get_full_name())
+        return "{username} ({name})".format(username=self.user.get_username(), name=self.user.get_full_name())
 
     class Meta:
         ordering = ['team']

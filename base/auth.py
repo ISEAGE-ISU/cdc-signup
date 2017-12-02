@@ -174,7 +174,7 @@ class ActiveDirectoryAuthenticationBackend:
             self.debug_write("results in {0}".format(result))
 
             # Validate that they are a member of review board group
-            if result.has_key('memberOf'):
+            if 'memberOf' in result:
                 membership = result['memberOf']
             else:
                 self.debug_write('AD user has no group memberships')
@@ -190,7 +190,7 @@ class ActiveDirectoryAuthenticationBackend:
 
             # get user info from ADS
             # get email
-            if result.has_key('mail'):
+            if 'mail' in result:
                 mail = result['mail'][0]
             else:
                 mail = ""
@@ -199,7 +199,7 @@ class ActiveDirectoryAuthenticationBackend:
             self.debug_write("mail=" + mail)
 
             # get surname
-            if result.has_key('sn'):
+            if 'sn' in result:
                 last_name = result['sn'][0]
             else:
                 last_name = ""
@@ -208,7 +208,7 @@ class ActiveDirectoryAuthenticationBackend:
             self.debug_write("sn=" + last_name)
 
             # get display name
-            if result.has_key('givenName'):
+            if 'givenName' in result:
                 first_name = result['givenName'][0]
             else:
                 first_name = None
@@ -222,7 +222,7 @@ class ActiveDirectoryAuthenticationBackend:
             l.unbind_s()
             return userInfo
 
-        except Exception, e:
+        except Exception as e:
             self.debug_write("exception caught!")
             self.debug_write(e)
             return None
