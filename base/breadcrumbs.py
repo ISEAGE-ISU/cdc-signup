@@ -1,5 +1,6 @@
 from django.core import urlresolvers
 from django import http
+import urlparse
 
 
 class Breadcrumb(object):
@@ -54,7 +55,7 @@ def create_breadcrumbs(path, context):
             view_name = func.__name__
             view = get_class('{0}.{1}'.format(module, view_name))
         # Couldn't resolve the url
-        except http.Http404 as e:
+        except http.Http404, e:
             pass
 
         # We have a valid view

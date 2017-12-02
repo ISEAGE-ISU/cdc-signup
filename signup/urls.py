@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, include, url
 from base import views
 from signup import settings
-from . import admin as custom_admin
+import admin as custom_admin
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin

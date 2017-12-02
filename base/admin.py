@@ -1,4 +1,5 @@
 import csv
+from cStringIO import StringIO
 
 from django.contrib import admin
 from django.http import HttpResponse

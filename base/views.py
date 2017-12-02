@@ -12,10 +12,10 @@ from django.core.urlresolvers import reverse
 
 from django.conf import settings
 from base import breadcrumbs, utils
-from . import forms as base_forms
+import forms as base_forms
 import base
-from . import actions
-from . import models
+import actions
+import models
 from django.utils import timezone
 
 from base.models import ArchivedEmail
@@ -290,7 +290,7 @@ class AdminSendEmailView(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView)
 # Member views
 ##########
 def login(request):
-    this_breadcrumb = '<a href="{link}" class="current">{text}</a>'.format(link='/login', text="Login")
+    this_breadcrumb = u'<a href="{link}" class="current">{text}</a>'.format(link='/login', text="Login")
     crumbs = mark_safe(breadcrumbs.render_breadcrumbs("/login/", {}) + this_breadcrumb)
     context= {
         'page_title': "Login",
@@ -644,14 +644,14 @@ class JoinTeamView(LoginRequiredMixin, BaseTemplateView):
         pt = context['participant']
         success = False
         if team.is_full():
-            messages.error(request, "Request to join team {} failed; this team is already full".format(team.name))
+            messages.error(request, u"Request to join team {} failed; this team is already full".format(team.name))
             return redirect('dashboard')
         if team.looking_for_members:
             if actions.join_team(pt.id, team.id):
-                messages.success(request, 'You have successfully joined Team {team}.'.format(team=team.name))
+                messages.success(request, u'You have successfully joined Team {team}.'.format(team=team.name))
             return redirect('dashboard')
         elif actions.submit_join_request(pt.id, team.id):
-            messages.success(request, 'Request to join {team} has been successfully submitted.'.format(team=team.name))
+            messages.success(request, u'Request to join {team} has been successfully submitted.'.format(team=team.name))
             return redirect('dashboard')
         else:
             messages.error(request, TRY_AGAIN)
@@ -713,7 +713,7 @@ class LeaveTeamView(LoginRequiredMixin, BaseTemplateView):
         if team:
             success = actions.leave_team(request.user.participant.id)
             if success:
-                messages.success(request, "You have successfully left {name}.".format(name=team.name))
+                messages.success(request, u"You have successfully left {name}.".format(name=team.name))
             else:
                 messages.error(request, TRY_AGAIN)
                 return self.render_to_response(context)
@@ -793,7 +793,7 @@ class TeamCreationView(LoginRequiredMixin, BaseTemplateView):
                 return self.get(request, context, form=form)
 
             if success:
-                messages.success(request, 'Team {name} successfully created.'.format(name=name))
+                messages.success(request, u'Team {name} successfully created.'.format(name=name))
                 return redirect('manage-team')
             else:
                 messages.error(request, WHOOPS)
@@ -876,7 +876,7 @@ class ApproveMemberView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView
                 messages.error(request, 'Your team is already full.')
                 return redirect('manage-team')
             if actions.add_user_to_team(team.id, participant_id):
-                messages.success(request, '{first} {last} has been successfully added to your team.'.format(
+                messages.success(request, u'{first} {last} has been successfully added to your team.'.format(
                     first=participant.user.first_name,last=participant.user.last_name))
                 return redirect('manage-team')
             else:
@@ -919,7 +919,7 @@ class ApproveCaptainView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateVie
             raise Http404
         if participant.team.id == team.id and participant.requests_captain:
             if actions.promote_to_captain(participant.id):
-                messages.success(request, '{first} {last} has been successfully promoted to captain.'.format(
+                messages.success(request, u'{first} {last} has been successfully promoted to captain.'.format(
                     first=participant.user.first_name,last=participant.user.last_name))
                 return redirect('manage-team')
             else:
@@ -964,7 +964,7 @@ class StepDownView(LoginRequiredMixin, UserIsCaptainMixin, BaseTemplateView):
                 messages.error(request, "You are the only remaining captain of this team. You must promote someone else to captain before stepping down.")
                 return redirect('dashboard')
             if success:
-                messages.success(request, "You have successfully stepped down as a captain of {name}.".format(name=team.name))
+                messages.success(request, u"You have successfully stepped down as a captain of {name}.".format(name=team.name))
             else:
                 messages.error(request, TRY_AGAIN)
                 return self.render_to_response(context)
