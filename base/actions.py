@@ -2,10 +2,10 @@ import ldap
 import requests
 from ldap import modlist
 from django.conf import settings
-import auth as ad_auth
+from . import auth as ad_auth
 import base
 import datetime
-import models
+from . import models
 from django.contrib.auth.models import User
 from django.db.models import Count, Q
 from django.core.mail import send_mail, EmailMessage
@@ -13,7 +13,7 @@ from django.template import Context, RequestContext
 from django.template.loader import get_template
 from django.core.cache import cache
 import re
-import email_templates
+from . import email_templates
 import smtplib
 import logging
 
@@ -493,7 +493,6 @@ def forgot_password(email):
     return True
 
 
-
 ##########
 # Teams
 ##########
@@ -833,6 +832,7 @@ def get_type_choices():
 # IScorE Integration
 def get_iscore_url():
     return settings.ISCORE_URL + "/api/" + settings.ISCORE_API_VERSION
+
 
 def get_iscore_headers():
     return {

@@ -3,6 +3,7 @@ from django.forms.utils import flatatt
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
 
+
 class ReadonlyWidget(forms.widgets.Widget):
 
     def render(self, name, value, attrs=None):
