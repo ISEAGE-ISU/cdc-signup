@@ -59,15 +59,18 @@ def email_participants(subject, content, audience, sender):
         # All Green Team Members (Approved & Unapproved), no Blue/Green
         emails = emails.filter(participant__is_green=True)
     emails = emails.values_list('email', flat=True)
+    # Send the message to staff also
+    emails.append(settings.EMAIL_FROM_ADDR)
 
     models.ArchivedEmail(subject=subject, content=content, audience=audience, sender=sender).save()
 
-    email = EmailMessage(subject=subject, body=content, bcc=emails, to=(settings.EMAIL_FROM_ADDR,), from_email=settings.EMAIL_FROM_ADDR)
+    for recipient in emails:
+        email = EmailMessage(subject=subject, body=content, to=(recipient,), from_email=settings.EMAIL_FROM_ADDR)
 
-    try:
-        email.send()
-    except smtplib.SMTPException:
-        logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=content))
+        try:
+            email.send()
+        except smtplib.SMTPException:
+            logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=content))
 
 
 def get_current_teams():
