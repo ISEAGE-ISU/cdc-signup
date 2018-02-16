@@ -59,6 +59,8 @@ def email_participants(subject, content, audience, sender):
         # All Green Team Members (Approved & Unapproved), no Blue/Green
         emails = emails.filter(participant__is_green=True)
     emails = emails.values_list('email', flat=True)
+    # Send the message to staff also
+    emails.append(settings.EMAIL_FROM_ADDR)
 
     models.ArchivedEmail(subject=subject, content=content, audience=audience, sender=sender).save()
 
