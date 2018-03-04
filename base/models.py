@@ -2,8 +2,9 @@ from django.contrib.auth import models as auth_models
 from django.db import models
 from django.db.models.signals import post_save, pre_save, pre_delete
 from django.dispatch import receiver
+import base
+from base import actions
 
-import actions
 from base.utils import AUDIENCE_CHOICES
 
 
