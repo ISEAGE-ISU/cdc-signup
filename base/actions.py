@@ -5,7 +5,7 @@ from django.conf import settings
 from . import auth as ad_auth
 import base
 import datetime
-from . import models
+import models
 from django.contrib.auth.models import User
 from django.db.models import Count, Q
 from django.core.mail import send_mail, EmailMessage
