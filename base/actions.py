@@ -8,7 +8,7 @@ import datetime
 from . import models
 from django.contrib.auth.models import User
 from django.db.models import Count, Q
-from django.core.mail import send_mail, EmailMessage
+from django.core.mail import send_mail, get_connection, EmailMessage
 from django.template import Context, RequestContext
 from django.template.loader import get_template
 from django.core.cache import cache
@@ -58,19 +58,25 @@ def email_participants(subject, content, audience, sender):
     elif audience == 'green_team_all':
         # All Green Team Members (Approved & Unapproved), no Blue/Green
         emails = emails.filter(participant__is_green=True)
-    emails = emails.values_list('email', flat=True)
-    # Send the message to staff also
-    emails.append(settings.EMAIL_FROM_ADDR)
+    emails = list(emails.values_list('email', flat=True))
+    # Send the message to staff first also
+    emails.insert(0, settings.EMAIL_FROM_ADDR)
 
     models.ArchivedEmail(subject=subject, content=content, audience=audience, sender=sender).save()
 
+    # Reuse the connection to avoid reopening the connection
+    connection = get_connection()
     for recipient in emails:
-        email = EmailMessage(subject=subject, body=content, to=(recipient,), from_email=settings.EMAIL_FROM_ADDR)
-
+        email = EmailMessage(subject=subject,
+                             body=content,
+                             to=(recipient,),
+                             from_email=settings.EMAIL_FROM_ADDR,
+                             connection=connection)
         try:
-            email.send()
+            email.send(fail_silently=False)
+            logging.info("Sent email to {email}".format(email=recipient))
         except smtplib.SMTPException:
-            logging.warning("Failed to send email to {email}:\n{body}".format(email=email, body=content))
+            logging.warning("Failed to send email to {email}:\n{body}".format(email=recipient, body=content))
 
 
 def get_current_teams():
