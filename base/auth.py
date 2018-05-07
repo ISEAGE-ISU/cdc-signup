@@ -111,8 +111,8 @@ class ActiveDirectoryAuthenticationBackend:
         }
         pattern = re.compile(r'(CN|OU)=(?P<groupName>[\w\s|\d\s]+),')
         for group in membership:
-            self.debug_write('checking group: ' + group)
-            group_matches = pattern.finditer(group)
+            self.debug_write('checking group: ' + str(group))
+            group_matches = pattern.finditer(str(group))
             for groupMatch in group_matches:
                 if groupMatch:
                     this_group = groupMatch.group('groupName')
@@ -195,12 +195,12 @@ class ActiveDirectoryAuthenticationBackend:
             else:
                 mail = ""
 
-            userInfo['mail'] = mail
-            self.debug_write("mail=" + mail)
+            userInfo['mail'] = str(mail)
+            self.debug_write("mail=" + str(mail))
 
             # get surname
             if 'sn' in result:
-                last_name = result['sn'][0]
+                last_name = str(result['sn'][0])
             else:
                 last_name = ""
 
@@ -209,12 +209,13 @@ class ActiveDirectoryAuthenticationBackend:
 
             # get display name
             if 'givenName' in result:
-                first_name = result['givenName'][0]
+                first_name = str(result['givenName'][0])
             else:
                 first_name = None
             #Need a first name
-            if first_name == None:
-                first_name = userInfo['username']
+            if first_name is None:
+                first_name = str(userInfo['username'])
+
             userInfo['first_name'] = first_name
             self.debug_write("first_name=" + first_name)
 
