@@ -9,7 +9,6 @@ from . import models
 from django.contrib.auth.models import User
 from django.db.models import Count, Q
 from django.core.mail import send_mail, EmailMessage
-from django.template import Context, RequestContext
 from django.template.loader import get_template
 from django.core.cache import cache
 import re
@@ -111,13 +110,7 @@ def set_global_setting(setting_name, value):
 
 
 def render_template(request, template, context=None):
-    if not context:
-        context = {}
-    if request is not None:
-        ctx = RequestContext(request, context)
-    else:
-        ctx = Context(context)
-    return get_template(template).render(ctx)
+    return get_template(template).render(context)
 
 
 def get_context(request):
@@ -131,8 +124,7 @@ def get_context(request):
             obj, created = models.Participant.objects.get_or_create(user=request.user)
             context['participant'] = obj
 
-    r_ctx = RequestContext(request, context)
-    return r_ctx
+    return context
 
 
 ##########
@@ -196,8 +188,8 @@ def ldap_admin_bind(func):
 
         try:
             ret = func(*args, **kwargs)
-        except:
-            raise
+        except Exception as e:
+            raise e
         finally:
             ldap_connection.unbind_s()
         return ret

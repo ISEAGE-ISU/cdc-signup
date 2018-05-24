@@ -289,18 +289,23 @@ class AdminSendEmailView(LoginRequiredMixin, UserIsAdminMixin, BaseTemplateView)
 ##########
 # Member views
 ##########
-def login(request):
-    this_breadcrumb = '<a href="{link}" class="current">{text}</a>'.format(link='/login', text="Login")
-    crumbs = mark_safe(breadcrumbs.render_breadcrumbs("/login/", {}) + this_breadcrumb)
-    context= {
-        'page_title': "Login",
-        'breadcrumbs': crumbs,
-    }
-    return auth_views.login(request, template_name='login.html', extra_context=context)
+class LoginView(BaseTemplateView):
+    template_name = 'login.html'
+    page_title = 'Login'
+    breadcrumb = 'Login'
 
-def logout(request):
-    messages.success(request, "You have been successfully logged out.")
-    return auth_views.logout(request, next_page='site-index')
+    def get(self, request, context, *args, **kwargs):
+            return auth_views.login(request, template_name='login.html', extra_context=context)
+
+    def post(self, request, context, *args, **kwargs):
+        return auth_views.login(request, template_name='login.html', extra_context=context)
+
+
+class LogoutView(BaseTemplateView):
+    def get(self, request, context, *args, **kwargs):
+        messages.success(request, "You have been successfully logged out.")
+        return auth_views.logout(request, next_page='site-index')
+
 
 class IndexView(BaseTemplateView):
     template_name = 'index.html'

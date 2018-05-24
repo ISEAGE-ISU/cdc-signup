@@ -3,7 +3,6 @@ from django.db import models
 from django.db.models.signals import post_save, pre_save, pre_delete
 from django.dispatch import receiver
 
-from . import actions
 from base.utils import AUDIENCE_CHOICES
 
 
@@ -68,6 +67,7 @@ class Team(models.Model):
         return emails
 
     def is_full(self):
+        from base import actions
         return len(self.members()) >= actions.get_global_setting('max_team_size')
 
     def __unicode__(self):
@@ -133,6 +133,7 @@ class Participant(models.Model):
 
         Only applies to Red/Green
         """
+        from base import actions
         if self.is_redgreen:
             self.approved = True
             self.save(update_fields=['approved'])
@@ -144,6 +145,7 @@ class Participant(models.Model):
 
         Only applies to Red/Green
         """
+        from base import actions
         if self.is_redgreen:
             self.approved = False
             self.save(update_fields=['approved'])
@@ -170,6 +172,7 @@ class ArchivedEmail(models.Model):
 ########
 @receiver(post_save, sender=GlobalSettings)
 def update_settings(sender, instance, **kwargs):
+    from base import actions
     actions.reset_global_settings_object()
 
 
@@ -180,6 +183,7 @@ def create_participant(sender, instance, **kwargs):
 
 @receiver(pre_save, sender=Participant)
 def remove_old_ad_group(sender, instance, **kwargs):
+    from base import actions
     fields = kwargs.get('update_fields', None)
     if fields:
         if not 'team' in fields:
@@ -198,6 +202,7 @@ def remove_old_ad_group(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Participant)
 def add_new_ad_group(sender, instance, **kwargs):
+    from base import actions
     fields = kwargs.get('update_fields', None)
     if fields:
         if not 'team' in fields:

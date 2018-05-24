@@ -181,7 +181,7 @@ def render_form_widget(context, form, title=None, show_legend=False, icon='icon-
         'widget_icon': icon,
         'widget_description': desc,
     })
-    return mark_safe(actions.render_template(None, 'includes/widget_box.html', context))
+    return mark_safe(actions.render_template(None, 'includes/widget_box.html', context.flatten()))
 
 
 @register.filter
