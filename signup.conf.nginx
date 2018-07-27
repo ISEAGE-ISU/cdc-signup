@@ -22,6 +22,7 @@ server {
     ssl_certificate_key ssl/iseage.org.key;
     client_max_body_size 4G;
     keepalive_timeout 5;
+    send_timeout 600; # To allow slow mass emails
 
     #Edit this to be the path where you installed signup
     root /var/www/cdc-signup;
