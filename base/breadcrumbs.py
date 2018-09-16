@@ -1,6 +1,7 @@
 from django.core import urlresolvers
 from django import http
-import urlparse
+from django.utils.html import format_html
+from urlparse import urljoin
 
 
 class Breadcrumb(object):
@@ -15,9 +16,9 @@ class Breadcrumb(object):
 
     def render(self):
         if self.active:
-            return '<a href="{link}" class="current">{text}</a>'.format(link=self.link, text=self.text)
+            return format_html('<a href="{link}" class="current">{text}</a>', link=self.link, text=self.text)
         else:
-            return '<a href="{link}">{text}</a>'.format(link=self.link, text=self.text)
+            return format_html('<a href="{link}">{text}</a>', link=self.link, text=self.text)
 
 
 def render_breadcrumbs(path, context):
@@ -55,7 +56,7 @@ def create_breadcrumbs(path, context):
             view_name = func.__name__
             view = get_class('{0}.{1}'.format(module, view_name))
         # Couldn't resolve the url
-        except http.Http404, e:
+        except http.Http404 as e:
             pass
 
         # We have a valid view
@@ -70,7 +71,7 @@ def create_breadcrumbs(path, context):
         if url == '/':
             break
 
-        url = urlparse.urljoin(url, '..')
+        url = urljoin(url, '..')
 
     breadcrumbs.reverse()
     return breadcrumbs

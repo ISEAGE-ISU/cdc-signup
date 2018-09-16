@@ -111,8 +111,8 @@ class ActiveDirectoryAuthenticationBackend:
         }
         pattern = re.compile(r'(CN|OU)=(?P<groupName>[\w\s|\d\s]+),')
         for group in membership:
-            self.debug_write('checking group: ' + group)
-            group_matches = pattern.finditer(group)
+            self.debug_write('checking group: ' + str(group))
+            group_matches = pattern.finditer(str(group))
             for groupMatch in group_matches:
                 if groupMatch:
                     this_group = groupMatch.group('groupName')
@@ -174,7 +174,7 @@ class ActiveDirectoryAuthenticationBackend:
             self.debug_write("results in {0}".format(result))
 
             # Validate that they are a member of review board group
-            if result.has_key('memberOf'):
+            if 'memberOf' in result:
                 membership = result['memberOf']
             else:
                 self.debug_write('AD user has no group memberships')
@@ -190,17 +190,17 @@ class ActiveDirectoryAuthenticationBackend:
 
             # get user info from ADS
             # get email
-            if result.has_key('mail'):
+            if 'mail' in result:
                 mail = result['mail'][0]
             else:
                 mail = ""
 
-            userInfo['mail'] = mail
-            self.debug_write("mail=" + mail)
+            userInfo['mail'] = str(mail)
+            self.debug_write("mail=" + str(mail))
 
             # get surname
-            if result.has_key('sn'):
-                last_name = result['sn'][0]
+            if 'sn' in result:
+                last_name = str(result['sn'][0])
             else:
                 last_name = ""
 
@@ -208,13 +208,14 @@ class ActiveDirectoryAuthenticationBackend:
             self.debug_write("sn=" + last_name)
 
             # get display name
-            if result.has_key('givenName'):
-                first_name = result['givenName'][0]
+            if 'givenName' in result:
+                first_name = str(result['givenName'][0])
             else:
                 first_name = None
             #Need a first name
-            if first_name == None:
-                first_name = userInfo['username']
+            if first_name is None:
+                first_name = str(userInfo['username'])
+
             userInfo['first_name'] = first_name
             self.debug_write("first_name=" + first_name)
 
@@ -222,7 +223,7 @@ class ActiveDirectoryAuthenticationBackend:
             l.unbind_s()
             return userInfo
 
-        except Exception, e:
+        except Exception as e:
             self.debug_write("exception caught!")
             self.debug_write(e)
             return None

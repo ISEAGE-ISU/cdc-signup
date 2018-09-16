@@ -1,7 +1,7 @@
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from base import views
 from signup import settings
-import admin as custom_admin
+from . import admin as custom_admin
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
@@ -15,7 +15,7 @@ handler403 = 'signup.errors.error403'
 handler404 = 'signup.errors.error404'
 handler500 = 'signup.errors.error500'
 
-urlpatterns = patterns('',
+urlpatterns = (
     # Examples:
     # url(r'^$', 'signup.views.home', name='home'),
     # url(r'^signup/', include('signup.foo.urls')),
@@ -34,8 +34,8 @@ urlpatterns = patterns('',
     url(r'^admin/approvals/(?P<participant_id>\d+)/unapprove', views.RedGreenUnapprove.as_view(), name='admin-unapprove'),
 
     url(r'^$', views.IndexView.as_view(), name='site-index'),
-    url(r'^login/$', 'base.views.login', name='site-login'),
-    url(r'^logout/$', 'base.views.logout', name='site-logout'),
+    url(r'^login/$', views.LoginView.as_view(), name='site-login'),
+    url(r'^logout/$', views.LogoutView.as_view(), name='site-logout'),
 
     url(r'^signup/$', views.SignupView.as_view(), name='signup'),
     url(r'^signup/redgreen/$', views.RedGreenSignupView.as_view(), name='signup-redgreen'),
@@ -61,9 +61,9 @@ urlpatterns = patterns('',
 
 )
 
-if settings.DEBUG:
-    urlpatterns += patterns('',
-        url(r'^403/$', 'signup.errors.error403', name='403'),
-        url(r'^404/$', 'signup.errors.error404', name='404'),
-        url(r'^500/$', 'signup.errors.error500', name='500'),
-    )
+# if settings.DEBUG:
+#     urlpatterns += [
+#         url(r'^403/$', 'signup.errors.error403', name='403'),
+#         url(r'^404/$', 'signup.errors.error404', name='404'),
+#         url(r'^500/$', 'signup.errors.error500', name='500'),
+#     ]

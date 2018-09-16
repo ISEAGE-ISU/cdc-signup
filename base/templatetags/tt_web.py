@@ -81,7 +81,7 @@ def render_form(form, in_widget=False, show_legend=True):
     """
     def get_visible_inputs(form):
         visible_inputs = []
-        for name, field in form.fields.items():
+        for name, field in list(form.fields.items()):
             if not isinstance(field.widget, field.hidden_widget):
                 visible_inputs.append(field)
         return visible_inputs
@@ -110,7 +110,7 @@ def render_form(form, in_widget=False, show_legend=True):
             ctx = {
                 'id': fieldset.get('id', ''),
                 'legend': legend,
-                'fields': get_fields_html(fieldset.get('fields', form.fields.keys()), form),
+                'fields': get_fields_html(fieldset.get('fields', list(form.fields.keys())), form),
                 'title': title,
             }
             fieldsets_html.append(fieldset_html.format(**ctx))
@@ -137,8 +137,8 @@ def render_form(form, in_widget=False, show_legend=True):
             exclude_names = meta.excludes
 
     # get the field list and remove the excluded fields
-    field_names = form.fields.keys()
-    field_names = filter(lambda x: x not in exclude_names, field_names)
+    field_names = list(form.fields.keys())
+    field_names = [x for x in field_names if x not in exclude_names]
     if in_widget:
         form_string = '{errors}<div class="fieldset-container"><fieldset><div>{fields}</div></fieldset></div>'
     else:
@@ -157,9 +157,9 @@ def render_form_errors_helper(form):
                  " Please correct to continue.</strong> {messages} </div>"
 
     if hasattr(form, 'show_no_base_error'):
-        rendered_form_errors = "<div class=\"error_notice_dialog\">{errors}</div>".format(errors=unicode(form.non_field_errors()))
+        rendered_form_errors = "<div class=\"error_notice_dialog\">{errors}</div>".format(errors=str(form.non_field_errors()))
     elif form.non_field_errors():
-        error_messages = unicode(form.non_field_errors())
+        error_messages = str(form.non_field_errors())
         rendered_form_errors = error_base.format(messages=error_messages)
     elif form.errors:
         rendered_form_errors = error_base.format(messages="")
@@ -181,7 +181,7 @@ def render_form_widget(context, form, title=None, show_legend=False, icon='icon-
         'widget_icon': icon,
         'widget_description': desc,
     })
-    return mark_safe(actions.render_template(None, 'includes/widget_box.html', context))
+    return mark_safe(actions.render_template(None, 'includes/widget_box.html', context.flatten()))
 
 
 @register.filter
