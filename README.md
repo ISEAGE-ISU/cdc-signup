@@ -5,9 +5,9 @@ Web app for automating creation and management of CDC accounts.
 
 Designed for Ubuntu 14.04 and Python 2.7
 
-#Installation#
+# Installation#
 
-##Install dependencies##
+## Install dependencies
 
 ```bash
 apt-get install nginx mysql-server memcached supervisor python-pip python-dev libmysqlclient-dev libldap2-dev libxml2-dev libsasl2-dev libssl-dev
@@ -19,27 +19,27 @@ dnf install nginx mariadb-server mariadb-devel memcached supervisor python-pip p
 
 Note: for development purposes you may omit nginx, memcached, and supervisor and just use python manage.py runserver instead
 
-##Install requirements##
+## Install requirements##
 
 ```bash
 pip install -r requirements.txt
 ```
 
-##Local settings##
+## Local settings
 
-###Production###
+### Production
 Copy signup/local_settings_prod.py to signup/local_settings.py and set a random database password and secret key
 
-###Development###
+### Development
 Copy signup/local_settings_dev.py to signup/local_settings.py
 
-##Sync Database##
+## Sync Database
 
 ```bash
 python manage.py syncdb
 ```
 
-##Setup supervisor##
+## Setup supervisor
 
 Copy signup.conf.supervisor to /etc/supervisor/conf.d/signup.conf
 
@@ -50,7 +50,7 @@ supervisorctl reload
 supervisorctl start signup
 ```
 
-##Setup nginx##
+## Setup nginx
 
 Copy signup.conf.nginx to /etc/nginx/conf.d/signup.conf
 
