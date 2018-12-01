@@ -243,6 +243,7 @@ def get_group_dn(team_id):
 @ldap_admin_bind
 def add_user_to_group(user_dn, group_dn, ldap_connection):
     ml = [(ldap.MOD_ADD, 'member', user_dn)]
+    ldap_debug_write("ADDING USER {} TO DN {}".format(user_dn, group_dn))
     try:
         ldap_connection.modify_s(group_dn, ml)
     except ldap.LDAPError as e:
@@ -255,6 +256,7 @@ def add_user_to_group(user_dn, group_dn, ldap_connection):
 @ldap_admin_bind
 def remove_user_from_group(user_dn, group_dn, ldap_connection):
     ml = [(ldap.MOD_DELETE, 'member', user_dn)]
+    ldap_debug_write("REMOVING USER {} FROM DN {}".format(user_dn, group_dn))
     try:
         ldap_connection.modify_s(group_dn, ml)
     except ldap.LDAPError as e:
@@ -267,7 +269,7 @@ def remove_user_from_group(user_dn, group_dn, ldap_connection):
 def set_password(participant_id, password, ldap_connection):
     if not password:
         return False
-
+    ldap_debug_write("RESETTING PASSWORD FOR USER {}".format(participant_id))
     # Prep the password
     unicode_pass = ('\"' + password + '\"').encode('iso-8859-1')
     password_value = unicode_pass.encode('utf-16-le')
@@ -304,6 +306,7 @@ def generate_password():
 
 
 def create_user_account(username, fname, lname, email):
+    ldap_debug_write("CREATING USER ACCOUNT FOR {}".format(email))
     return create_account(username, fname, lname, email, 'blue')
 
 
@@ -325,6 +328,7 @@ def create_account(username, fname, lname, email, acct_type, ldap_connection):
     ldap.set_option(ldap.OPT_REFERRALS, 0)
 
     ldap_debug_write("Attempting to create user {user} ({email})".format(user=username, email=email))
+    ldap_debug_write("USER IS OF ACCT TYPE {type} AND ADDED TO {g} AND {pou}".format(type=acct_type, g=group, pou=ou))
 
     # Check and see if user exists
     search_filter = '(&(sAMAccountName=' + username + ')(objectClass=person))'
@@ -548,6 +552,7 @@ def create_team(name, captain_id):
 def add_user_to_team(team_id, participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
     team = models.Team.objects.get(pk=team_id)
+    ldap_debug_write("ADDING {} TO TEAM {}".format(participant, team))
 
     participant.team = team
     participant.requested_team = None
@@ -585,6 +590,7 @@ def add_user_to_team(team_id, participant_id):
 def join_team(participant_id, team_id):
     participant = models.Participant.objects.get(pk=participant_id)
     team = models.Team.objects.get(pk=team_id)
+    ldap_debug_write("JOINING {} TO TEAM {}".format(participant, team))
 
     participant.team = team
     participant.requested_team = None
@@ -628,6 +634,7 @@ def join_team(participant_id, team_id):
 def leave_team(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
     team = participant.team
+    ldap_debug_write("REMOVING {} FROM TEAM {}".format(participant, team))
 
     participant.team = None
     participant.requested_team = None
@@ -656,6 +663,7 @@ def leave_team(participant_id):
 def promote_to_captain(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
     participant.promote()
+    ldap_debug_write("PROMOTING {} ON TEAM {}".format(participant, participant.team))
 
     email = participant.user.email
     email_body = email_templates.CAPTAIN_REQUEST_APPROVED.format(fname=participant.user.first_name,
@@ -673,6 +681,7 @@ def promote_to_captain(participant_id):
 def demote_captain(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
     team = participant.team
+    ldap_debug_write("DEMOTING {} ON TEAM {}".format(participant, team))
 
     if len(team.captains()) < 2:
         raise base.OnlyRemainingCaptainError()
@@ -699,6 +708,7 @@ def demote_captain(participant_id):
 def submit_join_request(participant_id, team_id):
     participant = models.Participant.objects.get(pk=participant_id)
     team = models.Team.objects.get(pk=team_id)
+    ldap_debug_write("SENDING JOIN REQUEST FOR {} TO TEAM {}".format(participant, participant.team))
 
     participant.request_team(team)
 
@@ -723,6 +733,7 @@ def submit_join_request(participant_id, team_id):
 
 def sumbit_captain_request(participant_id):
     participant = models.Participant.objects.get(pk=participant_id)
+    ldap_debug_write("{} IS REQUESTING PROMOTION ON TEAM {}".format(participant, participant.team))
 
     participant.request_promotion()
 
@@ -753,6 +764,7 @@ def disband_team(participant_id):
     team = participant.team
     name = team.name
     member_emails = team.member_email_list()
+    ldap_debug_write("DISBANDING TEAM {} AT THE REQUEST OF {}".format(participant, team))
 
     for member in team.members():
         member.team = None
@@ -797,9 +809,11 @@ def approve_user(participant):
     group_dn = None
     old_group_dn = None
     if participant.is_red:
+        ldap_debug_write("APPROVING {} FOR RED TEAM".format(participant))
         group_dn = _get_group_dn(settings.AD_RED_GROUP, settings.AD_RED_OU)
         old_group_dn = _get_group_dn(settings.AD_RED_PENDING, settings.AD_RED_OU)
     elif participant.is_green:
+        ldap_debug_write("APPROVING {} FOR GREEN TEAM".format(participant))
         group_dn = _get_group_dn(settings.AD_GREEN_GROUP, settings.AD_GREEN_OU)
         old_group_dn = _get_group_dn(settings.AD_GREEN_PENDING, settings.AD_GREEN_OU)
     remove_user_from_group(user_dn, old_group_dn)
@@ -811,9 +825,11 @@ def unapprove_user(participant):
     group_dn = None
     new_group_dn = None
     if participant.is_red:
+        ldap_debug_write("UNAPPROVING {} FOR RED TEAM".format(participant))
         group_dn = _get_group_dn(settings.AD_RED_GROUP, settings.AD_RED_OU)
         new_group_dn = _get_group_dn(settings.AD_RED_PENDING, settings.AD_RED_OU)
     elif participant.is_green:
+        ldap_debug_write("l {} FOR GREEN TEAM".format(participant))
         group_dn = _get_group_dn(settings.AD_GREEN_GROUP, settings.AD_GREEN_OU)
         new_group_dn = _get_group_dn(settings.AD_GREEN_PENDING, settings.AD_GREEN_OU)
     remove_user_from_group(user_dn, group_dn)
