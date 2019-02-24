@@ -247,8 +247,8 @@ class AdminCompetitionResetView(LoginRequiredMixin, UserIsAdminMixin, BaseTempla
         return self.render_to_response(context)
 
     def post(self, request, context, *args, **kwargs):
-        models.Team.objects.all().delete()
         User.objects.exclude(is_superuser=True).delete()
+        models.Team.objects.all().delete()
         ArchivedEmail.objects.all().delete()
         messages.success(request, 'Competition successfully reset.')
         return redirect('admin-dash')
