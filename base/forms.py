@@ -169,10 +169,10 @@ class GlobalSettingsForm(forms.ModelForm):
     administrator_bind_pw = forms.CharField(required=False, label="LDAP administrator password",
                                             widget=forms.PasswordInput(
                                                 attrs={'placeholder': 'Leave blank to keep same password'}))
-    check_in_date = forms.DateTimeField(widget=widgets.DateTimeInput(), required=False, label="Check-in start date")
+    check_in_date = forms.SplitDateTimeField(widget=widgets.DateTimeInput(), required=False, label="Check-in start date")
     enable_account_creation = forms.BooleanField(required=False, label="Enable account creation")
     documentation_url = forms.CharField(required=False, label="Shared Documentation URL")
-    competition_date = forms.DateTimeField(widget=widgets.DateTimeInput(), required=False, label="Competition date")
+    competition_date = forms.SplitDateTimeField(widget=widgets.DateTimeInput(), required=False, label="Competition date")
 
 
 class AdminEmailForm(forms.Form):
