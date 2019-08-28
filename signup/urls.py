@@ -38,7 +38,9 @@ urlpatterns = (
     url(r'^logout/$', views.LogoutView.as_view(), name='site-logout'),
 
     url(r'^signup/$', views.SignupView.as_view(), name='signup'),
-    url(r'^signup/redgreen/$', views.RedGreenSignupView.as_view(), name='signup-redgreen'),
+    url(r'^signup/red/$', views.RedLanding.as_view(), name="red_signup"),
+    url(r'^signup/red/real/$', views.RedSignup.as_view(), name='red_signup_real'),
+    url(r'^signup/green/$', views.GreenSignup.as_view(), name="green_signup"),
     url(r'^forgot/$', views.ForgotPasswordView.as_view(), name='forgot-password'),
 
     url(r'^dashboard/$', views.DashboardView.as_view(), name='dashboard'),

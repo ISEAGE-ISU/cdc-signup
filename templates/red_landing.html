@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="col-lg-6 col-lg-push-3">
+        <div class="well" align="center">
+            <h1>Just a moment!</h1>
+            <p>Red team is reserved for persons with experience in the info sec field.</p>
+            <p>In order to preserve the integrity of the competition, this is usually defined as professional
+                penetration
+                testers, security analysts, persons in related fields, or graduate students in the InfoSec program.</p>
+            <br>
+            <p>Signing up is not a guarantee that you will be allowed to participate. All red team members are approved
+                at the discretion of the white team.</p>
+            <p><a class="btn btn-primary btn-lg" href="{% url "red_signup_real" %}" role="button">Continue to signup</a>
+            </p>
+        </div>
+    </div>
+
+{% endblock %}

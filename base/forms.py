@@ -154,8 +154,8 @@ class GlobalSettingsForm(forms.ModelForm):
         model = models.GlobalSettings
         fields = [
             'number_of_teams', 'max_team_size', 'administrator_bind_dn', 'administrator_bind_pw', 'competition_name',
-            'competition_date', 'competition_prefix', 'check_in_date', 'documentation_url', 'rules_version',
-            'enable_account_creation', 'enable_red', 'enable_green',
+            'competition_date', 'competition_prefix', 'check_in_date', 'documentation_url', 'green_docs_url',
+            'red_docs_url', 'rules_version', 'enable_account_creation', 'enable_red', 'enable_green',
             'certificate_template',
         ]
         fieldsets = [{
@@ -171,7 +171,9 @@ class GlobalSettingsForm(forms.ModelForm):
                                                 attrs={'placeholder': 'Leave blank to keep same password'}))
     check_in_date = forms.SplitDateTimeField(widget=widgets.DateTimeInput(), required=False, label="Check-in start date")
     enable_account_creation = forms.BooleanField(required=False, label="Enable account creation")
-    documentation_url = forms.CharField(required=False, label="Shared Documentation URL")
+    documentation_url = forms.URLField(required=False, label="Blue Documentation URL")
+    green_docs_url = forms.URLField(required=False, label="Green Documentation URL")
+    red_docs_url = forms.URLField(required=False, label="Red Documentation URL")
     competition_date = forms.SplitDateTimeField(widget=widgets.DateTimeInput(), required=False, label="Competition date")
 
 

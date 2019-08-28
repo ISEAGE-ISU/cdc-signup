@@ -2,11 +2,14 @@
 
 {% block content %}
     <div class="col-md-4">
-    {% if enable_creation %}
-        <a class="btn btn-success btn-lg btn-block" href="{% url "signup" %}">Blue Team Signup</a>
+    {% if blue_enabled %}
+        <a class="btn btn-info btn-lg btn-block" href="{% url "signup" %}">Blue Team Signup</a>
     {% endif %}
-    {% if enable_red or enable_green %}
-        <a class="btn btn-info btn-lg btn-block" href="{% url "signup-redgreen" %}">Red Team/Green Team Signup</a>
+    {% if red_enabled %}
+        <a class="btn btn-danger btn-lg btn-block" href="{% url "red_signup" %}">Red Team Signup</a>
+    {% endif %}
+    {% if green_enabled %}
+        <a class="btn btn-lg btn-success btn-block" href="{% url "green_signup" %}">Green Team Signup</a>
     {% endif %}
         <a class="btn btn-primary btn-lg btn-block" href="{% url "site-login" %}">Sign in</a>
     </div>
