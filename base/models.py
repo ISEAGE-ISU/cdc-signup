@@ -2,8 +2,6 @@ from django.contrib.auth import models as auth_models
 from django.db import models
 from django.db.models.signals import post_save, pre_save, pre_delete
 from django.dispatch import receiver
-import base
-from base import actions
 
 from base.utils import AUDIENCE_CHOICES
 
@@ -13,7 +11,6 @@ class GlobalSettings(models.Model):
     administrator_bind_dn = models.CharField(max_length=100)
     administrator_bind_pw = models.CharField(max_length=100)
     check_in_date = models.DateTimeField(null=True)
-    documentation_url = models.CharField(max_length=200, blank=True, null=True)
     max_team_size = models.PositiveIntegerField(default=8)
 
     competition_name = models.CharField(max_length=100, blank=True, null=True)
@@ -23,6 +20,14 @@ class GlobalSettings(models.Model):
     enable_account_creation = models.BooleanField(default=True)
     enable_red = models.BooleanField(default=True)
     enable_green = models.BooleanField(default=True)
+
+    # Where are the docs?
+    documentation_url = models.URLField(blank=True, null=True, max_length=200,
+                                         help_text="Where blue teams can go to see their documentation. Usually a Google Drive folder.")
+    green_docs_url = models.URLField(help_text="Where green team members can go to see their documentation. Usually a "
+                                               "Google Drive folder.", null=True)
+    red_docs_url = models.URLField(help_text="Where red team members can go to see their documentation. Usually a "
+                                             "Google Drive folder.", null=True)
 
     certificate_template = models.FileField(null=True, blank=True)
     rules_version = models.CharField(max_length=40, null=True, blank=True)

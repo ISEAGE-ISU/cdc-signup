@@ -2,8 +2,25 @@
 {% load tt_web %}
 
 {% block content %}
+       <div class="row">
+        <div align="center">
+            <div class="btn-group btn-group-lg">
+                <a href="{{ ISCORE_URL }}" class="btn btn-lg btn-success">IScorE</a>
+                {% if docs_url is not None and team %}
+                    <a href="{{ docs_url }}" class="btn btn-lg btn-info">Documents</a>
+                {% elif red_docs_url is not None and is_red %}
+                    <a href="{{ red_docs_url }}" class="btn btn-lg btn-info">Documents</a>
+                {% elif green_docs_url is not None and is_green %}
+                    <a href="{{ green_docs_url }}" class="btn btn-lg btn-info">Documents</a>
+                {% endif %}
+                {% if is_captain %}
+                    <a href="{% url "manage-team" %}" class="btn btn-lg btn-primary">Manage the team</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
     <div class="row">
-        <div class="col-md-5">
+        <div class="col-md-6">
             {% render_widget widget_data %}
                 {% if check_in %}
                     <a class="btn btn-success btn-lg btn-block" href="{% url "check-in" %}">Check In</a>
@@ -59,7 +76,7 @@
         </div>
 
         {% if important_info %}
-        <div class="col-md-5">
+        <div class="col-md-6">
             {% render_widget important_info %}
             <dl>
                 {% if competition_name %}
@@ -71,7 +88,7 @@
                     <dd>{{ competition_date }}</dd>
                 {% endif %}
                 {% if rules_version %}
-                    <dt>Rules/Administrative Documents:</dt>
+                    <dt>Rules:</dt>
                     <dd>{% render_rules_version %}</dd>
                 {% endif %}
             </dl>
@@ -84,22 +101,8 @@
         </div>
         {% endif %}
     </div>
-    {% if team %}
     <div class="row">
-        <div class="col-md-5">
-            {% render_widget download_docs %}
-            {% if docs_url %}
-                <p>Documents containing the scenario, accounts, and other scenario related information.</p>
-                <a class="btn btn-sm btn-primary" href="{{ docs_url }}" target="_blank">View</a>
-            {% else %}
-                <p>Nothing here yet! You should receive an email from the staff when the documents become available.</p>
-            {% endif %}
-            {% render_widget_bottom %}
-        </div>
-    </div>
-    {% endif %}
-    <div class="row">
-        <div class="col-md-5">
+        <div class="col-md-6">
             <form class='form-horizontal' action='' method="POST">
                 {% render_form_widget form title="Change password" icon="fa-edit" %}
                 {% csrf_token %}

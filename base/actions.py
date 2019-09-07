@@ -305,22 +305,22 @@ def generate_password():
             return password
 
 
-def create_user_account(username, fname, lname, email):
+def create_user_account(username, fname, lname, email, color="blue"):
     ldap_debug_write("CREATING USER ACCOUNT FOR {}".format(email))
-    return create_account(username, fname, lname, email, 'blue')
+    return create_account(username, fname, lname, email, color)
 
 
 @ldap_admin_bind
 def create_account(username, fname, lname, email, acct_type, ldap_connection):
     base_dn = settings.AD_BASE_DN
 
-    if acct_type == 'blue':
+    if acct_type.lower() == 'blue':
         ou = settings.AD_CDCUSER_OU
         group = settings.AD_CDCUSER_GROUP
-    elif acct_type == 'red':
+    elif acct_type.lower() == 'red':
         ou = settings.AD_RED_OU
         group = settings.AD_RED_PENDING
-    elif acct_type == 'green':
+    elif acct_type.lower() == 'green':
         ou = settings.AD_GREEN_OU
         group = settings.AD_GREEN_PENDING
 
@@ -359,7 +359,6 @@ def create_account(username, fname, lname, email, acct_type, ldap_connection):
     user_ldif = modlist.addModlist(user_attrs)
 
     password = generate_password()
-
 
     # 512 will set user account to enabled
     mod_acct = [(ldap.MOD_REPLACE, 'userAccountControl', '512')]
@@ -420,7 +419,7 @@ def create_account(username, fname, lname, email, acct_type, ldap_connection):
     elif acct_type == 'green':
         template = email_templates.ACCOUNT_CREATED_GREEN
     email_body = template.format(fname=fname, lname=lname, username=username, password=password,
-                                support=settings.SUPPORT_EMAIL)
+                                 support=settings.SUPPORT_EMAIL)
 
     try:
         send_mail('Your ISEAGE CDC account', email_body, settings.EMAIL_FROM_ADDR, [email])

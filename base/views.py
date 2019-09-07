@@ -1,24 +1,23 @@
-from django.db.models.query_utils import Q
-from django.shortcuts import redirect, get_object_or_404
-from django.views.generic.base import View, TemplateResponseMixin
-from django.contrib.auth import views as auth_views
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import views as auth_views
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
+from django.db.models.query_utils import Q
+from django.http import Http404
+from django.shortcuts import redirect, get_object_or_404
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.html import mark_safe
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.http import Http404
-from django.core.urlresolvers import reverse
+from django.views.generic.base import View, TemplateResponseMixin
 
-from django.conf import settings
-from base import breadcrumbs, utils
-from . import forms as base_forms
 import base
-from . import actions
-from . import models
-from django.utils import timezone
-
+from base import breadcrumbs, utils
 from base.models import ArchivedEmail
+from . import actions
+from . import forms as base_forms
+from . import models, forms
 
 TRY_AGAIN = """Whoops! Something went wrong on our end. You can try submitting the form again in a few seconds. \
 If that still didn't work, please email us at {support} so we can fix it.""".format(support=settings.SUPPORT_EMAIL)
@@ -314,9 +313,9 @@ class IndexView(BaseTemplateView):
 
     def get(self, request, context, *args, **kwargs):
         admin_bind_dn = actions.get_global_setting('administrator_bind_dn')
-        context['enable_creation'] = actions.get_global_setting('enable_account_creation')
-        context['enable_green'] = actions.get_global_setting('enable_green')
-        context['enable_red'] = actions.get_global_setting('enable_red')
+        context['blue_enabled'] = actions.get_global_setting('enable_account_creation')
+        context['green_enabled'] = actions.get_global_setting('enable_green')
+        context['red_enabled'] = actions.get_global_setting('enable_red')
         if not admin_bind_dn:
             if request.user.is_authenticated():
                 messages.success(request, 'Setup your CDC here.')
@@ -381,73 +380,111 @@ class SignupView(BaseTemplateView):
         return self.get(request, context, form=form)
 
 
-class RedGreenSignupView(BaseTemplateView):
-    template_name = 'signup.html'
-    page_title = "Red/Green Signup"
-    breadcrumb = "Red/Green"
+class RedLanding(BaseTemplateView):
+    template_name = "red_landing.html"
+    page_title = "Red Landing"
+    breadcrumb = "Landing"
 
     def get(self, request, context, *args, **kwargs):
-        enabled_red = actions.get_global_setting('enable_red')
-        enabled_green = actions.get_global_setting('enable_green')
-        enabled = enabled_red or enabled_green
+        return self.render_to_response(context)
 
-        if not enabled:
-            messages.error(request, CREATION_DISABLED)
-            return redirect('site-index')
 
-        start_value = request.GET.get('type')
-        if start_value == 'red' and not enabled_red:
-            start_value = None
-        elif start_value == 'green' and not enabled_green:
-            start_value = None
+class RedSignup(BaseTemplateView):
+    template_name = "red_green_signup.html"
+    page_title = "Red Signup"
+    breadcrumb = "Red Signup"
 
-        initial_data = {'acct_type': start_value}
-
+    def get(self, request, context, *args, **kwargs):
+        if not actions.get_global_setting("enable_red"):
+            raise Http404("Not found")
         if 'form' in kwargs:
             form = kwargs.pop('form')
         else:
-            form = base_forms.RedGreenSignupForm(initial=initial_data)
+            form = forms.SignupForm
         context['form'] = form
+        context["color"] = "red"
         return self.render_to_response(context)
 
     def post(self, request, context, *args, **kwargs):
-        enabled = actions.get_global_setting('enable_red') or actions.get_global_setting('enable_green')
-        if not enabled:
-            messages.error(request, CREATION_DISABLED)
-            return redirect('site-index')
-
-        form = base_forms.RedGreenSignupForm(request.POST)
+        if not actions.get_global_setting("enable_red"):
+            raise Http404("Not found")
+        form = forms.SignupForm(request.POST)
         if form.is_valid():
-            email = form.cleaned_data['email']
-            first = form.cleaned_data['first_name']
-            last = form.cleaned_data['last_name']
-            username = form.cleaned_data['username']
-            acct_type = form.cleaned_data['acct_type']
+            cd = form.cleaned_data
             success = False
             try:
-                success = actions.create_account(username, first,
-                        last, email, acct_type)
+                success = actions.create_user_account(cd['username'], cd['first_name'], cd['last_name'], cd['email'],
+                                                      "red")
             except base.DuplicateName:
-                form.add_error('first_name', """It looks like there's already an account with the same first and last names as your provided. \
-                Try including your middle initial or middle name.""")
+                form.add_error('first_name', """It looks like there's already an account with the same first and last names as you provided. \
+                    Try including your middle initial or middle name.""")
             except base.UsernameAlreadyExistsError:
                 form.add_error('username', "That username already exists. Please choose another one.")
                 return self.get(request, context, form=form)
             if success:
-                # Update the participant object since it is created throught
-                # a signal rather than directly
-                user = User.objects.get(username=username)
-                if acct_type == 'red':
-                    user.participant.is_red = True
-                elif acct_type == 'green':
-                    user.participant.is_green = True
+                user = User.objects.get(username=cd['username'])
+                user.participant.is_red = True
                 user.participant.save()
-                messages.success(request, 'Account successfully created. Please check your email for further instructions.')
+                messages.success(request,
+                                 'Account successfully created. Please check your email for further instructions.')
                 return redirect('site-login')
             else:
                 messages.error(request, TRY_AGAIN)
+                return self.get(request, context, form=form)
 
-        return self.get(request, context, form=form)
+        else:
+            messages.error(request, "There was an error with your submission")
+            context['form'] = form
+            return self.render_to_response(context)
+
+
+class GreenSignup(BaseTemplateView):
+    template_name = "red_green_signup.html"
+    page_title = "Green Signup"
+    breadcrumb = "Green Signup"
+
+    def get(self, request, context, *args, **kwargs):
+        if not actions.get_global_setting("enable_green"):
+            raise Http404("Not found")
+        if 'form' in kwargs:
+            form = kwargs.pop('form')
+        else:
+            form = forms.SignupForm
+        context['form'] = form
+        context["color"] = "green"
+        return self.render_to_response(context)
+
+    def post(self, request, context, *args, **kwargs):
+        if not actions.get_global_setting("enable_green"):
+            raise Http404("Not found")
+        form = forms.SignupForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+            success = False
+            try:
+                success = actions.create_user_account(cd['username'], cd['first_name'], cd['last_name'], cd['email'],
+                                                      "red")
+            except base.DuplicateName:
+                form.add_error('first_name', """It looks like there's already an account with the same first and last names as you provided. \
+                    Try including your middle initial or middle name.""")
+            except base.UsernameAlreadyExistsError:
+                form.add_error('username', "That username already exists. Please choose another one.")
+                return self.get(request, context, form=form)
+            if success:
+                user = User.objects.get(username=cd['username'])
+                user.participant.is_green = True
+                user.participant.save()
+                messages.success(request,
+                                 'Account successfully created. Please check your email for further instructions.')
+                return redirect('site-login')
+            else:
+                messages.error(request, TRY_AGAIN)
+                return self.get(request, context, form=form)
+
+        else:
+            messages.error(request, "There was an error with your submission")
+            context['form'] = form
+            return self.render_to_response(context)
 
 
 class DashboardView(LoginRequiredMixin, BaseTemplateView):
@@ -491,6 +528,8 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
             'icon': 'fa-dashboard',
         }
         context['docs_url'] = actions.get_global_setting('documentation_url')
+        context['red_docs_url'] = actions.get_global_setting('red_docs_url')
+        context['green_docs_url'] = actions.get_global_setting('green_docs_url')
         context['download_docs'] = {
             'title': 'Scenario Documents',
             'icon': 'fa-file',
@@ -499,6 +538,8 @@ class DashboardView(LoginRequiredMixin, BaseTemplateView):
         context['competition_name'] = actions.get_global_setting('competition_name')
         context['competition_date'] = actions.get_global_setting('competition_date')
         context['rules_version'] = actions.get_global_setting('rules_version')
+
+        context['ISCORE_URL'] = settings.ISCORE_URL
 
         context['archived_emails'] = models.ArchivedEmail.objects.filter(audience__in=utils.get_user_audience(request.user))
 
