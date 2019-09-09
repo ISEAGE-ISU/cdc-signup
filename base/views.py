@@ -463,7 +463,7 @@ class GreenSignup(BaseTemplateView):
             success = False
             try:
                 success = actions.create_user_account(cd['username'], cd['first_name'], cd['last_name'], cd['email'],
-                                                      "red")
+                                                      "green")
             except base.DuplicateName:
                 form.add_error('first_name', """It looks like there's already an account with the same first and last names as you provided. \
                     Try including your middle initial or middle name.""")
