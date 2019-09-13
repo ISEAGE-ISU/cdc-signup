@@ -18,4 +18,4 @@ def error500(request):
     context = {
         'page_title': "Internal Server Error"
     }
-    return render(request, '500.html', dictionary=context, status=500)
+    return render(request, '500.html', context_instance=context, status=500)
