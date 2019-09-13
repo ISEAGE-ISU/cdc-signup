@@ -183,6 +183,8 @@ def admin_bind():
                 continue
             else:
                 return None
+        except Exception as e:
+            ldap_debug_write("Other unknown error: " + str(e))
         return l
 
 
