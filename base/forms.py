@@ -3,6 +3,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, HTML, Div, ButtonHolder, Submit, Fieldset
 from django import forms
 from django.conf import settings
+import re
 
 from base import models, widgets, actions
 from base.utils import AUDIENCE_CHOICES
@@ -112,6 +113,8 @@ class ChangePasswordForm(forms.Form):
             raise forms.ValidationError("The passwords you entered do not match.")
         if len(cleaned_data.get('new_password')) < settings.MIN_PASSWORD_LENGTH:
             raise forms.ValidationError("Your password does not meat the length requirements.")
+        if not re.match(r'(?=.{4})(?=.*?[a-z])(?=.*?[A-Z])(?=.*?[0-9])', cleaned_data.get('new_password')):
+            raise forms.ValidationError("Your password does not meet complexity requirements")
 
 
 class ForgotPasswordForm(forms.Form):
