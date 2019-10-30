@@ -221,6 +221,8 @@ AD_DEBUG = False
 AD_LDAP_DEBUG_LEVEL = 0
 AD_DEBUG_FILE = '/var/log/signup/ldap.debug'
 
+MIN_PASSWORD_LENGTH = 4
+
 AUTHENTICATION_BACKENDS = (
     'base.auth.ActiveDirectoryAuthenticationBackend',
     'django.contrib.auth.backends.ModelBackend'
